@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from 'express'
 import { ForbiddenError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'
 import { auditLogger } from '../utils/logging/audit-logger'
+import { permissionService } from '../core/permissions/permission-service'
 
 export interface AuthRequest extends Request {
   user?: {
@@ -55,20 +56,14 @@ export function authorize(minLevel: number) {
         throw new ForbiddenError('User not authenticated')
       }
 
-      // TODO: Fetch user's actual role level from database
-      // For now, we'll assume the roleId maps to a role name
-      // In production, you'd do: SELECT level FROM roles WHERE id = req.user.roleId
+      // Check user's role level from database
+      const meetsRequirement = await permissionService.checkRoleLevel(req.user.roleId, minLevel)
 
-      // Placeholder: Parse role level from roleId
-      // This will be replaced with actual database lookup
-      const userRoleLevel = RoleLevel.USER // Default fallback
-
-      if (userRoleLevel < minLevel) {
+      if (!meetsRequirement) {
         logger.warn('Authorization denied - insufficient permissions', {
           userId: req.user.userId,
           tenantId: req.user.tenantId,
           requiredLevel: minLevel,
-          userLevel: userRoleLevel,
           path: req.path,
           method: req.method,
         })
@@ -79,7 +74,7 @@ export function authorize(minLevel: number) {
           req.user.tenantId,
           req.path,
           req.method,
-          `Required level ${minLevel}, user has level ${userRoleLevel}`
+          `Required level ${minLevel}`
         )
 
         throw new ForbiddenError('Insufficient permissions to access this resource')
@@ -89,7 +84,6 @@ export function authorize(minLevel: number) {
       logger.debug('Authorization granted', {
         userId: req.user.userId,
         requiredLevel: minLevel,
-        userLevel: userRoleLevel,
       })
 
       next()
@@ -115,21 +109,19 @@ export function requirePermission(permission: string) {
         throw new ForbiddenError('User not authenticated')
       }
 
-      // TODO: Check if user's role has the required permission
-      // Query: SELECT 1 FROM role_permissions rp
-      //        JOIN permissions p ON rp.permission_id = p.id
-      //        WHERE rp.role_id = $1 AND p.name = $2
+      // Parse permission (format: "resource:action")
+      const [resource, action] = permission.split(':')
 
-      // Placeholder: For now, we'll log and continue
-      // In production, implement actual permission check
-      logger.debug('Permission check', {
-        userId: req.user.userId,
-        permission,
-        path: req.path,
-      })
+      if (!resource || !action) {
+        throw new Error('Invalid permission format. Expected "resource:action"')
+      }
 
-      // TODO: Replace with actual permission check
-      const hasPermission = true // Placeholder
+      // Check permission from database
+      const hasPermission = await permissionService.checkPermission(
+        req.user.roleId,
+        resource,
+        action
+      )
 
       if (!hasPermission) {
         logger.warn('Authorization denied - missing permission', {
