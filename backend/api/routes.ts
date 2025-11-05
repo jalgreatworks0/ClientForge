@@ -7,6 +7,11 @@ import { Application } from 'express'
 import { appConfig } from '../../config/app/app-config'
 import authRoutes from './rest/v1/routes/auth-routes'
 import healthRoutes from './rest/v1/routes/health-routes'
+import contactsRoutes from './rest/v1/routes/contacts-routes'
+import accountsRoutes from './rest/v1/routes/accounts-routes'
+import dealsRoutes from './rest/v1/routes/deals-routes'
+import tasksRoutes from './rest/v1/routes/tasks-routes'
+import activitiesRoutes from './rest/v1/routes/activities-routes'
 
 /**
  * Configure all application routes
@@ -20,8 +25,13 @@ export function configureRoutes(app: Application): void {
   // Authentication routes (public)
   app.use(`${apiPrefix}/auth`, authRoutes)
 
+  // CRM routes (authentication required)
+  app.use(`${apiPrefix}/contacts`, contactsRoutes)
+  app.use(`${apiPrefix}/accounts`, accountsRoutes)
+  app.use(`${apiPrefix}/deals`, dealsRoutes)
+  app.use(`${apiPrefix}/tasks`, tasksRoutes)
+  app.use(`${apiPrefix}/activities`, activitiesRoutes)
+
   // TODO: Add more routes as we build features
   // app.use(`${apiPrefix}/users`, userRoutes)
-  // app.use(`${apiPrefix}/contacts`, contactRoutes)
-  // app.use(`${apiPrefix}/deals`, dealRoutes)
 }

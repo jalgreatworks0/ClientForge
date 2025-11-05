@@ -1,0 +1,321 @@
+/* ClientForge CRM - Theme System */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Syne+Mono:wght@400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-alabaster-700 dark:border-dark-border;
+  }
+
+  body {
+    @apply bg-alabaster-100 text-charcoal-900 font-syne-mono antialiased;
+    @apply dark:bg-dark-primary dark:text-charcoal-50;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-syne font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Glass Effect Cards */
+  .glass-card {
+    @apply bg-white/85 backdrop-blur-md border border-alabaster-600 shadow-md;
+    @apply dark:bg-dark-secondary/85 dark:border-dark-border dark:shadow-dark-md;
+  }
+
+  .glass-nav {
+    @apply bg-white/90 backdrop-blur-xl border-b border-alabaster-700 shadow-lg;
+    @apply dark:bg-dark-secondary/90 dark:border-dark-border dark:shadow-dark-lg;
+  }
+
+  /* Widget Container */
+  .widget {
+    @apply bg-white rounded-xl p-6 shadow-md transition-all duration-200;
+    @apply hover:shadow-xl hover:-translate-y-1 cursor-move;
+    @apply dark:bg-dark-secondary dark:shadow-dark-md dark:hover:shadow-dark-xl;
+  }
+
+  .widget-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .widget-title {
+    @apply text-xl font-syne font-bold text-charcoal-900 dark:text-charcoal-50;
+    @apply flex items-center gap-2;
+  }
+
+  .widget-content {
+    @apply text-sm text-charcoal-600 dark:text-charcoal-300;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply px-4 py-2 rounded-lg font-syne font-semibold transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-charcoal-800 text-white hover:bg-charcoal-900 shadow-sm hover:shadow-md;
+    @apply dark:bg-charcoal-50 dark:text-charcoal-900 dark:hover:bg-white;
+    @apply focus:ring-charcoal-500;
+  }
+
+  .btn-secondary {
+    @apply bg-alabaster-300 text-charcoal-800 hover:bg-alabaster-400;
+    @apply dark:bg-dark-tertiary dark:text-charcoal-50 dark:hover:bg-dark-hover;
+    @apply focus:ring-charcoal-500;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-charcoal-700 hover:bg-alabaster-300;
+    @apply dark:text-charcoal-300 dark:hover:bg-dark-hover;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
+  }
+
+  .btn-success {
+    @apply bg-green-500 text-white hover:bg-green-600 focus:ring-green-500;
+  }
+
+  /* Form Controls */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-lg border border-alabaster-700 bg-white;
+    @apply text-charcoal-900 placeholder-charcoal-800/50;
+    @apply focus:outline-none focus:ring-2 focus:ring-charcoal-500 focus:border-transparent;
+    @apply transition-all duration-200;
+    @apply dark:bg-dark-tertiary dark:border-dark-border dark:text-charcoal-50;
+    @apply dark:placeholder-charcoal-400 dark:focus:ring-charcoal-300;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:ring-red-500 dark:border-red-600;
+  }
+
+  .label {
+    @apply block text-sm font-syne font-semibold text-charcoal-800 mb-2;
+    @apply dark:text-charcoal-200;
+  }
+
+  .error-message {
+    @apply text-sm text-red-600 mt-1 dark:text-red-400;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-xl p-6 shadow-md border border-alabaster-600;
+    @apply dark:bg-dark-secondary dark:border-dark-border dark:shadow-dark-md;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-xl hover:-translate-y-1;
+    @apply dark:hover:shadow-dark-xl;
+  }
+
+  /* Navigation */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200;
+    @apply text-charcoal-700 hover:text-charcoal-900 hover:bg-alabaster-300;
+    @apply dark:text-charcoal-300 dark:hover:text-charcoal-50 dark:hover:bg-dark-hover;
+    @apply cursor-pointer;
+  }
+
+  .nav-item-active {
+    @apply bg-charcoal-800 text-white hover:bg-charcoal-900;
+    @apply dark:bg-charcoal-50 dark:text-charcoal-900;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-syne font-semibold;
+  }
+
+  .badge-primary {
+    @apply bg-charcoal-800 text-white;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300;
+  }
+
+  /* Sortable Ghost (dragging) */
+  .sortable-ghost {
+    @apply opacity-40 bg-alabaster-400 border-2 border-dashed border-charcoal-800;
+    @apply dark:bg-dark-hover dark:border-charcoal-300;
+  }
+
+  .sortable-chosen {
+    @apply cursor-grabbing;
+  }
+
+  .sortable-drag {
+    @apply opacity-80 scale-105 shadow-2xl;
+  }
+
+  /* Table */
+  .table {
+    @apply w-full border-collapse;
+  }
+
+  .table thead {
+    @apply bg-alabaster-300 dark:bg-dark-tertiary;
+  }
+
+  .table th {
+    @apply px-4 py-3 text-left text-xs font-syne font-bold text-charcoal-800 uppercase tracking-wider;
+    @apply dark:text-charcoal-200;
+  }
+
+  .table td {
+    @apply px-4 py-3 text-sm text-charcoal-700 border-t border-alabaster-600;
+    @apply dark:text-charcoal-300 dark:border-dark-border;
+  }
+
+  .table tr:hover {
+    @apply bg-alabaster-200 dark:bg-dark-hover;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+  }
+
+  .modal {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6;
+    @apply dark:bg-dark-secondary;
+    @apply animate-scale-in;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply inline-block w-6 h-6 border-4 border-alabaster-700 border-t-charcoal-800 rounded-full animate-spin;
+    @apply dark:border-dark-border dark:border-t-charcoal-50;
+  }
+
+  /* Status Indicators */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  .status-active {
+    @apply bg-green-500;
+  }
+
+  .status-inactive {
+    @apply bg-gray-400 dark:bg-charcoal-500;
+  }
+
+  .status-pending {
+    @apply bg-yellow-500;
+  }
+
+  /* Scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-alabaster-300 dark:bg-dark-tertiary rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-charcoal-800 dark:bg-charcoal-400 rounded-full hover:bg-charcoal-900 dark:hover:bg-charcoal-300;
+  }
+}
+
+/* React Grid Layout Overrides */
+.react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.react-grid-item.resizing {
+  transition: none;
+  z-index: 100;
+}
+
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 100;
+  will-change: transform;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: var(--tw-gradient-from);
+  opacity: 0.2;
+  transition-duration: 100ms;
+  z-index: 2;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid rgba(0, 0, 0, 0.4);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+/* Toast Notifications */
+.Toastify__toast {
+  @apply font-syne-mono rounded-lg shadow-xl;
+}
+
+.Toastify__toast--success {
+  @apply bg-green-500;
+}
+
+.Toastify__toast--error {
+  @apply bg-red-500;
+}
+
+.Toastify__toast--info {
+  @apply bg-blue-500;
+}
+
+.Toastify__toast--warning {
+  @apply bg-yellow-500;
+}

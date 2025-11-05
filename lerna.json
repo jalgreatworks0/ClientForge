@@ -1,0 +1,22 @@
+{
+  "version": "3.0.0",
+  "npmClient": "npm",
+  "useWorkspaces": true,
+  "packages": [
+    "packages/*",
+    "frontend/apps/*",
+    "backend"
+  ],
+  "command": {
+    "publish": {
+      "conventionalCommits": true,
+      "message": "chore(release): publish"
+    },
+    "version": {
+      "allowBranch": [
+        "main",
+        "develop"
+      ]
+    }
+  }
+}

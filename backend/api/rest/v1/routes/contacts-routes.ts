@@ -4,17 +4,17 @@
  */
 
 import { Router } from 'express'
-import { authenticate } from '../../../middleware/authenticate'
-import { authorize, RoleLevel } from '../../../middleware/authorize'
-import { requirePermission } from '../../../middleware/authorize'
-import { validateRequest } from '../../../middleware/validate-request'
-import * as contactController from '../../../core/contacts/contact-controller'
+import { authenticate } from '../../../../middleware/authenticate'
+import { authorize, RoleLevel } from '../../../../middleware/authorize'
+import { requirePermission } from '../../../../middleware/authorize'
+import { validateRequest } from '../../../../middleware/validate-request'
+import * as contactController from '../../../../core/contacts/contact-controller'
 import {
   createContactSchema,
   updateContactSchema,
   bulkContactOperationSchema,
   contactNoteSchema,
-} from '../../../core/contacts/contact-validators'
+} from '../../../../core/contacts/contact-validators'
 
 const router = Router()
 
