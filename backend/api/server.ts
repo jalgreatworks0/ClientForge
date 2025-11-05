@@ -1,0 +1,184 @@
+/**
+ * Express Server
+ * Main server setup and configuration
+ */
+
+import express, { Application } from 'express'
+import helmet from 'helmet'
+import cors from 'cors'
+import compression from 'compression'
+import { createServer, Server as HTTPServer } from 'http'
+import { corsConfig } from '../../config/security/cors-config'
+import { appConfig } from '../../config/app/app-config'
+import { logger } from '../utils/logging/logger'
+import { errorHandler, setupGlobalErrorHandlers } from '../utils/errors/error-handler'
+import { configureRoutes } from './routes'
+
+export class Server {
+  private app: Application
+  private httpServer: HTTPServer
+
+  constructor() {
+    this.app = express()
+    this.httpServer = createServer(this.app)
+    this.setupMiddleware()
+    this.setupRoutes()
+    this.setupErrorHandling()
+    setupGlobalErrorHandlers()
+  }
+
+  /**
+   * Configure middleware
+   */
+  private setupMiddleware(): void {
+    // Trust proxy (for running behind reverse proxy)
+    this.app.set('trust proxy', 1)
+
+    // Security headers
+    this.app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", 'data:', 'https:'],
+          },
+        },
+        hsts: {
+          maxAge: 31536000,
+          includeSubDomains: true,
+          preload: true,
+        },
+      })
+    )
+
+    // CORS
+    this.app.use(cors(corsConfig))
+
+    // Body parsing
+    this.app.use(express.json({ limit: appConfig.maxRequestSize }))
+    this.app.use(
+      express.urlencoded({
+        extended: true,
+        limit: appConfig.maxRequestSize,
+      })
+    )
+
+    // Compression
+    this.app.use(compression())
+
+    // Request logging middleware
+    this.app.use((req, res, next) => {
+      const start = Date.now()
+
+      res.on('finish', () => {
+        const duration = Date.now() - start
+        logger.http(`${req.method} ${req.path}`, {
+          statusCode: res.statusCode,
+          duration: `${duration}ms`,
+          ip: req.ip,
+          userAgent: req.get('user-agent'),
+        })
+      })
+
+      next()
+    })
+
+    logger.info('✅ Middleware configured')
+  }
+
+  /**
+   * Configure routes
+   */
+  private setupRoutes(): void {
+    configureRoutes(this.app)
+    logger.info('✅ Routes configured')
+  }
+
+  /**
+   * Configure error handling
+   */
+  private setupErrorHandling(): void {
+    // 404 handler - must be after all routes
+    this.app.use((req, res) => {
+      res.status(404).json({
+        success: false,
+        error: {
+          message: 'Route not found',
+          statusCode: 404,
+          path: req.path,
+        },
+      })
+    })
+
+    // Global error handler - must be last
+    this.app.use(errorHandler)
+
+    logger.info('✅ Error handling configured')
+  }
+
+  /**
+   * Start server
+   */
+  public async start(): Promise<void> {
+    return new Promise((resolve) => {
+      this.httpServer.listen(appConfig.port, () => {
+        logger.info(`🚀 Server running on port ${appConfig.port}`)
+        logger.info(`📝 Environment: ${appConfig.env}`)
+        logger.info(`🔗 API Version: ${appConfig.apiVersion}`)
+        logger.info(`🌐 URL: ${appConfig.url}`)
+        resolve()
+      })
+    })
+  }
+
+  /**
+   * Stop server gracefully
+   */
+  public async stop(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.httpServer.close((err) => {
+        if (err) {
+          logger.error('Failed to stop server', { error: err })
+          reject(err)
+        } else {
+          logger.info('Server stopped gracefully')
+          resolve()
+        }
+      })
+    })
+  }
+
+  /**
+   * Get Express app instance
+   */
+  public getApp(): Application {
+    return this.app
+  }
+}
+
+/**
+ * Start server if this file is executed directly
+ */
+if (require.main === module) {
+  const server = new Server()
+
+  server.start().catch((error) => {
+    logger.error('Failed to start server', { error })
+    process.exit(1)
+  })
+
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received, shutting down gracefully...')
+    await server.stop()
+    process.exit(0)
+  })
+
+  process.on('SIGINT', async () => {
+    logger.info('SIGINT received, shutting down gracefully...')
+    await server.stop()
+    process.exit(0)
+  })
+}

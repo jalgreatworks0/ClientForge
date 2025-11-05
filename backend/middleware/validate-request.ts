@@ -1,0 +1,108 @@
+/**
+ * Request Validation Middleware
+ * Validates request body, query, and params using Zod schemas
+ */
+
+import { Request, Response, NextFunction } from 'express'
+import { z, ZodError, ZodSchema } from 'zod'
+import { ValidationError } from '../utils/errors/app-error'
+import { logger } from '../utils/logging/logger'
+
+export interface ValidationSchemas {
+  body?: ZodSchema
+  query?: ZodSchema
+  params?: ZodSchema
+}
+
+/**
+ * Middleware factory for request validation
+ */
+export function validateRequest(schemas: ValidationSchemas) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Validate body
+      if (schemas.body) {
+        req.body = await schemas.body.parseAsync(req.body)
+      }
+
+      // Validate query params
+      if (schemas.query) {
+        req.query = await schemas.query.parseAsync(req.query)
+      }
+
+      // Validate route params
+      if (schemas.params) {
+        req.params = await schemas.params.parseAsync(req.params)
+      }
+
+      next()
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errors = error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }))
+
+        logger.warn('Request validation failed', {
+          path: req.path,
+          method: req.method,
+          errors,
+        })
+
+        next(
+          new ValidationError('Request validation failed', {
+            errors,
+          })
+        )
+      } else {
+        logger.error('Unexpected validation error', { error })
+        next(new ValidationError('Request validation failed'))
+      }
+    }
+  }
+}
+
+/**
+ * Common validation schemas
+ */
+export const commonSchemas = {
+  // UUID parameter
+  uuidParam: z.object({
+    id: z.string().uuid('Invalid ID format'),
+  }),
+
+  // Pagination query
+  paginationQuery: z.object({
+    page: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseInt(val, 10) : 1))
+      .refine((val) => val > 0, 'Page must be greater than 0'),
+    limit: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseInt(val, 10) : 20))
+      .refine((val) => val > 0 && val <= 100, 'Limit must be between 1 and 100'),
+  }),
+
+  // Email field
+  email: z.string().email('Invalid email format').toLowerCase(),
+
+  // Password field
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(
+      /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+      'Password must contain at least one special character'
+    ),
+
+  // Tenant ID (UUID)
+  tenantId: z.string().uuid('Invalid tenant ID'),
+
+  // User ID (UUID)
+  userId: z.string().uuid('Invalid user ID'),
+}
