@@ -1,0 +1,21 @@
+# Frontend Development Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY turbo.json ./
+COPY lerna.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose frontend port
+EXPOSE 3001
+
+# Start in development mode with hot reload
+CMD ["npm", "run", "dev"]

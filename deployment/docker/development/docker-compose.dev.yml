@@ -1,0 +1,142 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database (Primary)
+  postgres:
+    image: postgres:15-alpine
+    container_name: clientforge-postgres
+    environment:
+      POSTGRES_DB: clientforge_crm
+      POSTGRES_USER: crm_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password_change_in_prod}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../../database/schemas/postgresql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_admin -d clientforge_crm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - clientforge-network
+    restart: unless-stopped
+
+  # Redis Cache & Sessions
+  redis:
+    image: redis:7-alpine
+    container_name: clientforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - clientforge-network
+    restart: unless-stopped
+
+  # MongoDB (Logs & Events)
+  mongodb:
+    image: mongo:6
+    container_name: clientforge-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-dev_password_change_in_prod}
+      MONGO_INITDB_DATABASE: clientforge_logs
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - clientforge-network
+    restart: unless-stopped
+
+  # Backend API (Node.js)
+  backend:
+    build:
+      context: ../../..
+      dockerfile: deployment/docker/development/Dockerfile.backend
+    container_name: clientforge-backend
+    environment:
+      NODE_ENV: development
+      APP_PORT: 3000
+      DATABASE_URL: postgresql://crm_admin:${DB_PASSWORD:-dev_password_change_in_prod}@postgres:5432/clientforge_crm
+      REDIS_URL: redis://redis:6379
+      MONGODB_URI: mongodb://admin:${MONGO_PASSWORD:-dev_password_change_in_prod}@mongodb:27017/clientforge_logs?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-change-in-production}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../../backend:/app/backend
+      - ../../../config:/app/config
+      - ../../../package.json:/app/package.json
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - clientforge-network
+    restart: unless-stopped
+
+  # Frontend Web App (React)
+  frontend:
+    build:
+      context: ../../..
+      dockerfile: deployment/docker/development/Dockerfile.frontend
+    container_name: clientforge-frontend
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:3000/api/v1
+      REACT_APP_WS_URL: ws://localhost:3000
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../../../frontend:/app/frontend
+      - ../../../package.json:/app/package.json
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - clientforge-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mongo_data:
+    driver: local
+  mongo_config:
+    driver: local
+
+networks:
+  clientforge-network:
+    driver: bridge
