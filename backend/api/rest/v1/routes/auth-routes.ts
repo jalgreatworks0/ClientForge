@@ -87,4 +87,83 @@ router.post(
   authController.refreshToken
 )
 
+/**
+ * POST /api/v1/auth/verify-email
+ * Verify email address with token
+ *
+ * @body {string} token - Email verification token
+ *
+ * @returns {200} Email verified successfully
+ * @returns {400} Invalid or expired token
+ */
+router.post(
+  '/verify-email',
+  validateRequest({ body: authController.authSchemas.verifyEmail }),
+  authController.verifyEmail
+)
+
+/**
+ * POST /api/v1/auth/resend-verification
+ * Resend email verification
+ *
+ * @body {string} email - User email
+ * @body {string} tenantId - Tenant UUID
+ *
+ * @returns {200} Verification email sent
+ * @returns {404} User not found
+ */
+router.post(
+  '/resend-verification',
+  rateLimiters.emailVerification,
+  validateRequest({ body: authController.authSchemas.resendVerification }),
+  authController.resendVerification
+)
+
+/**
+ * POST /api/v1/auth/request-password-reset
+ * Request password reset email
+ *
+ * @body {string} email - User email
+ * @body {string} tenantId - Tenant UUID
+ *
+ * @returns {200} Reset email sent (always returns success for security)
+ */
+router.post(
+  '/request-password-reset',
+  rateLimiters.passwordReset,
+  validateRequest({ body: authController.authSchemas.requestPasswordReset }),
+  authController.requestPasswordReset
+)
+
+/**
+ * POST /api/v1/auth/reset-password
+ * Reset password with token
+ *
+ * @body {string} token - Password reset token
+ * @body {string} newPassword - New password (min 8 chars, complexity requirements)
+ *
+ * @returns {200} Password reset successfully
+ * @returns {400} Invalid or expired token
+ */
+router.post(
+  '/reset-password',
+  rateLimiters.passwordReset,
+  validateRequest({ body: authController.authSchemas.resetPassword }),
+  authController.resetPassword
+)
+
+/**
+ * POST /api/v1/auth/validate-reset-token
+ * Validate password reset token
+ *
+ * @body {string} token - Password reset token to validate
+ *
+ * @returns {200} Token validity status
+ */
+router.post(
+  '/validate-reset-token',
+  validateRequest({ body: authController.authSchemas.validateResetToken }),
+  authController.validateResetToken
+)
+
 export default router

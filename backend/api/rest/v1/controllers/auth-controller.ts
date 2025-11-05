@@ -6,6 +6,8 @@
 import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { authService } from '../../../../core/auth/auth-service'
+import { emailVerificationService } from '../../../../core/auth/email-verification-service'
+import { passwordResetService } from '../../../../core/auth/password-reset-service'
 import { logger } from '../../../../utils/logging/logger'
 import { ValidationError } from '../../../../utils/errors/app-error'
 import { commonSchemas } from '../../../../middleware/validate-request'
@@ -37,6 +39,29 @@ export const authSchemas = {
 
   logout: z.object({
     refreshToken: z.string().min(1, 'Refresh token is required'),
+  }),
+
+  verifyEmail: z.object({
+    token: z.string().min(1, 'Verification token is required'),
+  }),
+
+  resendVerification: z.object({
+    email: commonSchemas.email,
+    tenantId: commonSchemas.tenantId,
+  }),
+
+  requestPasswordReset: z.object({
+    email: commonSchemas.email,
+    tenantId: commonSchemas.tenantId,
+  }),
+
+  resetPassword: z.object({
+    token: z.string().min(1, 'Reset token is required'),
+    newPassword: commonSchemas.password,
+  }),
+
+  validateResetToken: z.object({
+    token: z.string().min(1, 'Reset token is required'),
   }),
 }
 
@@ -247,6 +272,141 @@ export async function refreshToken(
       data: {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Verify email with token
+ * POST /api/v1/auth/verify-email
+ */
+export async function verifyEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const data = authSchemas.verifyEmail.parse(req.body)
+
+    const result = await emailVerificationService.verifyEmail(data.token)
+
+    logger.info('Email verified successfully', {
+      userId: result.userId,
+      email: result.email,
+    })
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully',
+      data: {
+        email: result.email,
+        firstName: result.firstName,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Resend verification email
+ * POST /api/v1/auth/resend-verification
+ */
+export async function resendVerification(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const data = authSchemas.resendVerification.parse(req.body)
+
+    await emailVerificationService.resendVerificationEmail(data.email, data.tenantId)
+
+    logger.info('Verification email resent', { email: data.email })
+
+    res.status(200).json({
+      success: true,
+      message: 'Verification email sent. Please check your inbox.',
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Request password reset
+ * POST /api/v1/auth/request-password-reset
+ */
+export async function requestPasswordReset(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const data = authSchemas.requestPasswordReset.parse(req.body)
+
+    await passwordResetService.requestPasswordReset({
+      email: data.email,
+      tenantId: data.tenantId,
+    })
+
+    logger.info('Password reset requested', { email: data.email })
+
+    // Always return success to prevent email enumeration
+    res.status(200).json({
+      success: true,
+      message: 'If an account exists with this email, you will receive a password reset link.',
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Reset password with token
+ * POST /api/v1/auth/reset-password
+ */
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const data = authSchemas.resetPassword.parse(req.body)
+
+    const result = await passwordResetService.resetPassword({
+      token: data.token,
+      newPassword: data.newPassword,
+    })
+
+    logger.info('Password reset successfully', { email: result.email })
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. You can now log in with your new password.',
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Validate password reset token
+ * POST /api/v1/auth/validate-reset-token
+ */
+export async function validateResetToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const data = authSchemas.validateResetToken.parse(req.body)
+
+    const isValid = await passwordResetService.validateResetToken(data.token)
+
+    res.status(200).json({
+      success: true,
+      data: {
+        valid: isValid,
       },
     })
   } catch (error) {

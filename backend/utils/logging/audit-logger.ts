@@ -182,6 +182,7 @@ export class AuditLogger {
     tenantId: string,
     resource: string,
     action: string,
+    reason?: string,
     ipAddress?: string
   ): Promise<void> {
     await this.logBlocked({
@@ -189,8 +190,49 @@ export class AuditLogger {
       userId,
       action: 'permission_denied',
       resourceType: resource,
+      errorMessage: reason,
       ipAddress,
       metadata: { requiredPermission: `${resource}:${action}` },
+    })
+  }
+
+  /**
+   * Log password reset requested
+   */
+  async logPasswordResetRequested(
+    userId: string,
+    email: string,
+    tenantId: string,
+    ipAddress?: string
+  ): Promise<void> {
+    await this.logSuccess({
+      tenantId,
+      userId,
+      action: 'password_reset_requested',
+      resourceType: 'user',
+      resourceId: userId,
+      ipAddress,
+      metadata: { email },
+    })
+  }
+
+  /**
+   * Log password changed (via reset or settings)
+   */
+  async logPasswordChanged(
+    userId: string,
+    email: string,
+    tenantId: string,
+    ipAddress?: string
+  ): Promise<void> {
+    await this.logSuccess({
+      tenantId,
+      userId,
+      action: 'password_changed',
+      resourceType: 'user',
+      resourceId: userId,
+      ipAddress,
+      metadata: { email },
     })
   }
 }
