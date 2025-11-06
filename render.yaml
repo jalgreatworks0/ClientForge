@@ -53,9 +53,8 @@ services:
     autoDeploy: true
 
   # Frontend Static Site
-  - type: web
+  - type: static
     name: clientforge-crm-frontend
-    runtime: static
     plan: starter
     region: oregon
     buildCommand: cd frontend && npm install && npm run build
@@ -68,6 +67,10 @@ services:
           name: clientforge-crm-backend
           type: web
           property: host
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     autoDeploy: true
 
   # Redis Cache
