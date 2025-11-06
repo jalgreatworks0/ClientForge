@@ -1,20 +1,33 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
     "outDir": "../dist/backend",
-    "rootDir": ".",
-    "baseUrl": ".",
-    "noEmitOnError": false,
+    "rootDir": "..",
+    "baseUrl": "..",
+    "esModuleInterop": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": false,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "allowJs": true,
+    "noEmitOnError": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
     "strict": false,
+    "sourceMap": false,
+    "declaration": false,
     "paths": {
-      "@backend/*": ["./*"]
+      "@backend/*": ["backend/*"],
+      "@config/*": ["config/*"]
     }
   },
   "include": [
-    "./**/*"
+    "./**/*",
+    "../config/**/*"
   ],
   "exclude": [
     "node_modules",
