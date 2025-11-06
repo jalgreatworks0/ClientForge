@@ -10,7 +10,7 @@ import { ValidationError, NotFoundError, ConflictError } from '../../../backend/
 
 // Mock the repository
 jest.mock('../../../backend/core/accounts/account-repository')
-const mockedRepository = accountRepository as jest.Mocked<typeof accountRepository>
+const mockedRepository = accountRepository as jest.Mocked<typeof accountRepository>;
 
 describe('AccountService', () => {
   let accountService: AccountService

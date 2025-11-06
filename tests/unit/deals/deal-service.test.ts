@@ -14,9 +14,9 @@ jest.mock('../../../backend/core/deals/deal-repository')
 jest.mock('../../../backend/core/accounts/account-repository')
 jest.mock('../../../backend/core/contacts/contact-repository')
 
-const mockedDealRepo = dealRepository as jest.Mocked<typeof dealRepository>
-const mockedAccountRepo = accountRepository as jest.Mocked<typeof accountRepository>
-const mockedContactRepo = contactRepository as jest.Mocked<typeof contactRepository>
+const mockedDealRepo = dealRepository as jest.Mocked<typeof dealRepository>;
+const mockedAccountRepo = accountRepository as jest.Mocked<typeof accountRepository>;
+const mockedContactRepo = contactRepository as jest.Mocked<typeof contactRepository>;
 
 describe('DealService', () => {
   let dealService: DealService

@@ -1,5 +1,5 @@
 /* ClientForge CRM - Theme System */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Syne+Mono:wght@400&display=swap');
+/* Fonts are now imported via Fontsource in main.tsx */
 
 @tailwind base;
 @tailwind components;
@@ -11,32 +11,50 @@
   }
 
   body {
-    @apply bg-alabaster-100 text-charcoal-900 font-syne-mono antialiased;
+    @apply bg-alabaster-200 text-charcoal-900 font-syne-mono antialiased;
     @apply dark:bg-dark-primary dark:text-charcoal-50;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-syne font-bold tracking-tight;
+    @apply font-syne tracking-tight;
+    font-weight: 800 !important;
+  }
+
+  /* All paragraphs and spans default to Syne Mono */
+  p, span, div, td, th, li {
+    @apply font-syne-mono;
+  }
+
+  /* Buttons and labels use Syne */
+  button, label, a {
+    @apply font-syne;
+    font-weight: 600;
   }
 }
 
 @layer components {
-  /* Glass Effect Cards */
+  /* Glass Effect Cards - Enhanced */
   .glass-card {
-    @apply bg-white/85 backdrop-blur-md border border-alabaster-600 shadow-md;
-    @apply dark:bg-dark-secondary/85 dark:border-dark-border dark:shadow-dark-md;
+    @apply bg-white/90 backdrop-blur-xl border border-alabaster-600/50 shadow-elegant;
+    @apply dark:bg-dark-secondary/90 dark:border-dark-border/50 dark:shadow-dark-lg;
+    @apply transition-all duration-300 hover:shadow-2xl hover:scale-[1.02];
+  }
+
+  .glass-card-hover {
+    @apply bg-white/90 backdrop-blur-xl border border-alabaster-600/50 shadow-soft;
+    @apply dark:bg-dark-secondary/90 dark:border-dark-border/50 dark:shadow-dark-md;
+    @apply transition-all duration-300 hover:shadow-elegant hover:-translate-y-1 hover:border-primary-500/30;
+    @apply dark:hover:border-primary-500/30;
   }
 
   .glass-nav {
-    @apply bg-white/90 backdrop-blur-xl border-b border-alabaster-700 shadow-lg;
-    @apply dark:bg-dark-secondary/90 dark:border-dark-border dark:shadow-dark-lg;
+    @apply bg-white/95 backdrop-blur-xl border-b border-alabaster-700/30 shadow-soft;
+    @apply dark:bg-dark-secondary/95 dark:border-dark-border/30 dark:shadow-dark-lg;
   }
 
   /* Widget Container */
   .widget {
-    @apply bg-white rounded-xl p-6 shadow-md transition-all duration-200;
-    @apply hover:shadow-xl hover:-translate-y-1 cursor-move;
-    @apply dark:bg-dark-secondary dark:shadow-dark-md dark:hover:shadow-dark-xl;
+    @apply bg-transparent rounded-xl transition-all duration-200;
   }
 
   .widget-header {
@@ -52,45 +70,105 @@
     @apply text-sm text-charcoal-600 dark:text-charcoal-300;
   }
 
-  /* Buttons */
+  /* Buttons - Claude Desktop refined style */
   .btn {
-    @apply px-4 py-2 rounded-lg font-syne font-semibold transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply px-5 py-2.5 rounded-lg font-syne font-semibold transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-alabaster-200;
+    @apply dark:focus:ring-offset-dark-primary;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+    opacity: 0;
+    transition: opacity 200ms;
+    pointer-events: none;
+  }
+
+  .btn:hover::after {
+    opacity: 1;
   }
 
   .btn-primary {
-    @apply bg-charcoal-800 text-white hover:bg-charcoal-900 shadow-sm hover:shadow-md;
-    @apply dark:bg-charcoal-50 dark:text-charcoal-900 dark:hover:bg-white;
-    @apply focus:ring-charcoal-500;
+    @apply bg-charcoal-900 text-white;
+    @apply hover:bg-charcoal-800;
+    @apply dark:bg-charcoal-50 dark:text-charcoal-900 dark:hover:bg-charcoal-100;
+    @apply focus:ring-charcoal-500/30;
+    box-shadow:
+      0 1px 2px 0 rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-primary:hover {
+    box-shadow:
+      0 2px 4px 0 rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
   }
 
   .btn-secondary {
-    @apply bg-alabaster-300 text-charcoal-800 hover:bg-alabaster-400;
-    @apply dark:bg-dark-tertiary dark:text-charcoal-50 dark:hover:bg-dark-hover;
-    @apply focus:ring-charcoal-500;
+    @apply bg-white border border-alabaster-600/50 text-charcoal-800;
+    @apply hover:bg-alabaster-100 hover:border-alabaster-700;
+    @apply dark:bg-dark-secondary dark:border-dark-border dark:text-charcoal-50;
+    @apply dark:hover:bg-dark-tertiary dark:hover:border-dark-border;
+    @apply focus:ring-charcoal-500/30;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 
   .btn-ghost {
-    @apply bg-transparent text-charcoal-700 hover:bg-alabaster-300;
-    @apply dark:text-charcoal-300 dark:hover:bg-dark-hover;
+    @apply bg-transparent text-charcoal-700 hover:bg-alabaster-300/50;
+    @apply dark:text-charcoal-300 dark:hover:bg-dark-hover/50;
+    @apply shadow-none hover:shadow-none;
   }
 
   .btn-danger {
-    @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
+    @apply bg-gradient-to-r from-danger-500 to-danger-600 text-white;
+    @apply hover:from-danger-600 hover:to-danger-700;
+    @apply focus:ring-danger-500/50;
   }
 
   .btn-success {
-    @apply bg-green-500 text-white hover:bg-green-600 focus:ring-green-500;
+    @apply bg-gradient-to-r from-success-500 to-success-600 text-white;
+    @apply hover:from-success-600 hover:to-success-700;
+    @apply focus:ring-success-500/50;
   }
 
-  /* Form Controls */
+  .btn-warning {
+    @apply bg-gradient-to-r from-warning-500 to-warning-600 text-white;
+    @apply hover:from-warning-600 hover:to-warning-700;
+    @apply focus:ring-warning-500/50;
+  }
+
+  .btn-lg {
+    @apply px-8 py-4 text-lg;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-icon {
+    @apply p-2.5 rounded-full;
+  }
+
+  /* Form Controls - Claude Desktop refined inputs */
   .input {
-    @apply w-full px-4 py-2.5 rounded-lg border border-alabaster-700 bg-white;
-    @apply text-charcoal-900 placeholder-charcoal-800/50;
-    @apply focus:outline-none focus:ring-2 focus:ring-charcoal-500 focus:border-transparent;
+    @apply w-full px-4 py-2.5 rounded-lg border border-alabaster-600/50 bg-white;
+    @apply text-charcoal-900 placeholder-charcoal-500/60;
+    @apply focus:outline-none focus:ring-2 focus:ring-charcoal-500/20 focus:border-charcoal-500/50;
     @apply transition-all duration-200;
-    @apply dark:bg-dark-tertiary dark:border-dark-border dark:text-charcoal-50;
-    @apply dark:placeholder-charcoal-400 dark:focus:ring-charcoal-300;
+    @apply dark:bg-dark-tertiary/50 dark:border-dark-border/50 dark:text-charcoal-50;
+    @apply dark:placeholder-charcoal-400/60 dark:focus:ring-charcoal-300/20 dark:focus:border-charcoal-300/50;
+    box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .input:focus {
+    box-shadow:
+      inset 0 1px 2px 0 rgba(0, 0, 0, 0.05),
+      0 0 0 3px rgba(0, 0, 0, 0.03);
   }
 
   .input-error {
@@ -106,15 +184,58 @@
     @apply text-sm text-red-600 mt-1 dark:text-red-400;
   }
 
-  /* Cards */
+  /* Cards - Enhanced Floating Effect */
   .card {
-    @apply bg-white rounded-xl p-6 shadow-md border border-alabaster-600;
+    @apply bg-white rounded-xl p-6 shadow-lg border border-alabaster-600/50;
     @apply dark:bg-dark-secondary dark:border-dark-border dark:shadow-dark-md;
+    @apply transition-all duration-300 ease-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-xl hover:-translate-y-1;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:-translate-y-2 hover:shadow-2xl;
     @apply dark:hover:shadow-dark-xl;
+  }
+
+  .card-hover:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Floating Box - Claude Desktop inspired refined effect */
+  .floating-box {
+    @apply bg-white rounded-xl border border-alabaster-600/30;
+    @apply dark:bg-dark-secondary dark:border-dark-border/30;
+    @apply transition-all duration-200 ease-out;
+    box-shadow:
+      0 1px 2px 0 rgba(0, 0, 0, 0.05),
+      0 0 0 1px rgba(0, 0, 0, 0.02);
+    position: relative;
+  }
+
+  .floating-box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .dark .floating-box::before {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  }
+
+  .floating-box:hover {
+    box-shadow:
+      0 4px 8px 0 rgba(0, 0, 0, 0.08),
+      0 0 0 1px rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
   }
 
   /* Navigation */
@@ -259,6 +380,33 @@
   transition-property: transform, width, height;
 }
 
+/* Albedo Chat Sparkle Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
 .react-grid-item.resizing {
   transition: none;
   z-index: 100;
@@ -318,4 +466,151 @@
 
 .Toastify__toast--warning {
   @apply bg-yellow-500;
+}
+
+/* React Grid Layout Overrides */
+.react-grid-layout {
+  background: transparent !important;
+}
+
+.react-grid-item {
+  background: transparent !important;
+  transition: all 200ms ease;
+}
+
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 100;
+  opacity: 0.9;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: rgb(var(--color-charcoal-900) / 0.1) !important;
+  border-radius: 12px;
+  transition: all 100ms;
+}
+
+.react-grid-item > .react-resizable-handle {
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  border-color: rgb(var(--color-charcoal-900) / 0.3) !important;
+}
+
+/* Widget cursor changes */
+.widget {
+  cursor: default;
+}
+
+.react-grid-item.react-draggable:not(.react-grid-item.static):not(.react-grid-item.resizing) .widget {
+  cursor: grab;
+}
+
+.react-grid-item.react-draggable.react-draggable-dragging .widget {
+  cursor: grabbing;
+}
+
+/* Squarespace-style Dotted Grid Background */
+.dashboard-grid-background {
+  position: relative;
+  min-height: 100vh;
+}
+
+.dashboard-grid-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(circle, rgba(31, 31, 31, 0.15) 1.5px, transparent 1.5px);
+  background-size: 40px 40px;
+  background-position: 0 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.dashboard-grid-background.grid-visible::before {
+  opacity: 1;
+}
+
+/* Dark mode grid dots */
+.dark .dashboard-grid-background::before {
+  background-image:
+    radial-gradient(circle, rgba(250, 250, 250, 0.12) 1.5px, transparent 1.5px);
+}
+
+/* Ensure widgets are above grid */
+.react-grid-layout {
+  position: relative;
+  z-index: 1;
+}
+
+/* Claude Desktop inspired interactive elements */
+.interactive-item {
+  @apply rounded-lg transition-all duration-150;
+  @apply hover:bg-alabaster-100/80 dark:hover:bg-dark-tertiary/80;
+  position: relative;
+}
+
+.interactive-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+  opacity: 0;
+  transition: opacity 150ms;
+  pointer-events: none;
+}
+
+.interactive-item:hover::before {
+  opacity: 0.4;
+}
+
+.dark .interactive-item::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+}
+
+/* Refined metric/stat boxes */
+.metric-box {
+  @apply rounded-lg p-4 transition-all duration-200;
+  @apply bg-alabaster-100/60 dark:bg-dark-tertiary/60;
+  @apply border border-alabaster-600/20 dark:border-dark-border/20;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 200ms;
+  pointer-events: none;
+}
+
+.metric-box:hover::before {
+  opacity: 0.6;
+}
+
+.dark .metric-box::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+}
+
+.metric-box:hover {
+  @apply bg-alabaster-200/60 dark:bg-dark-hover/60;
+  @apply border-alabaster-700/30 dark:border-dark-border/30;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
 }

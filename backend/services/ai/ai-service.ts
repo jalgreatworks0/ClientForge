@@ -27,7 +27,7 @@ import {
   shouldUseCache,
   getCacheTTL,
 } from './ai-config'
-import { ValidationError } from '../../../utils/errors'
+import { ValidationError } from '../../utils/errors'
 
 // =====================================================
 // AI SERVICE CLASS

@@ -219,11 +219,13 @@ export class TaskService {
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
     const weekEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
 
+    const completedTasks = tasks.filter((t) => t.status === TaskStatus.COMPLETED).length
+
     const stats: TaskStatistics = {
       totalTasks: tasks.length,
       pendingTasks: tasks.filter((t) => t.status === TaskStatus.PENDING).length,
       inProgressTasks: tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length,
-      completedTasks: tasks.filter((t) => t.status === TaskStatus.COMPLETED).length,
+      completedTasks,
       cancelledTasks: tasks.filter((t) => t.status === TaskStatus.CANCELLED).length,
       onHoldTasks: tasks.filter((t) => t.status === TaskStatus.ON_HOLD).length,
       overdueTasks: tasks.filter(
@@ -240,7 +242,7 @@ export class TaskService {
         urgent: tasks.filter((t) => t.priority === TaskPriority.URGENT).length,
       },
       byAssignee: this.calculateByAssignee(tasks),
-      completionRate: tasks.length > 0 ? (stats.completedTasks / tasks.length) * 100 : 0,
+      completionRate: tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0,
       averageCompletionTime: this.calculateAverageCompletionTime(tasks),
     }
 

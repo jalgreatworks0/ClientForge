@@ -4,7 +4,7 @@
  */
 
 import { metadataRepository } from './metadata-repository'
-import { ValidationError, NotFoundError } from '../../../utils/errors'
+import { ValidationError, NotFoundError } from '../../utils/errors'
 import type {
   Note,
   Comment,

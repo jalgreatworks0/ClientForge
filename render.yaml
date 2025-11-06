@@ -1,0 +1,100 @@
+services:
+  # Backend API Service
+  - type: web
+    name: clientforge-crm-backend
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run build:backend
+    startCommand: npm run start:backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_NAME
+        value: ClientForge CRM
+      - key: APP_PORT
+        value: 3000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clientforge-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: clientforge-redis
+          type: redis
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: noreply@clientforge.com
+      - key: ENABLE_AI_FEATURES
+        value: true
+      - key: ENABLE_ADVANCED_ANALYTICS
+        value: true
+      - key: LOG_LEVEL
+        value: info
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: web
+    name: clientforge-crm-frontend
+    runtime: static
+    plan: starter
+    region: oregon
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        fromService:
+          name: clientforge-crm-backend
+          type: web
+          property: host
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+    autoDeploy: true
+
+# Database
+databases:
+  - name: clientforge-db
+    databaseName: clientforge
+    user: clientforge
+    plan: starter
+    region: oregon
+
+# Redis Cache
+  - type: redis
+    name: clientforge-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru

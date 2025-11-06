@@ -10,7 +10,7 @@ import { ValidationError, NotFoundError } from '../../../backend/utils/errors/ap
 
 // Mock the repository
 jest.mock('../../../backend/core/contacts/contact-repository')
-const mockedRepository = contactRepository as jest.Mocked<typeof contactRepository>
+const mockedRepository = contactRepository as jest.Mocked<typeof contactRepository>;
 
 describe('ContactService', () => {
   let contactService: ContactService

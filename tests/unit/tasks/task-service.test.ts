@@ -11,7 +11,7 @@ import { TaskStatus, TaskPriority, ActivityType } from '../../../backend/core/ta
 // Mock the repository
 jest.mock('../../../backend/core/tasks/task-repository')
 
-const mockedTaskRepo = taskRepository as jest.Mocked<typeof taskRepository>
+const mockedTaskRepo = taskRepository as jest.Mocked<typeof taskRepository>;
 
 describe('TaskService', () => {
   let taskService: TaskService

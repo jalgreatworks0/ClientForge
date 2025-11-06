@@ -51,47 +51,55 @@ export class AppError extends Error {
 export class ValidationError extends AppError {
   constructor(message: string, context?: Record<string, any>) {
     super(message, 400, context)
+    Object.setPrototypeOf(this, ValidationError.prototype)
   }
 }
 
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Unauthorized', context?: Record<string, any>) {
     super(message, 401, context)
+    Object.setPrototypeOf(this, UnauthorizedError.prototype)
   }
 }
 
 export class ForbiddenError extends AppError {
   constructor(message: string = 'Forbidden', context?: Record<string, any>) {
     super(message, 403, context)
+    Object.setPrototypeOf(this, ForbiddenError.prototype)
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(resource: string = 'Resource', context?: Record<string, any>) {
     super(`${resource} not found`, 404, context)
+    Object.setPrototypeOf(this, NotFoundError.prototype)
   }
 }
 
 export class ConflictError extends AppError {
   constructor(message: string, context?: Record<string, any>) {
     super(message, 409, context)
+    Object.setPrototypeOf(this, ConflictError.prototype)
   }
 }
 
 export class TooManyRequestsError extends AppError {
   constructor(message: string = 'Too many requests', context?: Record<string, any>) {
     super(message, 429, context)
+    Object.setPrototypeOf(this, TooManyRequestsError.prototype)
   }
 }
 
 export class InternalServerError extends AppError {
   constructor(message: string = 'Internal server error', context?: Record<string, any>) {
     super(message, 500, context)
+    Object.setPrototypeOf(this, InternalServerError.prototype)
   }
 }
 
 export class ServiceUnavailableError extends AppError {
   constructor(message: string = 'Service unavailable', context?: Record<string, any>) {
     super(message, 503, context)
+    Object.setPrototypeOf(this, ServiceUnavailableError.prototype)
   }
 }

@@ -5,8 +5,8 @@
 
 import { Router } from 'express'
 import { noteController } from '../../../../core/metadata/metadata-controller'
-import { authenticate } from '../../../../middleware/auth'
-import { checkPermission } from '../../../../middleware/rbac'
+import { authenticate } from '../../../../middleware/authenticate'
+import { requirePermission } from '../../../../middleware/authorize'
 
 const router = Router()
 
@@ -20,7 +20,7 @@ router.use(authenticate)
  */
 router.get(
   '/search',
-  checkPermission('notes:read'),
+  requirePermission('notes:read'),
   noteController.searchNotes.bind(noteController)
 )
 
@@ -31,7 +31,7 @@ router.get(
  */
 router.get(
   '/entity',
-  checkPermission('notes:read'),
+  requirePermission('notes:read'),
   noteController.getEntityNotes.bind(noteController)
 )
 
@@ -42,7 +42,7 @@ router.get(
  */
 router.get(
   '/statistics',
-  checkPermission('notes:read'),
+  requirePermission('notes:read'),
   noteController.getNoteStatistics.bind(noteController)
 )
 
@@ -53,7 +53,7 @@ router.get(
  */
 router.post(
   '/bulk',
-  checkPermission('notes:update'),
+  requirePermission('notes:update'),
   noteController.bulkNoteOperation.bind(noteController)
 )
 
@@ -62,21 +62,21 @@ router.post(
  * @desc    List notes with pagination and filtering
  * @access  Private (notes:read)
  */
-router.get('/', checkPermission('notes:read'), noteController.listNotes.bind(noteController))
+router.get('/', requirePermission('notes:read'), noteController.listNotes.bind(noteController))
 
 /**
  * @route   POST /api/v1/notes
  * @desc    Create a new note
  * @access  Private (notes:create)
  */
-router.post('/', checkPermission('notes:create'), noteController.createNote.bind(noteController))
+router.post('/', requirePermission('notes:create'), noteController.createNote.bind(noteController))
 
 /**
  * @route   GET /api/v1/notes/:id
  * @desc    Get note by ID
  * @access  Private (notes:read)
  */
-router.get('/:id', checkPermission('notes:read'), noteController.getNoteById.bind(noteController))
+router.get('/:id', requirePermission('notes:read'), noteController.getNoteById.bind(noteController))
 
 /**
  * @route   PUT /api/v1/notes/:id
@@ -85,7 +85,7 @@ router.get('/:id', checkPermission('notes:read'), noteController.getNoteById.bin
  */
 router.put(
   '/:id',
-  checkPermission('notes:update'),
+  requirePermission('notes:update'),
   noteController.updateNote.bind(noteController)
 )
 
@@ -96,7 +96,7 @@ router.put(
  */
 router.delete(
   '/:id',
-  checkPermission('notes:delete'),
+  requirePermission('notes:delete'),
   noteController.deleteNote.bind(noteController)
 )
 

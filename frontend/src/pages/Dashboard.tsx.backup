@@ -1,0 +1,581 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { Responsive, WidthProvider, Layout } from 'react-grid-layout'
+import { Settings, Lock, Unlock, RotateCcw, Eye, EyeOff, Plus, Phone, Mail, Calendar } from 'lucide-react'
+import 'react-grid-layout/css/styles.css'
+
+const ResponsiveGridLayout = WidthProvider(Responsive)
+
+// Mock data - will be replaced with real data later
+const initialContacts = [
+  { id: '1', firstName: 'Sarah', lastName: 'Johnson', email: 'sarah.j@example.com', company: 'Acme Corp', status: 'active' },
+  { id: '2', firstName: 'Michael', lastName: 'Chen', email: 'mchen@beta.com', company: 'Beta Inc', status: 'active' },
+  { id: '3', firstName: 'Emma', lastName: 'Davis', email: 'emma.d@gamma.com', company: 'Gamma LLC', status: 'inactive' },
+]
+
+const initialDeals = [
+  { id: '1', name: 'Enterprise Package - Acme Corp', value: 125000, stage: 'Proposal', probability: 70 },
+  { id: '2', name: 'Premium Subscription - Beta Inc', value: 45000, stage: 'Negotiation', probability: 85 },
+  { id: '3', name: 'Starter Plan - Gamma LLC', value: 12000, stage: 'Qualified', probability: 50 },
+]
+
+const initialTasks = [
+  { id: '1', title: 'Follow up with Acme Corp', dueDate: '2024-03-05', priority: 'high', status: 'pending' },
+  { id: '2', title: 'Prepare proposal for Beta Inc', dueDate: '2024-03-06', priority: 'medium', status: 'in_progress' },
+  { id: '3', title: 'Review contract with Gamma LLC', dueDate: '2024-03-06', priority: 'low', status: 'pending' },
+]
+
+const recentActivities = [
+  { id: '1', type: 'call', title: 'Call with Sarah Johnson', time: '2 hours ago', icon: Phone },
+  { id: '2', type: 'email', title: 'Sent proposal to Michael Chen', time: '4 hours ago', icon: Mail },
+  { id: '3', type: 'meeting', title: 'Demo scheduled with Emma Davis', time: '1 day ago', icon: Calendar },
+]
+
+const defaultLayout: Layout[] = [
+  { i: 'metrics', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
+  { i: 'recent-contacts', x: 0, y: 2, w: 4, h: 4, minW: 3, minH: 3 },
+  { i: 'pipeline-overview', x: 4, y: 2, w: 4, h: 4, minW: 3, minH: 3 },
+  { i: 'upcoming-tasks', x: 8, y: 2, w: 4, h: 4, minW: 3, minH: 3 },
+  { i: 'top-deals', x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+  { i: 'activity-feed', x: 6, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+  { i: 'quick-actions', x: 0, y: 10, w: 12, h: 2, minW: 6, minH: 2 },
+]
+
+export default function Dashboard() {
+  const [isLocked, setIsLocked] = useState(true)
+  const [showSettings, setShowSettings] = useState(false)
+  const [layouts, setLayouts] = useState<{ lg: Layout[] }>({ lg: defaultLayout })
+  const [hiddenWidgets, setHiddenWidgets] = useState<Set<string>>(new Set())
+
+  // Load layout and hidden widgets from localStorage on mount
+  useEffect(() => {
+    const savedLayout = localStorage.getItem('dashboard-layout')
+    const savedHidden = localStorage.getItem('dashboard-hidden-widgets')
+
+    if (savedLayout) {
+      try {
+        setLayouts({ lg: JSON.parse(savedLayout) })
+      } catch (e) {
+        console.error('Failed to parse saved layout:', e)
+      }
+    }
+
+    if (savedHidden) {
+      try {
+        setHiddenWidgets(new Set(JSON.parse(savedHidden)))
+      } catch (e) {
+        console.error('Failed to parse hidden widgets:', e)
+      }
+    }
+  }, [])
+
+  const handleLayoutChange = (layout: Layout[]) => {
+    setLayouts({ lg: layout })
+    // Save to localStorage
+    localStorage.setItem('dashboard-layout', JSON.stringify(layout))
+  }
+
+  const handleResetLayout = () => {
+    setLayouts({ lg: defaultLayout })
+    setHiddenWidgets(new Set())
+    localStorage.removeItem('dashboard-layout')
+    localStorage.removeItem('dashboard-hidden-widgets')
+  }
+
+  const toggleWidgetVisibility = (widgetId: string) => {
+    const newHidden = new Set(hiddenWidgets)
+    if (newHidden.has(widgetId)) {
+      newHidden.delete(widgetId)
+    } else {
+      newHidden.add(widgetId)
+    }
+    setHiddenWidgets(newHidden)
+    localStorage.setItem('dashboard-hidden-widgets', JSON.stringify(Array.from(newHidden)))
+  }
+
+  const metrics = [
+    { name: 'Total Contacts', value: initialContacts.length.toString(), link: '/contacts', icon: '👥', iconBg: 'bg-blue-500' },
+    { name: 'Active Deals', value: initialDeals.length.toString(), link: '/deals', icon: '💼', iconBg: 'bg-green-500' },
+    { name: 'Total Value', value: `$${(initialDeals.reduce((sum, d) => sum + d.value, 0) / 1000).toFixed(0)}K`, link: '/deals', icon: '💰', iconBg: 'bg-orange-500' },
+    { name: 'Pending Tasks', value: initialTasks.filter(t => t.status === 'pending').length.toString(), link: '/tasks', icon: '📋', iconBg: 'bg-purple-500' },
+  ]
+
+  const pipelineStages = [
+    { stage: 'Lead', count: 0, value: 0 },
+    { stage: 'Qualified', count: 1, value: 12000 },
+    { stage: 'Proposal', count: 1, value: 125000 },
+    { stage: 'Negotiation', count: 1, value: 45000 },
+    { stage: 'Closed Won', count: 0, value: 0 },
+  ]
+
+  const widgets = [
+    { id: 'metrics', name: 'Key Metrics', icon: '📊' },
+    { id: 'recent-contacts', name: 'Recent Contacts', icon: '👥' },
+    { id: 'pipeline-overview', name: 'Pipeline Overview', icon: '📈' },
+    { id: 'upcoming-tasks', name: 'Upcoming Tasks', icon: '📋' },
+    { id: 'top-deals', name: 'Top Deals', icon: '💼' },
+    { id: 'activity-feed', name: 'Activity Feed', icon: '🔔' },
+    { id: 'quick-actions', name: 'Quick Actions', icon: '⚡' },
+  ]
+
+  const visibleLayouts = layouts.lg.filter(layout => !hiddenWidgets.has(layout.i))
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Controls */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-5xl font-syne font-bold text-charcoal-900 dark:text-charcoal-50 mb-2">
+            Dashboard
+          </h1>
+          <p className="text-charcoal-600 dark:text-charcoal-400 font-syne-mono text-sm">
+            {isLocked ? 'Your personalized business overview' : '✨ Drag widgets to rearrange • Resize by dragging edges'}
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          {/* Widget Visibility Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg font-syne font-medium bg-alabaster-300 dark:bg-dark-tertiary text-charcoal-700 dark:text-charcoal-300 hover:bg-alabaster-400 dark:hover:bg-dark-hover transition-all duration-200"
+              title="Widget settings"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Widgets</span>
+            </button>
+            {showSettings && (
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-dark-secondary rounded-lg shadow-2xl border border-alabaster-600/30 dark:border-dark-border p-4 z-50">
+                <h3 className="text-sm font-syne font-bold text-charcoal-900 dark:text-charcoal-50 mb-3">
+                  Show/Hide Widgets
+                </h3>
+                <div className="space-y-2">
+                  {widgets.map((widget) => (
+                    <label
+                      key={widget.id}
+                      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-alabaster-100 dark:hover:bg-dark-tertiary cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!hiddenWidgets.has(widget.id)}
+                        onChange={() => toggleWidgetVisibility(widget.id)}
+                        className="w-4 h-4 text-charcoal-900 dark:text-charcoal-50 rounded"
+                      />
+                      <span className="text-lg">{widget.icon}</span>
+                      <span className="text-sm font-syne-mono text-charcoal-700 dark:text-charcoal-300 flex-1">
+                        {widget.name}
+                      </span>
+                      {hiddenWidgets.has(widget.id) && (
+                        <EyeOff className="w-3 h-3 text-charcoal-400" />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Reset Layout Button */}
+          <button
+            onClick={handleResetLayout}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg font-syne font-medium bg-alabaster-300 dark:bg-dark-tertiary text-charcoal-700 dark:text-charcoal-300 hover:bg-alabaster-400 dark:hover:bg-dark-hover transition-all duration-200"
+            title="Reset to default layout"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>Reset</span>
+          </button>
+
+          {/* Lock/Unlock Toggle */}
+          <button
+            onClick={() => setIsLocked(!isLocked)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-syne font-medium transition-all duration-200 ${
+              isLocked
+                ? 'bg-alabaster-300 dark:bg-dark-tertiary text-charcoal-700 dark:text-charcoal-300 hover:bg-alabaster-400 dark:hover:bg-dark-hover'
+                : 'bg-charcoal-900 dark:bg-charcoal-50 text-white dark:text-charcoal-900 hover:bg-charcoal-800 dark:hover:bg-charcoal-200 shadow-lg'
+            }`}
+            title={isLocked ? 'Unlock to rearrange widgets' : 'Lock widgets in place'}
+          >
+            {isLocked ? (
+              <>
+                <Lock className="w-4 h-4" />
+                <span>Locked</span>
+              </>
+            ) : (
+              <>
+                <Unlock className="w-4 h-4" />
+                <span>Editing</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Grid Layout with Moveable Widgets */}
+      <ResponsiveGridLayout
+        className="layout"
+        layouts={{ lg: visibleLayouts }}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+        rowHeight={80}
+        isDraggable={!isLocked}
+        isResizable={!isLocked}
+        onLayoutChange={handleLayoutChange}
+        compactType="vertical"
+      >
+        {/* Metrics Widget */}
+        {!hiddenWidgets.has('metrics') && (
+          <div key="metrics" className={`widget ${!isLocked ? 'ring-2 ring-charcoal-900/10 dark:ring-charcoal-50/10 ring-offset-2' : ''}`}>
+            <div className="floating-box p-6 h-full">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
+                  📊 Key Metrics
+                </h2>
+                {!isLocked && (
+                  <div className="widget-drag-handle cursor-move p-2 hover:bg-alabaster-200 dark:hover:bg-dark-tertiary rounded transition-colors">
+                    <Settings className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                {metrics.map((metric) => (
+                  <Link
+                    key={metric.name}
+                    to={metric.link}
+                    className="group p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-all duration-200 hover:scale-105 hover:shadow-md"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`${metric.iconBg} w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm`}>
+                        {metric.icon}
+                      </div>
+                    </div>
+                    <div className="text-2xl font-syne font-bold text-charcoal-900 dark:text-charcoal-50 mb-1">
+                      {metric.value}
+                    </div>
+                    <div className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                      {metric.name}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recent Contacts Widget */}
+        {!hiddenWidgets.has('recent-contacts') && (
+          <div key="recent-contacts" className={`widget ${!isLocked ? 'ring-2 ring-charcoal-900/10 dark:ring-charcoal-50/10 ring-offset-2' : ''}`}>
+            <div className="floating-box p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
+                  👥 Recent Contacts
+                </h2>
+                {!isLocked && (
+                  <div className="widget-drag-handle cursor-move p-2 hover:bg-alabaster-200 dark:hover:bg-dark-tertiary rounded transition-colors">
+                    <Settings className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 flex-1 overflow-y-auto">
+                {initialContacts.map((contact) => (
+                  <Link
+                    key={contact.id}
+                    to={`/contacts/${contact.id}`}
+                    className="block p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                          {contact.firstName} {contact.lastName}
+                        </div>
+                        <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                          {contact.company}
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-syne font-semibold rounded ${
+                        contact.status === 'active'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                      }`}>
+                        {contact.status}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link
+                to="/contacts"
+                className="mt-4 text-center py-2 text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 hover:text-charcoal-700 dark:hover:text-charcoal-300 transition-colors"
+              >
+                View All Contacts →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Pipeline Overview Widget */}
+        {!hiddenWidgets.has('pipeline-overview') && (
+          <div key="pipeline-overview" className={`widget ${!isLocked ? 'ring-2 ring-charcoal-900/10 dark:ring-charcoal-50/10 ring-offset-2' : ''}`}>
+            <div className="floating-box p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
+                  📈 Pipeline Overview
+                </h2>
+                {!isLocked && (
+                  <div className="widget-drag-handle cursor-move p-2 hover:bg-alabaster-200 dark:hover:bg-dark-tertiary rounded transition-colors">
+                    <Settings className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 flex-1 overflow-y-auto">
+                {pipelineStages.map((stage) => (
+                  <div
+                    key={stage.stage}
+                    className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                        {stage.stage}
+                      </span>
+                      <span className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                        {stage.count} deals
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 bg-alabaster-300 dark:bg-dark-hover rounded-full h-2 mr-3">
+                        <div
+                          className="bg-gradient-to-r from-charcoal-900 to-charcoal-700 dark:from-charcoal-50 dark:to-charcoal-300 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(stage.count / 3) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                        ${(stage.value / 1000).toFixed(0)}K
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link
+                to="/deals"
+                className="mt-4 text-center py-2 text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 hover:text-charcoal-700 dark:hover:text-charcoal-300 transition-colors"
+              >
+                View Pipeline →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Upcoming Tasks Widget */}
+        {!hiddenWidgets.has('upcoming-tasks') && (
+          <div key="upcoming-tasks" className={`widget ${!isLocked ? 'ring-2 ring-charcoal-900/10 dark:ring-charcoal-50/10 ring-offset-2' : ''}`}>
+            <div className="floating-box p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
+                  📋 Upcoming Tasks
+                </h2>
+                {!isLocked && (
+                  <div className="widget-drag-handle cursor-move p-2 hover:bg-alabaster-200 dark:hover:bg-dark-tertiary rounded transition-colors">
+                    <Settings className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 flex-1 overflow-y-auto">
+                {initialTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                        {task.title}
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-syne font-semibold rounded ${
+                        task.priority === 'high'
+                          ? 'bg-red-100 text-red-700'
+                          : task.priority === 'medium'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {task.priority}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                        Due: {task.dueDate}
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-syne font-semibold rounded ${
+                        task.status === 'completed'
+                          ? 'bg-green-100 text-green-700'
+                          : task.status === 'in_progress'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {task.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link
+                to="/tasks"
+                className="mt-4 text-center py-2 text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 hover:text-charcoal-700 dark:hover:text-charcoal-300 transition-colors"
+              >
+                View All Tasks →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Top Deals Widget */}
+        {!hiddenWidgets.has('top-deals') && (
+          <div key="top-deals" className={`widget ${!isLocked ? 'ring-2 ring-charcoal-900/10 dark:ring-charcoal-50/10 ring-offset-2' : ''}`}>
+            <div className="floating-box p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
+                  💼 Top Deals
+                </h2>
+                {!isLocked && (
+                  <div className="widget-drag-handle cursor-move p-2 hover:bg-alabaster-200 dark:hover:bg-dark-tertiary rounded transition-colors">
+                    <Settings className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 flex-1 overflow-y-auto">
+                {initialDeals
+                  .sort((a, b) => b.value - a.value)
+                  .map((deal) => (
+                    <Link
+                      key={deal.id}
+                      to={`/deals/${deal.id}`}
+                      className="block p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                          {deal.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                          ${(deal.value / 1000).toFixed(0)}K
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="badge badge-info text-xs">
+                            {deal.stage}
+                          </span>
+                          <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                            {deal.probability}%
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+              <Link
+                to="/deals"
+                className="mt-4 text-center py-2 text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 hover:text-charcoal-700 dark:hover:text-charcoal-300 transition-colors"
+              >
+                View All Deals →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Activity Feed Widget */}
+        {!hiddenWidgets.has('activity-feed') && (
+          <div key="activity-feed" className={`widget ${!isLocked ? 'ring-2 ring-charcoal-900/10 dark:ring-charcoal-50/10 ring-offset-2' : ''}`}>
+            <div className="floating-box p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
+                  🔔 Recent Activity
+                </h2>
+                {!isLocked && (
+                  <div className="widget-drag-handle cursor-move p-2 hover:bg-alabaster-200 dark:hover:bg-dark-tertiary rounded transition-colors">
+                    <Settings className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 flex-1 overflow-y-auto">
+                {recentActivities.map((activity) => {
+                  const Icon = activity.icon
+                  return (
+                    <div
+                      key={activity.id}
+                      className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="p-2 rounded-lg bg-charcoal-900 dark:bg-charcoal-50">
+                          <Icon className="w-4 h-4 text-white dark:text-charcoal-900" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50 text-sm">
+                            {activity.title}
+                          </div>
+                          <div className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400 mt-1">
+                            {activity.time}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions Widget */}
+        {!hiddenWidgets.has('quick-actions') && (
+          <div key="quick-actions" className={`widget ${!isLocked ? 'ring-2 ring-charcoal-900/10 dark:ring-charcoal-50/10 ring-offset-2' : ''}`}>
+            <div className="floating-box p-6 h-full">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
+                  ⚡ Quick Actions
+                </h2>
+                {!isLocked && (
+                  <div className="widget-drag-handle cursor-move p-2 hover:bg-alabaster-200 dark:hover:bg-dark-tertiary rounded transition-colors">
+                    <Settings className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                <Link
+                  to="/contacts"
+                  className="group flex flex-col items-center justify-center p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-all duration-200 hover:scale-105 hover:shadow-md"
+                >
+                  <Plus className="w-6 h-6 text-charcoal-900 dark:text-charcoal-50 mb-2" />
+                  <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                    New Contact
+                  </span>
+                </Link>
+                <Link
+                  to="/deals"
+                  className="group flex flex-col items-center justify-center p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-all duration-200 hover:scale-105 hover:shadow-md"
+                >
+                  <Plus className="w-6 h-6 text-charcoal-900 dark:text-charcoal-50 mb-2" />
+                  <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                    New Deal
+                  </span>
+                </Link>
+                <Link
+                  to="/tasks"
+                  className="group flex flex-col items-center justify-center p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-all duration-200 hover:scale-105 hover:shadow-md"
+                >
+                  <Plus className="w-6 h-6 text-charcoal-900 dark:text-charcoal-50 mb-2" />
+                  <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                    New Task
+                  </span>
+                </Link>
+                <button
+                  className="group flex flex-col items-center justify-center p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-all duration-200 hover:scale-105 hover:shadow-md"
+                >
+                  <Mail className="w-6 h-6 text-charcoal-900 dark:text-charcoal-50 mb-2" />
+                  <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                    Send Email
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </ResponsiveGridLayout>
+    </div>
+  )
+}

@@ -5,8 +5,8 @@
 
 import { Router } from 'express'
 import { customFieldController } from '../../../../core/metadata/metadata-controller'
-import { authenticate } from '../../../../middleware/auth'
-import { checkPermission } from '../../../../middleware/rbac'
+import { authenticate } from '../../../../middleware/authenticate'
+import { requirePermission } from '../../../../middleware/authorize'
 
 const router = Router()
 
@@ -20,7 +20,7 @@ router.use(authenticate)
  */
 router.post(
   '/values',
-  checkPermission('custom_fields:update'),
+  requirePermission('custom_fields:update'),
   customFieldController.setCustomFieldValue.bind(customFieldController)
 )
 
@@ -31,7 +31,7 @@ router.post(
  */
 router.get(
   '/values',
-  checkPermission('custom_fields:read'),
+  requirePermission('custom_fields:read'),
   customFieldController.getCustomFieldValues.bind(customFieldController)
 )
 
@@ -42,7 +42,7 @@ router.get(
  */
 router.get(
   '/fields-with-values',
-  checkPermission('custom_fields:read'),
+  requirePermission('custom_fields:read'),
   customFieldController.getCustomFieldsWithValues.bind(customFieldController)
 )
 
@@ -53,7 +53,7 @@ router.get(
  */
 router.get(
   '/',
-  checkPermission('custom_fields:read'),
+  requirePermission('custom_fields:read'),
   customFieldController.listCustomFields.bind(customFieldController)
 )
 
@@ -64,7 +64,7 @@ router.get(
  */
 router.post(
   '/',
-  checkPermission('custom_fields:create'),
+  requirePermission('custom_fields:create'),
   customFieldController.createCustomField.bind(customFieldController)
 )
 
@@ -75,7 +75,7 @@ router.post(
  */
 router.get(
   '/:id',
-  checkPermission('custom_fields:read'),
+  requirePermission('custom_fields:read'),
   customFieldController.getCustomFieldById.bind(customFieldController)
 )
 
@@ -86,7 +86,7 @@ router.get(
  */
 router.put(
   '/:id',
-  checkPermission('custom_fields:update'),
+  requirePermission('custom_fields:update'),
   customFieldController.updateCustomField.bind(customFieldController)
 )
 
@@ -97,7 +97,7 @@ router.put(
  */
 router.delete(
   '/:id',
-  checkPermission('custom_fields:delete'),
+  requirePermission('custom_fields:delete'),
   customFieldController.deleteCustomField.bind(customFieldController)
 )
 

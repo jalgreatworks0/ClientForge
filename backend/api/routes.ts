@@ -16,6 +16,7 @@ import notesRoutes from './rest/v1/routes/notes-routes'
 import commentsRoutes from './rest/v1/routes/comments-routes'
 import tagsRoutes from './rest/v1/routes/tags-routes'
 import customFieldsRoutes from './rest/v1/routes/custom-fields-routes'
+import aiRoutes from './rest/v1/routes/ai-routes'
 
 /**
  * Configure all application routes
@@ -28,6 +29,9 @@ export function configureRoutes(app: Application): void {
 
   // Authentication routes (public)
   app.use(`${apiPrefix}/auth`, authRoutes)
+
+  // AI routes (authentication required) - Albedo AI assistant
+  app.use(`${apiPrefix}/ai`, aiRoutes)
 
   // CRM routes (authentication required)
   app.use(`${apiPrefix}/contacts`, contactsRoutes)
@@ -42,6 +46,5 @@ export function configureRoutes(app: Application): void {
   app.use(`${apiPrefix}/tags`, tagsRoutes)
   app.use(`${apiPrefix}/custom-fields`, customFieldsRoutes)
 
-  // TODO: Add more routes as we build features
-  // app.use(`${apiPrefix}/users`, userRoutes)
+  console.log('✅ All routes configured including AI endpoints')
 }

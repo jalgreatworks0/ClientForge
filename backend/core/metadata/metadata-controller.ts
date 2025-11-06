@@ -28,7 +28,7 @@ import {
   entityTagsQuerySchema,
   entityCustomFieldsQuerySchema,
 } from './metadata-validators'
-import { ValidationError } from '../../../utils/errors'
+import { ValidationError } from '../../utils/errors'
 
 // =====================================================
 // NOTE CONTROLLER

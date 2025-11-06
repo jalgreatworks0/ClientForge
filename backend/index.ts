@@ -3,6 +3,10 @@
  * Initializes and starts the Express server
  */
 
+// Load environment variables from .env file
+import dotenv from 'dotenv'
+dotenv.config()
+
 import { Server } from './api/server'
 import { logger } from './utils/logging/logger'
 import { appConfig } from '../config/app/app-config'

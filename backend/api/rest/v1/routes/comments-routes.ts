@@ -5,8 +5,8 @@
 
 import { Router } from 'express'
 import { commentController } from '../../../../core/metadata/metadata-controller'
-import { authenticate } from '../../../../middleware/auth'
-import { checkPermission } from '../../../../middleware/rbac'
+import { authenticate } from '../../../../middleware/authenticate'
+import { requirePermission } from '../../../../middleware/authorize'
 
 const router = Router()
 
@@ -20,7 +20,7 @@ router.use(authenticate)
  */
 router.get(
   '/entity',
-  checkPermission('comments:read'),
+  requirePermission('comments:read'),
   commentController.getEntityComments.bind(commentController)
 )
 
@@ -31,7 +31,7 @@ router.get(
  */
 router.get(
   '/statistics',
-  checkPermission('comments:read'),
+  requirePermission('comments:read'),
   commentController.getCommentStatistics.bind(commentController)
 )
 
@@ -42,7 +42,7 @@ router.get(
  */
 router.get(
   '/',
-  checkPermission('comments:read'),
+  requirePermission('comments:read'),
   commentController.listComments.bind(commentController)
 )
 
@@ -53,7 +53,7 @@ router.get(
  */
 router.post(
   '/',
-  checkPermission('comments:create'),
+  requirePermission('comments:create'),
   commentController.createComment.bind(commentController)
 )
 
@@ -64,7 +64,7 @@ router.post(
  */
 router.get(
   '/:id',
-  checkPermission('comments:read'),
+  requirePermission('comments:read'),
   commentController.getCommentById.bind(commentController)
 )
 
@@ -75,7 +75,7 @@ router.get(
  */
 router.put(
   '/:id',
-  checkPermission('comments:update'),
+  requirePermission('comments:update'),
   commentController.updateComment.bind(commentController)
 )
 
@@ -86,7 +86,7 @@ router.put(
  */
 router.delete(
   '/:id',
-  checkPermission('comments:delete'),
+  requirePermission('comments:delete'),
   commentController.deleteComment.bind(commentController)
 )
 

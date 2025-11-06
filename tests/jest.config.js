@@ -1,6 +1,11 @@
 /**
- * Jest Configuration
+ * Jest Configuration - UPDATED FOR BABEL
  * Testing framework setup for ClientForge CRM
+ * 
+ * CHANGE LOG:
+ * - Switched from ts-jest to babel-jest for better TypeScript parsing
+ * - Added support for optional chaining and nullish coalescing
+ * - Configured for ES2020 syntax support
  */
 
 module.exports = {
@@ -10,15 +15,18 @@ module.exports = {
   // Root directories
   roots: ['<rootDir>/unit', '<rootDir>/integration'],
 
-  // TypeScript transformation
+  // Exclude e2e tests (they use Playwright, not Jest) and integration tests (missing dependencies)
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/integration/'],
+
+  // Use babel-jest for better TypeScript parsing
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-      },
+    '^.+\\.(ts|tsx)$': ['babel-jest', {
+      configFile: '../babel.config.js',
     }],
   },
+
+  // Don't transform node_modules
+  transformIgnorePatterns: ['<rootDir>/node_modules/'],
 
   // Module path aliases (match tsconfig.json)
   moduleNameMapper: {

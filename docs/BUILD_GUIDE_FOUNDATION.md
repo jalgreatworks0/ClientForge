@@ -1212,10 +1212,225 @@ CREATE TABLE pipelines (
 
 **Goal**: Add campaign management, automation, and reporting
 
-### Email Campaigns
-### Marketing Automation
-### Custom Reports
-### Analytics Dashboard
+### Week 11-12: Email Campaign Management
+
+#### 11.1 Email Templates & Builder (Day 46-48)
+
+**Database Schema**:
+
+```sql
+-- Email Templates
+CREATE TABLE email_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  subject VARCHAR(500) NOT NULL,
+  html_content TEXT NOT NULL,
+  plain_text_content TEXT,
+  thumbnail_url VARCHAR(500),
+  category VARCHAR(100), -- newsletter, promotional, transactional
+  variables JSONB, -- Dynamic variables like {{first_name}}
+  is_active BOOLEAN DEFAULT true,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Email Campaigns
+CREATE TABLE email_campaigns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  subject VARCHAR(500) NOT NULL,
+  template_id UUID,
+  status VARCHAR(50) DEFAULT 'draft', -- draft, scheduled, sending, sent, paused, cancelled
+  send_type VARCHAR(50), -- immediate, scheduled, triggered
+  scheduled_at TIMESTAMP,
+  sent_at TIMESTAMP,
+  from_name VARCHAR(255) NOT NULL,
+  from_email VARCHAR(255) NOT NULL,
+  reply_to_email VARCHAR(255),
+  total_recipients INTEGER DEFAULT 0,
+  total_sent INTEGER DEFAULT 0,
+  total_delivered INTEGER DEFAULT 0,
+  total_opened INTEGER DEFAULT 0,
+  total_clicked INTEGER DEFAULT 0,
+  total_bounced INTEGER DEFAULT 0,
+  total_unsubscribed INTEGER DEFAULT 0,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_template FOREIGN KEY (template_id) REFERENCES email_templates(id)
+);
+
+-- Campaign Recipients
+CREATE TABLE campaign_recipients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL,
+  contact_id UUID NOT NULL,
+  status VARCHAR(50), -- pending, sent, delivered, opened, clicked, bounced, unsubscribed
+  sent_at TIMESTAMP,
+  delivered_at TIMESTAMP,
+  opened_at TIMESTAMP,
+  clicked_at TIMESTAMP,
+  bounced_at TIMESTAMP,
+  bounce_reason TEXT,
+  unsubscribed_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_campaign FOREIGN KEY (campaign_id) REFERENCES email_campaigns(id) ON DELETE CASCADE,
+  CONSTRAINT fk_contact FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_campaign_recipients_status ON campaign_recipients(status);
+CREATE INDEX idx_campaign_recipients_campaign ON campaign_recipients(campaign_id);
+```
+
+**Files to Create**:
+
+```bash
+# Location: backend/core/campaigns/
+├── campaign-controller.ts
+├── campaign-service.ts
+├── campaign-repository.ts
+├── email-template-service.ts
+├── email-sender-service.ts      # Integration with SendGrid/AWS SES
+└── campaign-analytics-service.ts
+```
+
+#### 11.2 A/B Testing (Day 48-50)
+
+**Features**:
+- Split test subject lines
+- Split test email content
+- Automatic winner selection
+- Statistical significance calculation
+
+### Week 13-14: Workflow Automation
+
+#### 13.1 Workflow Builder (Day 51-54)
+
+**Database Schema**:
+
+```sql
+-- Workflows
+CREATE TABLE workflows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  trigger_type VARCHAR(100) NOT NULL, -- contact_created, deal_stage_changed, form_submitted, etc.
+  trigger_config JSONB,
+  is_active BOOLEAN DEFAULT true,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Workflow Actions
+CREATE TABLE workflow_actions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workflow_id UUID NOT NULL,
+  action_type VARCHAR(100) NOT NULL, -- send_email, create_task, update_field, wait, condition
+  action_config JSONB NOT NULL,
+  position INTEGER NOT NULL,
+  parent_action_id UUID, -- For branching/conditional logic
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_workflow FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE,
+  CONSTRAINT fk_parent_action FOREIGN KEY (parent_action_id) REFERENCES workflow_actions(id)
+);
+
+-- Workflow Executions
+CREATE TABLE workflow_executions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workflow_id UUID NOT NULL,
+  entity_type VARCHAR(50) NOT NULL, -- contact, deal, etc.
+  entity_id UUID NOT NULL,
+  status VARCHAR(50) DEFAULT 'running', -- running, completed, failed, cancelled
+  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
+  error_message TEXT,
+  CONSTRAINT fk_workflow FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+);
+```
+
+**Features**:
+- Visual workflow builder (drag-and-drop)
+- Trigger events (contact created, deal stage changed, etc.)
+- Actions (send email, create task, update field, wait)
+- Conditional branching
+- Delay/wait actions
+
+### Week 15-16: Custom Reports & Analytics
+
+#### 15.1 Report Builder (Day 56-59)
+
+**Database Schema**:
+
+```sql
+-- Custom Reports
+CREATE TABLE custom_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  report_type VARCHAR(100) NOT NULL, -- table, chart, pivot
+  entity_type VARCHAR(100) NOT NULL, -- contacts, deals, activities
+  filters JSONB,
+  columns JSONB,
+  grouping JSONB,
+  sorting JSONB,
+  chart_config JSONB,
+  is_public BOOLEAN DEFAULT false,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Dashboards
+CREATE TABLE dashboards (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  layout JSONB, -- Grid layout configuration
+  is_default BOOLEAN DEFAULT false,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Dashboard Widgets
+CREATE TABLE dashboard_widgets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  dashboard_id UUID NOT NULL,
+  report_id UUID,
+  widget_type VARCHAR(100) NOT NULL, -- chart, metric, table, list
+  title VARCHAR(255),
+  config JSONB,
+  position_x INTEGER NOT NULL,
+  position_y INTEGER NOT NULL,
+  width INTEGER NOT NULL,
+  height INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_dashboard FOREIGN KEY (dashboard_id) REFERENCES dashboards(id) ON DELETE CASCADE,
+  CONSTRAINT fk_report FOREIGN KEY (report_id) REFERENCES custom_reports(id)
+);
+```
+
+**Features**:
+- Drag-and-drop report builder
+- Multiple chart types (line, bar, pie, funnel)
+- Custom filters and grouping
+- Scheduled report emails
+- Export to PDF/Excel
+- Real-time dashboard updates
 
 ---
 
@@ -1223,10 +1438,202 @@ CREATE TABLE pipelines (
 
 **Goal**: Integrate Albedo AI companion and ML features
 
-### Lead Scoring ML Model
-### Sales Forecasting
-### Natural Language Processing
-### AI-Powered Insights
+### Week 17-18: Lead Scoring ML Model
+
+#### 17.1 ML Model Development (Day 61-64)
+
+**Database Schema**:
+
+```sql
+-- ML Models
+CREATE TABLE ml_models (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  model_type VARCHAR(100) NOT NULL, -- lead_scoring, forecast, churn_prediction
+  version VARCHAR(50) NOT NULL,
+  algorithm VARCHAR(100), -- random_forest, gradient_boosting, neural_network
+  training_data_start_date TIMESTAMP,
+  training_data_end_date TIMESTAMP,
+  accuracy_score DECIMAL(5, 4),
+  precision_score DECIMAL(5, 4),
+  recall_score DECIMAL(5, 4),
+  f1_score DECIMAL(5, 4),
+  is_active BOOLEAN DEFAULT false,
+  model_file_path VARCHAR(500),
+  feature_importance JSONB,
+  hyperparameters JSONB,
+  trained_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Lead Scores
+CREATE TABLE lead_scores (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id UUID NOT NULL,
+  model_id UUID NOT NULL,
+  score INTEGER NOT NULL, -- 0-100
+  confidence DECIMAL(5, 4),
+  factors JSONB, -- Which factors contributed to the score
+  predicted_conversion_probability DECIMAL(5, 4),
+  predicted_revenue DECIMAL(15, 2),
+  scored_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_contact FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_model FOREIGN KEY (model_id) REFERENCES ml_models(id)
+);
+
+CREATE INDEX idx_lead_scores_contact ON lead_scores(contact_id);
+CREATE INDEX idx_lead_scores_score ON lead_scores(score DESC);
+```
+
+**Files to Create**:
+
+```bash
+# Location: ai/ml-models/lead-scoring/
+├── train-lead-scoring-model.py  # Model training script
+├── predict-lead-score.py        # Prediction service
+├── evaluate-model.py            # Model evaluation
+├── feature-engineering.py       # Feature extraction
+└── model-registry.py            # Model versioning
+
+# Location: backend/core/ai/
+├── lead-scoring-service.ts      # Score calculation API
+├── model-service.ts             # ML model management
+└── feature-service.ts           # Feature extraction
+```
+
+**Features**:
+- Automated lead scoring (0-100)
+- Feature importance analysis
+- Real-time score updates
+- Model retraining pipeline
+- A/B testing for models
+
+#### 17.2 Feature Engineering (Day 64-66)
+
+**Key Features**:
+- Engagement score (email opens, clicks, website visits)
+- Demographic fit (industry, company size, title)
+- Behavioral patterns (time since last interaction)
+- Pipeline velocity (days in each stage)
+- Historical conversion data
+
+### Week 19-20: Sales Forecasting
+
+#### 19.1 Forecast Engine (Day 67-70)
+
+**Database Schema**:
+
+```sql
+-- Sales Forecasts
+CREATE TABLE sales_forecasts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  user_id UUID, -- NULL for company-wide forecast
+  team_id UUID,
+  forecast_period VARCHAR(50), -- month, quarter, year
+  period_start_date DATE NOT NULL,
+  period_end_date DATE NOT NULL,
+  forecasted_revenue DECIMAL(15, 2) NOT NULL,
+  confidence_interval_low DECIMAL(15, 2),
+  confidence_interval_high DECIMAL(15, 2),
+  actual_revenue DECIMAL(15, 2),
+  accuracy_percentage DECIMAL(5, 2),
+  model_id UUID,
+  generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_model FOREIGN KEY (model_id) REFERENCES ml_models(id)
+);
+
+-- Forecast Breakdown
+CREATE TABLE forecast_breakdown (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  forecast_id UUID NOT NULL,
+  deal_id UUID,
+  expected_close_date DATE,
+  forecasted_amount DECIMAL(15, 2),
+  confidence_percentage DECIMAL(5, 2),
+  CONSTRAINT fk_forecast FOREIGN KEY (forecast_id) REFERENCES sales_forecasts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_deal FOREIGN KEY (deal_id) REFERENCES deals(id)
+);
+```
+
+**Features**:
+- Revenue forecasting by user/team/company
+- Time-series analysis (ARIMA, Prophet)
+- Seasonality detection
+- Confidence intervals
+- Forecast vs actual tracking
+
+### Week 21-22: Albedo AI Companion (NLP)
+
+#### 21.1 Natural Language Interface (Day 71-75)
+
+**Database Schema**:
+
+```sql
+-- AI Conversations
+CREATE TABLE ai_conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  tenant_id UUID NOT NULL,
+  title VARCHAR(255),
+  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  ended_at TIMESTAMP,
+  CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- AI Messages
+CREATE TABLE ai_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL,
+  role VARCHAR(50) NOT NULL, -- user, assistant, system
+  content TEXT NOT NULL,
+  intent VARCHAR(100), -- search_contacts, create_deal, generate_report
+  entities JSONB, -- Extracted entities (names, dates, amounts)
+  action_taken JSONB, -- What action was performed
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_conversation FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_ai_messages_conversation ON ai_messages(conversation_id);
+```
+
+**Files to Create**:
+
+```bash
+# Location: ai/nlp/
+├── intent-classifier.py         # Classify user intent
+├── entity-extractor.py          # Extract entities (NER)
+├── query-generator.py           # Generate SQL from NL
+├── response-generator.py        # Generate natural responses
+└── conversation-manager.py      # Manage conversation context
+
+# Location: backend/core/ai/
+├── albedo-service.ts           # Main AI service
+├── nlp-service.ts              # NLP integration
+└── conversation-service.ts     # Conversation management
+```
+
+**Features**:
+- Natural language queries ("Show me top deals closing this month")
+- Entity recognition (contact names, dates, amounts)
+- Intent classification (search, create, update, analyze)
+- Context-aware conversations
+- Action execution (create contacts, update deals)
+- Smart suggestions and insights
+
+#### 21.2 AI-Powered Insights (Day 75-77)
+
+**Features**:
+- Anomaly detection (unusual deal patterns)
+- Churn risk prediction
+- Next best action recommendations
+- Email sentiment analysis
+- Automated data enrichment
+- Smart field suggestions
 
 ---
 
@@ -1234,34 +1641,1761 @@ CREATE TABLE pipelines (
 
 **Goal**: Scale to microservices and enterprise features
 
-### Microservices Extraction
-### Advanced Security
-### Performance Optimization
-### Enterprise Features
+### Week 23-24: Microservices Extraction
+
+#### 23.1 Service Identification (Day 78-80)
+
+**Services to Extract**:
+
+1. **Auth Service** (High Priority)
+   - User authentication
+   - Session management
+   - Permission checking
+   - **Why**: Shared across all services, security-critical
+
+2. **Email Service** (High Priority)
+   - Campaign sending
+   - Transactional emails
+   - Email tracking
+   - **Why**: Resource-intensive, can be scaled independently
+
+3. **AI/ML Service** (Medium Priority)
+   - Lead scoring
+   - Forecasting
+   - NLP processing
+   - **Why**: Compute-intensive, different tech stack (Python)
+
+4. **Analytics Service** (Medium Priority)
+   - Report generation
+   - Data aggregation
+   - Real-time dashboards
+   - **Why**: Heavy read operations, caching benefits
+
+5. **File Storage Service** (Low Priority)
+   - Document uploads
+   - File processing
+   - CDN integration
+   - **Why**: Can be deferred, S3 handles most of this
+
+**Migration Strategy**:
+
+```typescript
+// Phase 1: Strangler Pattern
+// Keep monolith, route specific requests to new service
+
+// Phase 2: Dual Write
+// Write to both monolith and new service for data consistency
+
+// Phase 3: Read from New Service
+// Switch reads to new service, validate consistency
+
+// Phase 4: Deprecate Monolith Code
+// Remove old code from monolith
+```
+
+#### 23.2 API Gateway Setup (Day 80-82)
+
+**Files to Create**:
+
+```bash
+# Location: services/api-gateway/
+├── gateway.ts                   # API Gateway entry point
+├── rate-limiter.ts              # Rate limiting
+├── load-balancer.ts             # Service load balancing
+├── circuit-breaker.ts           # Fault tolerance
+└── service-registry.ts          # Service discovery
+
+# Location: deployment/kubernetes/
+├── api-gateway-deployment.yaml
+├── auth-service-deployment.yaml
+├── email-service-deployment.yaml
+└── ingress.yaml
+```
+
+**Technology Stack**:
+- API Gateway: Kong or AWS API Gateway
+- Service Mesh: Istio (for advanced deployments)
+- Load Balancer: Nginx or AWS ALB
+- Service Discovery: Consul or Kubernetes DNS
+
+### Week 25-26: Advanced Security & Compliance
+
+#### 25.1 Enterprise SSO (Day 83-86)
+
+**Features**:
+- SAML 2.0 integration
+- OAuth 2.0 / OpenID Connect
+- Active Directory integration
+- Okta/Auth0 integration
+- Multi-factor authentication (MFA)
+- Biometric authentication
+
+**Database Schema**:
+
+```sql
+-- SSO Providers
+CREATE TABLE sso_providers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL,
+  provider_type VARCHAR(50) NOT NULL, -- saml, oauth, oidc
+  provider_name VARCHAR(255) NOT NULL,
+  config JSONB NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- MFA Settings
+CREATE TABLE mfa_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  mfa_type VARCHAR(50) NOT NULL, -- totp, sms, email, biometric
+  secret_key VARCHAR(255),
+  backup_codes TEXT[],
+  is_enabled BOOLEAN DEFAULT false,
+  last_used_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+#### 25.2 Compliance & Data Governance (Day 86-88)
+
+**Features**:
+- GDPR compliance (data export, right to be forgotten)
+- SOC 2 compliance
+- HIPAA compliance (if healthcare)
+- Data retention policies
+- Audit trail encryption
+- Data anonymization
+
+**Files to Create**:
+
+```bash
+# Location: backend/core/compliance/
+├── gdpr-service.ts              # GDPR operations
+├── data-export-service.ts       # Data portability
+├── data-deletion-service.ts     # Right to be forgotten
+├── retention-policy-service.ts  # Automated data cleanup
+└── audit-encryption-service.ts  # Encrypted audit logs
+```
+
+### Week 27-28: Performance Optimization & Monitoring
+
+#### 27.1 Performance Optimization (Day 89-92)
+
+**Optimization Strategies**:
+
+1. **Database Optimization**
+   - Query optimization (EXPLAIN ANALYZE)
+   - Index optimization
+   - Connection pooling tuning
+   - Read replicas for reporting
+   - Partitioning large tables
+
+2. **Caching Strategy**
+   - Redis caching (hot data)
+   - CDN caching (static assets)
+   - API response caching
+   - Database query caching
+   - Browser caching headers
+
+3. **Frontend Optimization**
+   - Code splitting
+   - Lazy loading
+   - Image optimization (WebP, lazy load)
+   - Bundle size reduction
+   - Service worker caching
+
+4. **API Optimization**
+   - GraphQL for flexible queries
+   - Pagination (cursor-based)
+   - Field filtering
+   - Rate limiting per tenant
+   - Compression (gzip/brotli)
+
+**Performance Budgets**:
+
+```typescript
+interface PerformanceBudgets {
+  api: {
+    p50: '<100ms',
+    p95: '<200ms',
+    p99: '<500ms'
+  },
+  pageLoad: {
+    fcp: '<1.5s',   // First Contentful Paint
+    lcp: '<2.5s',   // Largest Contentful Paint
+    tti: '<3.5s',   // Time to Interactive
+    cls: '<0.1'     // Cumulative Layout Shift
+  },
+  database: {
+    queryTime: '<50ms',
+    connectionTime: '<10ms'
+  }
+}
+```
+
+#### 27.2 Monitoring & Observability (Day 92-94)
+
+**Monitoring Stack**:
+
+```bash
+# Location: monitoring/
+├── prometheus/
+│   ├── prometheus.yml           # Metrics collection
+│   └── alert-rules.yml          # Alert definitions
+├── grafana/
+│   ├── dashboards/
+│   │   ├── api-metrics.json
+│   │   ├── database-metrics.json
+│   │   └── business-metrics.json
+│   └── datasources.yml
+├── elasticsearch/
+│   └── log-aggregation.yml      # Centralized logging
+└── jaeger/
+    └── distributed-tracing.yml  # Request tracing
+```
+
+**Metrics to Track**:
+
+1. **System Metrics**
+   - CPU usage
+   - Memory usage
+   - Disk I/O
+   - Network throughput
+
+2. **Application Metrics**
+   - Request rate
+   - Error rate
+   - Response time (p50, p95, p99)
+   - Active connections
+
+3. **Business Metrics**
+   - New signups
+   - Active users (DAU/MAU)
+   - Revenue metrics
+   - Feature usage
+
+4. **Database Metrics**
+   - Query performance
+   - Connection pool utilization
+   - Cache hit rate
+   - Slow query log
+
+**Files to Create**:
+
+```bash
+# Location: backend/utils/monitoring/
+├── metrics-collector.ts         # Prometheus metrics
+├── logger.ts                    # Structured logging
+├── tracer.ts                    # Distributed tracing
+└── health-checker.ts            # Service health
+
+# Location: monitoring/alerting/
+├── alert-manager.yml            # Alert routing
+├── pagerduty-integration.yml    # On-call alerts
+└── slack-notifications.yml      # Team notifications
+```
+
+**Alerts to Configure**:
+
+```yaml
+# Critical Alerts (Page immediately)
+- High error rate (>1%)
+- API response time >500ms (p95)
+- Database connection failures
+- Disk usage >90%
+- Service down
+
+# Warning Alerts (Notify, don't page)
+- Error rate >0.5%
+- API response time >300ms (p95)
+- Memory usage >80%
+- Disk usage >75%
+- Slow queries detected
+```
 
 ---
 
 ## 📚 TECHNOLOGY STACK DETAILS
 
-[Detailed stack information...]
+### Frontend Stack
+
+**Core Framework**:
+- **React 18.2+** - UI framework with concurrent features
+- **TypeScript 5.3+** - Type safety and better DX
+- **Vite 5.0+** - Fast build tool (replaces CRA)
+
+**State Management**:
+- **Redux Toolkit** - Global state (auth, user, settings)
+- **React Query (TanStack Query)** - Server state, caching, sync
+- **Zustand** - Lightweight local state (UI state)
+
+**UI Components**:
+- **shadcn/ui** - Accessible, customizable components
+- **Tailwind CSS 3.4+** - Utility-first styling
+- **Radix UI** - Headless, accessible primitives
+- **Framer Motion** - Smooth animations
+
+**Forms & Validation**:
+- **React Hook Form** - Performant form management
+- **Zod** - Schema validation (shared with backend)
+
+**Data Visualization**:
+- **Recharts** - Charts and graphs
+- **D3.js** - Advanced custom visualizations
+- **React Flow** - Workflow builder diagrams
+
+**Development Tools**:
+- **ESLint** - Linting
+- **Prettier** - Code formatting
+- **Vitest** - Unit testing (faster than Jest)
+- **Playwright** - E2E testing
+
+### Backend Stack
+
+**Runtime & Framework**:
+- **Node.js 18 LTS** - JavaScript runtime
+- **TypeScript 5.3+** - Type-safe backend code
+- **Express 4.18+** - Web framework
+
+**Database & Storage**:
+- **PostgreSQL 15+** - Primary relational database
+- **MongoDB 6+** - Logs, events, flexible data
+- **Redis 7+** - Caching, sessions, pub/sub
+- **Elasticsearch 8+** - Full-text search (Phase 3)
+- **AWS S3 / MinIO** - File storage
+
+**Authentication & Security**:
+- **jsonwebtoken** - JWT tokens
+- **bcrypt** - Password hashing (cost 12)
+- **helmet** - Security headers
+- **cors** - CORS handling
+- **express-rate-limit** - Rate limiting
+
+**Validation & Data**:
+- **Zod** - Schema validation (shared with frontend)
+- **Joi** - Alternative validation
+- **date-fns** - Date manipulation
+
+**ORM & Query Builders**:
+- **Prisma** - Type-safe ORM for PostgreSQL
+- **Mongoose** - MongoDB ODM
+- **node-postgres (pg)** - Direct PostgreSQL client
+
+**Background Jobs**:
+- **Bull** - Redis-based job queue
+- **node-cron** - Scheduled tasks
+
+**Testing**:
+- **Jest** - Unit & integration testing
+- **Supertest** - API testing
+- **Playwright** - E2E testing
+
+**Logging & Monitoring**:
+- **Winston** - Structured logging
+- **Pino** - Fast JSON logging
+- **Prometheus** - Metrics collection
+- **Grafana** - Metrics visualization
+
+### AI/ML Stack
+
+**AI Services**:
+- **Anthropic Claude SDK** - Claude AI integration
+  - Haiku 4.5 (fast, cheap queries)
+  - Sonnet 4.5 (balanced performance)
+  - Opus 4.1 (complex analysis)
+- **OpenAI SDK** - GPT-4 fallback
+- **Hugging Face Transformers** - Open-source models
+
+**Machine Learning**:
+- **Python 3.11+** - ML language
+- **TensorFlow.js** - Browser ML models
+- **scikit-learn** - Traditional ML algorithms
+- **pandas** - Data manipulation
+- **NumPy** - Numerical computing
+
+**NLP Libraries**:
+- **spaCy** - NLP pipelines
+- **NLTK** - Natural language toolkit
+- **sentence-transformers** - Semantic embeddings
+
+**ML Operations**:
+- **MLflow** - Model tracking & registry
+- **Weights & Biases** - Experiment tracking
+- **DVC** - Data version control
+
+### DevOps & Infrastructure
+
+**Containerization**:
+- **Docker 24+** - Containerization
+- **Docker Compose** - Local development
+- **Kubernetes 1.28+** - Container orchestration
+
+**CI/CD**:
+- **GitHub Actions** - CI/CD pipeline
+- **GitLab CI** - Alternative CI/CD
+- **Jenkins** - Enterprise CI/CD
+
+**Cloud Platforms** (Choose one):
+- **AWS** - EC2, RDS, S3, Lambda, ECS
+- **GCP** - Compute Engine, Cloud SQL, Cloud Storage
+- **Azure** - VMs, Azure Database, Blob Storage
+
+**Infrastructure as Code**:
+- **Terraform** - Infrastructure provisioning
+- **Pulumi** - Alternative IaC (TypeScript-based)
+- **AWS CDK** - AWS-specific IaC
+
+**Monitoring & Logging**:
+- **Prometheus** - Metrics collection
+- **Grafana** - Dashboards & alerts
+- **Elasticsearch** - Log aggregation
+- **Kibana** - Log visualization
+- **Jaeger** - Distributed tracing
+- **Sentry** - Error tracking
+
+**Communication**:
+- **Socket.IO** - Real-time WebSocket
+- **RabbitMQ / Redis Pub/Sub** - Message queue
+
+### Development Tools
+
+**Version Control**:
+- **Git** - Version control
+- **GitHub / GitLab** - Code hosting
+
+**API Development**:
+- **Postman** - API testing
+- **Insomnia** - Alternative API client
+- **Swagger / OpenAPI** - API documentation
+
+**Database Tools**:
+- **DBeaver** - Universal database GUI
+- **pgAdmin** - PostgreSQL admin
+- **MongoDB Compass** - MongoDB GUI
+- **Redis Commander** - Redis GUI
+
+**Package Management**:
+- **npm / pnpm / yarn** - Node package managers
+- **pip** - Python package manager
+
+### Third-Party Integrations
+
+**Email Services**:
+- **SendGrid** - Transactional & marketing emails
+- **AWS SES** - Cost-effective alternative
+- **Postmark** - Transactional emails only
+
+**Authentication Providers**:
+- **Auth0** - Enterprise SSO
+- **Okta** - Enterprise identity
+- **Active Directory** - On-premise auth
+
+**Payment Processing**:
+- **Stripe** - Primary payment processor
+- **PayPal** - Alternative processor
+
+**Communication**:
+- **Twilio** - SMS & voice
+- **Slack API** - Team notifications
+- **Microsoft Teams API** - Enterprise notifications
+
+**Analytics**:
+- **Segment** - Customer data platform
+- **Mixpanel** - Product analytics
+- **Google Analytics** - Web analytics
 
 ---
 
 ## 🗄️ DATABASE ARCHITECTURE
 
-[Database design patterns...]
+### Database Strategy
+
+**Multi-Database Approach** (Polyglot Persistence):
+
+1. **PostgreSQL** - Primary relational database
+   - Transactional data (ACID compliance)
+   - Core CRM entities (contacts, deals, users)
+   - Complex queries with JOINs
+   - Data integrity through foreign keys
+
+2. **MongoDB** - Document store
+   - Logs (audit logs, application logs)
+   - Events (workflow executions, email events)
+   - Unstructured data (custom field values)
+   - Flexible schema for evolving features
+
+3. **Redis** - In-memory cache
+   - Session storage (fast authentication)
+   - API response caching
+   - Rate limiting counters
+   - Real-time features (pub/sub)
+   - Job queues (Bull)
+
+4. **Elasticsearch** - Search engine (Phase 3+)
+   - Full-text search across all entities
+   - Faceted search and filtering
+   - Log aggregation and analysis
+   - Real-time analytics
+
+### PostgreSQL Schema Design
+
+**Multi-Tenancy Pattern**:
+
+```sql
+-- Every table has tenant_id for data isolation
+CREATE TABLE contacts (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL,  -- ← Multi-tenancy
+  -- ... other fields
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id)
+    REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Indexes include tenant_id for query performance
+CREATE INDEX idx_contacts_tenant_email
+  ON contacts(tenant_id, email);
+```
+
+**Soft Deletes Pattern**:
+
+```sql
+-- Use deleted_at instead of hard deletes
+CREATE TABLE contacts (
+  -- ... fields
+  deleted_at TIMESTAMP,
+
+  -- Indexes exclude deleted records
+  WHERE deleted_at IS NULL
+);
+
+-- Queries filter out deleted records
+SELECT * FROM contacts
+WHERE tenant_id = $1
+  AND deleted_at IS NULL;
+```
+
+**Audit Trail Pattern**:
+
+```sql
+-- Track all changes with audit_logs
+CREATE TABLE audit_logs (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL,
+  user_id UUID,
+  entity_type VARCHAR(50),     -- contacts, deals, etc.
+  entity_id UUID,
+  action VARCHAR(50),           -- create, update, delete
+  old_values JSONB,             -- Before state
+  new_values JSONB,             -- After state
+  ip_address INET,
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Triggered automatically on INSERT/UPDATE/DELETE
+CREATE TRIGGER audit_contact_changes
+  AFTER INSERT OR UPDATE OR DELETE ON contacts
+  FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+```
+
+**Optimistic Locking Pattern**:
+
+```sql
+-- Prevent concurrent update conflicts
+CREATE TABLE deals (
+  id UUID PRIMARY KEY,
+  -- ... fields
+  version INTEGER DEFAULT 1,  -- Version counter
+  updated_at TIMESTAMP
+);
+
+-- Update with version check
+UPDATE deals
+SET
+  amount = $1,
+  version = version + 1,
+  updated_at = NOW()
+WHERE id = $2
+  AND version = $3;  -- ← Fails if version changed
+
+-- If no rows updated, throw conflict error
+```
+
+**Indexing Strategy**:
+
+```sql
+-- 1. Foreign keys (always indexed)
+CREATE INDEX idx_contacts_owner_id ON contacts(owner_id);
+CREATE INDEX idx_contacts_account_id ON contacts(account_id);
+
+-- 2. Frequently queried columns
+CREATE INDEX idx_contacts_email ON contacts(email);
+CREATE INDEX idx_contacts_status ON contacts(lead_status);
+
+-- 3. Composite indexes for multi-column queries
+CREATE INDEX idx_contacts_tenant_status
+  ON contacts(tenant_id, lead_status, created_at DESC);
+
+-- 4. Partial indexes for filtered queries
+CREATE INDEX idx_active_contacts
+  ON contacts(tenant_id, created_at DESC)
+  WHERE deleted_at IS NULL AND is_active = true;
+
+-- 5. GIN indexes for array/JSONB columns
+CREATE INDEX idx_contacts_tags ON contacts USING GIN(tags);
+CREATE INDEX idx_custom_fields ON contacts USING GIN(custom_fields);
+```
+
+**Partitioning Strategy** (for large tables):
+
+```sql
+-- Partition audit_logs by month for better performance
+CREATE TABLE audit_logs (
+  -- ... fields
+  created_at TIMESTAMP NOT NULL
+) PARTITION BY RANGE (created_at);
+
+-- Create monthly partitions
+CREATE TABLE audit_logs_2025_01 PARTITION OF audit_logs
+  FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+
+CREATE TABLE audit_logs_2025_02 PARTITION OF audit_logs
+  FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+
+-- Automatically create new partitions via cron job
+```
+
+### Database Relationships
+
+**One-to-Many**:
+```sql
+-- One account has many contacts
+accounts (1) ←→ (N) contacts
+
+CREATE TABLE contacts (
+  account_id UUID,
+  CONSTRAINT fk_account FOREIGN KEY (account_id)
+    REFERENCES accounts(id) ON DELETE SET NULL
+);
+```
+
+**Many-to-Many**:
+```sql
+-- Contacts can have many tags, tags can have many contacts
+contacts (N) ←→ (N) tags
+
+-- Junction table
+CREATE TABLE contact_tags (
+  contact_id UUID NOT NULL,
+  tag_id UUID NOT NULL,
+  PRIMARY KEY (contact_id, tag_id),
+  CONSTRAINT fk_contact FOREIGN KEY (contact_id)
+    REFERENCES contacts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tag FOREIGN KEY (tag_id)
+    REFERENCES tags(id) ON DELETE CASCADE
+);
+```
+
+**Polymorphic Associations**:
+```sql
+-- Notes can belong to contacts, deals, or accounts
+CREATE TABLE notes (
+  id UUID PRIMARY KEY,
+  entity_type VARCHAR(50) NOT NULL,  -- contacts, deals, accounts
+  entity_id UUID NOT NULL,
+  content TEXT,
+  created_at TIMESTAMP
+);
+
+-- Composite index for polymorphic queries
+CREATE INDEX idx_notes_entity
+  ON notes(entity_type, entity_id, created_at DESC);
+```
+
+### Connection Pooling
+
+```typescript
+// PostgreSQL connection pool configuration
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+
+  // Connection pool settings
+  max: 20,                    // Maximum connections
+  min: 5,                     // Minimum idle connections
+  idleTimeoutMillis: 30000,   // Close idle connections after 30s
+  connectionTimeoutMillis: 2000, // Fail fast if can't connect
+
+  // Health checks
+  allowExitOnIdle: false,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000,
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  await pool.end();
+  process.exit(0);
+});
+```
+
+### Query Optimization
+
+**Use EXPLAIN ANALYZE**:
+```sql
+-- Identify slow queries
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM contacts
+WHERE tenant_id = '123'
+  AND lead_status = 'qualified'
+ORDER BY created_at DESC
+LIMIT 20;
+
+-- Look for:
+-- - Sequential scans (bad, add index)
+-- - High cost estimates
+-- - Long execution times
+```
+
+**N+1 Query Prevention**:
+```typescript
+// ❌ BAD: N+1 queries
+const contacts = await db.query('SELECT * FROM contacts');
+for (const contact of contacts) {
+  const account = await db.query(
+    'SELECT * FROM accounts WHERE id = $1',
+    [contact.account_id]
+  );
+}
+
+// ✅ GOOD: Single query with JOIN
+const contacts = await db.query(`
+  SELECT
+    c.*,
+    a.name as account_name,
+    a.industry as account_industry
+  FROM contacts c
+  LEFT JOIN accounts a ON c.account_id = a.id
+  WHERE c.tenant_id = $1
+`, [tenantId]);
+```
+
+**Batch Operations**:
+```typescript
+// ❌ BAD: Multiple INSERTs
+for (const contact of contacts) {
+  await db.query('INSERT INTO contacts (...) VALUES (...)', [contact]);
+}
+
+// ✅ GOOD: Bulk INSERT
+await db.query(`
+  INSERT INTO contacts (tenant_id, email, first_name, last_name)
+  SELECT * FROM UNNEST($1::uuid[], $2::text[], $3::text[], $4::text[])
+`, [tenantIds, emails, firstNames, lastNames]);
+```
 
 ---
 
 ## 🔗 API DESIGN STANDARDS
 
-[REST API conventions...]
+### RESTful API Principles
+
+**Resource-Based URLs**:
+```
+✅ GOOD - Nouns, not verbs
+GET    /api/v1/contacts
+POST   /api/v1/contacts
+GET    /api/v1/contacts/:id
+PUT    /api/v1/contacts/:id
+DELETE /api/v1/contacts/:id
+
+❌ BAD - Verbs in URLs
+POST /api/v1/getContacts
+POST /api/v1/createContact
+POST /api/v1/deleteContact
+```
+
+**HTTP Methods & Status Codes**:
+```typescript
+// GET - Read resource(s)
+GET /api/v1/contacts
+→ 200 OK (with data)
+→ 404 Not Found (if resource doesn't exist)
+
+// POST - Create resource
+POST /api/v1/contacts
+→ 201 Created (with Location header)
+→ 400 Bad Request (validation errors)
+→ 409 Conflict (duplicate email)
+
+// PUT - Update entire resource
+PUT /api/v1/contacts/:id
+→ 200 OK (with updated data)
+→ 404 Not Found (if resource doesn't exist)
+
+// PATCH - Partial update
+PATCH /api/v1/contacts/:id
+→ 200 OK (with updated data)
+→ 404 Not Found
+
+// DELETE - Remove resource
+DELETE /api/v1/contacts/:id
+→ 204 No Content (successful deletion)
+→ 404 Not Found
+```
+
+### API Response Format
+
+**Standard Success Response**:
+```typescript
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "john@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "createdAt": "2025-01-05T10:30:00Z"
+  },
+  "meta": {
+    "timestamp": "2025-01-05T10:30:00Z",
+    "requestId": "req_abc123"
+  }
+}
+```
+
+**Standard Error Response**:
+```typescript
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid email format",
+    "details": [
+      {
+        "field": "email",
+        "message": "Email must be a valid email address",
+        "value": "invalid-email"
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "2025-01-05T10:30:00Z",
+    "requestId": "req_abc123"
+  }
+}
+```
+
+**Paginated Response**:
+```typescript
+{
+  "success": true,
+  "data": [...contacts...],
+  "pagination": {
+    "page": 2,
+    "limit": 20,
+    "total": 150,
+    "totalPages": 8,
+    "hasNext": true,
+    "hasPrev": true
+  },
+  "meta": {
+    "timestamp": "2025-01-05T10:30:00Z",
+    "requestId": "req_abc123"
+  }
+}
+```
+
+### Pagination
+
+**Offset-Based Pagination** (simple, but slower for large datasets):
+```typescript
+GET /api/v1/contacts?page=2&limit=20
+
+// Implementation
+const page = parseInt(req.query.page) || 1
+const limit = parseInt(req.query.limit) || 20
+const offset = (page - 1) * limit
+
+const contacts = await db.query(`
+  SELECT * FROM contacts
+  WHERE tenant_id = $1
+  ORDER BY created_at DESC
+  LIMIT $2 OFFSET $3
+`, [tenantId, limit, offset])
+```
+
+**Cursor-Based Pagination** (faster, better for large datasets):
+```typescript
+GET /api/v1/contacts?cursor=eyJpZCI6MTIzfQ&limit=20
+
+// Implementation
+const cursor = req.query.cursor
+  ? JSON.parse(Buffer.from(req.query.cursor, 'base64').toString())
+  : null
+
+const contacts = await db.query(`
+  SELECT * FROM contacts
+  WHERE tenant_id = $1
+    ${cursor ? 'AND created_at < $3' : ''}
+  ORDER BY created_at DESC
+  LIMIT $2
+`, cursor ? [tenantId, limit, cursor.createdAt] : [tenantId, limit])
+
+// Next cursor
+const nextCursor = contacts.length > 0
+  ? Buffer.from(JSON.stringify({
+      id: contacts[contacts.length - 1].id,
+      createdAt: contacts[contacts.length - 1].createdAt
+    })).toString('base64')
+  : null
+```
+
+### Filtering & Sorting
+
+**Query Parameters**:
+```typescript
+// Filtering
+GET /api/v1/contacts?status=active&leadScore[gte]=50
+
+// Sorting
+GET /api/v1/contacts?sort=-createdAt,firstName
+// - prefix means DESC, no prefix means ASC
+
+// Field Selection
+GET /api/v1/contacts?fields=id,email,firstName,lastName
+
+// Search
+GET /api/v1/contacts?search=john
+
+// Multiple filters with OR
+GET /api/v1/contacts?status=active,qualified
+```
+
+**Implementation**:
+```typescript
+interface QueryFilters {
+  status?: string | string[]
+  leadScore?: { gte?: number; lte?: number }
+  search?: string
+  sort?: string
+  fields?: string
+}
+
+function buildQuery(filters: QueryFilters) {
+  const conditions = ['tenant_id = $1']
+  const params: any[] = [tenantId]
+  let paramIndex = 2
+
+  // Status filter
+  if (filters.status) {
+    const statuses = Array.isArray(filters.status)
+      ? filters.status
+      : [filters.status]
+    conditions.push(`status = ANY($${paramIndex})`)
+    params.push(statuses)
+    paramIndex++
+  }
+
+  // Lead score range
+  if (filters.leadScore?.gte) {
+    conditions.push(`lead_score >= $${paramIndex}`)
+    params.push(filters.leadScore.gte)
+    paramIndex++
+  }
+
+  // Search
+  if (filters.search) {
+    conditions.push(`(
+      first_name ILIKE $${paramIndex} OR
+      last_name ILIKE $${paramIndex} OR
+      email ILIKE $${paramIndex}
+    )`)
+    params.push(`%${filters.search}%`)
+    paramIndex++
+  }
+
+  return { conditions, params }
+}
+```
+
+### Versioning
+
+**URL Versioning** (recommended):
+```
+/api/v1/contacts  ← Version in URL path
+/api/v2/contacts
+```
+
+**Header Versioning** (alternative):
+```
+GET /api/contacts
+Accept: application/vnd.clientforge.v1+json
+```
+
+**Breaking Changes**:
+- New major version required for:
+  - Removing fields
+  - Changing field types
+  - Changing response structure
+  - Changing authentication
+- Maintain old version for 6-12 months
+
+### Rate Limiting
+
+**Per-Tenant Limits**:
+```typescript
+// Rate limit by tenant and plan
+const limits = {
+  starter: 100,      // requests per minute
+  professional: 500,
+  business: 2000,
+  enterprise: 10000
+}
+
+// Rate limit headers
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 500
+X-RateLimit-Remaining: 487
+X-RateLimit-Reset: 1609459200
+
+// Rate limit exceeded
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Rate limit exceeded. Limit: 500 requests per minute"
+  }
+}
+```
+
+### Authentication & Authorization
+
+**JWT in Authorization Header**:
+```
+GET /api/v1/contacts
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Permission-Based Access**:
+```typescript
+// Middleware checks permissions
+router.get('/contacts',
+  authenticate,
+  requirePermission('contacts', 'read'),
+  contactController.list
+)
+
+// User permissions stored in JWT payload
+{
+  "userId": "123",
+  "tenantId": "456",
+  "roleId": "789",
+  "permissions": ["contacts:read", "contacts:create", "deals:read"]
+}
+```
+
+### Bulk Operations
+
+**Bulk Create**:
+```typescript
+POST /api/v1/contacts/bulk
+{
+  "contacts": [
+    { "email": "john@example.com", "firstName": "John" },
+    { "email": "jane@example.com", "firstName": "Jane" }
+  ]
+}
+
+// Response with results per item
+{
+  "success": true,
+  "data": {
+    "created": 2,
+    "failed": 0,
+    "results": [
+      { "index": 0, "success": true, "id": "123" },
+      { "index": 1, "success": true, "id": "124" }
+    ]
+  }
+}
+```
+
+**Bulk Update**:
+```typescript
+PATCH /api/v1/contacts/bulk
+{
+  "ids": ["123", "124", "125"],
+  "updates": {
+    "status": "qualified",
+    "tags": ["hot-lead"]
+  }
+}
+```
+
+**Bulk Delete**:
+```typescript
+DELETE /api/v1/contacts/bulk
+{
+  "ids": ["123", "124", "125"]
+}
+```
+
+### Async Operations
+
+**Long-Running Tasks**:
+```typescript
+// 1. Client initiates task
+POST /api/v1/contacts/import
+{
+  "file": "base64-encoded-csv"
+}
+
+// 2. Server returns job ID
+{
+  "success": true,
+  "data": {
+    "jobId": "job_abc123",
+    "status": "pending",
+    "statusUrl": "/api/v1/jobs/job_abc123"
+  }
+}
+
+// 3. Client polls for status
+GET /api/v1/jobs/job_abc123
+{
+  "success": true,
+  "data": {
+    "jobId": "job_abc123",
+    "status": "processing", // pending, processing, completed, failed
+    "progress": 45, // percentage
+    "result": null
+  }
+}
+
+// 4. Job completes
+GET /api/v1/jobs/job_abc123
+{
+  "success": true,
+  "data": {
+    "jobId": "job_abc123",
+    "status": "completed",
+    "progress": 100,
+    "result": {
+      "imported": 150,
+      "failed": 5,
+      "errors": [...]
+    }
+  }
+}
+```
+
+### API Documentation
+
+**OpenAPI/Swagger Spec**:
+```yaml
+openapi: 3.0.0
+info:
+  title: ClientForge CRM API
+  version: 1.0.0
+  description: Enterprise CRM API
+
+servers:
+  - url: https://api.clientforge.com/v1
+    description: Production
+  - url: https://staging-api.clientforge.com/v1
+    description: Staging
+
+paths:
+  /contacts:
+    get:
+      summary: List contacts
+      tags: [Contacts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactList'
+```
 
 ---
 
 ## 🔒 SECURITY IMPLEMENTATION
 
-[Security best practices...]
+### OWASP Top 10 Protection
+
+**1. Injection Prevention (SQL, NoSQL, Command)**:
+```typescript
+// ❌ BAD - SQL Injection vulnerability
+const query = `SELECT * FROM users WHERE email = '${email}'`
+await db.query(query)
+
+// ✅ GOOD - Parameterized queries
+const query = 'SELECT * FROM users WHERE email = $1'
+await db.query(query, [email])
+
+// ✅ GOOD - ORM with parameter binding
+const user = await prisma.user.findUnique({
+  where: { email }
+})
+```
+
+**2. Broken Authentication**:
+```typescript
+// Password requirements
+const PASSWORD_POLICY = {
+  minLength: 12,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumbers: true,
+  requireSpecialChars: true,
+  preventCommonPasswords: true,
+  maxAge: 90, // days
+}
+
+// Account lockout after failed attempts
+if (failedAttempts >= 5) {
+  await lockAccount(userId, 15 * 60 * 1000) // 15 minutes
+}
+
+// JWT token expiration
+const accessToken = jwt.sign(payload, secret, {
+  expiresIn: '15m' // Short-lived access tokens
+})
+
+const refreshToken = jwt.sign(payload, refreshSecret, {
+  expiresIn: '7d' // Longer refresh tokens
+})
+```
+
+**3. Sensitive Data Exposure**:
+```typescript
+// Encrypt sensitive fields at rest
+import crypto from 'crypto'
+
+function encrypt(text: string): string {
+  const cipher = crypto.createCipheriv(
+    'aes-256-gcm',
+    Buffer.from(process.env.ENCRYPTION_KEY, 'hex'),
+    iv
+  )
+  return cipher.update(text, 'utf8', 'hex') + cipher.final('hex')
+}
+
+// Never log sensitive data
+logger.info('User logged in', {
+  userId: user.id,
+  email: user.email.replace(/(.{3}).*@/, '$1***@'), // Mask email
+  // ❌ password: user.password  // NEVER log passwords
+})
+
+// Remove sensitive fields from API responses
+function sanitizeUser(user: User) {
+  const { password, passwordHash, secretKey, ...safe } = user
+  return safe
+}
+```
+
+**4. XML External Entities (XXE)**:
+```typescript
+// Disable external entity processing
+import { parseString } from 'xml2js'
+
+parseString(xml, {
+  strict: true,
+  explicitArray: false,
+  ignoreAttrs: true,
+  // Disable external entities
+  parserOptions: {
+    xmlResolveExternalEntities: false
+  }
+}, callback)
+```
+
+**5. Broken Access Control**:
+```typescript
+// Always check tenant ownership
+async function getContact(contactId: string, userId: string, tenantId: string) {
+  const contact = await db.query(`
+    SELECT * FROM contacts
+    WHERE id = $1
+      AND tenant_id = $2  -- ← Prevents cross-tenant access
+      AND deleted_at IS NULL
+  `, [contactId, tenantId])
+
+  if (!contact) {
+    throw new AppError('Contact not found', 404)
+  }
+
+  // Check user permissions
+  if (!await hasPermission(userId, 'contacts', 'read')) {
+    throw new AppError('Insufficient permissions', 403)
+  }
+
+  return contact
+}
+```
+
+**6. Security Misconfiguration**:
+```typescript
+// Helmet.js for security headers
+import helmet from 'helmet'
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  frameguard: { action: 'deny' },
+  noSniff: true,
+  xssFilter: true,
+}))
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || [],
+  credentials: true,
+  maxAge: 86400,
+}))
+
+// Disable unnecessary headers
+app.disable('x-powered-by')
+```
+
+**7. Cross-Site Scripting (XSS)**:
+```typescript
+// Sanitize user input
+import DOMPurify from 'isomorphic-dompurify'
+
+function sanitizeHtml(dirty: string): string {
+  return DOMPurify.sanitize(dirty, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
+    ALLOWED_ATTR: ['href'],
+  })
+}
+
+// Content-Type headers
+res.setHeader('Content-Type', 'application/json; charset=utf-8')
+res.setHeader('X-Content-Type-Options', 'nosniff')
+
+// Escape output in React (automatic with JSX)
+<div>{userInput}</div> // React automatically escapes
+
+// For dangerouslySetInnerHTML, sanitize first
+<div dangerouslySetInnerHTML={{
+  __html: DOMPurify.sanitize(userInput)
+}} />
+```
+
+**8. Insecure Deserialization**:
+```typescript
+// Validate JSON input
+import { z } from 'zod'
+
+const ContactSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  phone: z.string().optional(),
+})
+
+// Validate before processing
+try {
+  const validated = ContactSchema.parse(req.body)
+  // Safe to use validated data
+} catch (error) {
+  throw new ValidationError('Invalid contact data', error)
+}
+```
+
+**9. Using Components with Known Vulnerabilities**:
+```bash
+# Regular security audits
+npm audit
+npm audit fix
+
+# Automated dependency updates (Dependabot, Renovate)
+# Check for outdated packages
+npm outdated
+
+# Use npm ci in production (locks versions)
+npm ci
+```
+
+**10. Insufficient Logging & Monitoring**:
+```typescript
+// Comprehensive audit logging
+await auditLogger.log({
+  userId: req.user.id,
+  tenantId: req.user.tenantId,
+  action: 'contact.delete',
+  entityType: 'contact',
+  entityId: contactId,
+  ipAddress: req.ip,
+  userAgent: req.get('user-agent'),
+  status: 'success',
+  details: { reason: 'user_requested' }
+})
+
+// Security event monitoring
+if (failedLoginAttempts >= 3) {
+  await securityMonitor.alert({
+    severity: 'medium',
+    type: 'multiple_failed_logins',
+    userId: userId,
+    ipAddress: req.ip,
+  })
+}
+
+// Anomaly detection
+if (isAnomalousActivity(user, activity)) {
+  await securityMonitor.alert({
+    severity: 'high',
+    type: 'anomalous_activity',
+    userId: user.id,
+    activity: activity,
+  })
+}
+```
+
+### Authentication Security
+
+**Password Hashing**:
+```typescript
+import bcrypt from 'bcrypt'
+
+// Hash password with high cost factor
+async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 12 // 2^12 iterations
+  return await bcrypt.hash(password, saltRounds)
+}
+
+// Verify password
+async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
+  return await bcrypt.compare(password, hash)
+}
+```
+
+**JWT Token Security**:
+```typescript
+// Use strong secrets (32+ bytes)
+const JWT_SECRET = process.env.JWT_SECRET // 256-bit minimum
+
+// Sign with algorithm specification
+const token = jwt.sign(payload, JWT_SECRET, {
+  algorithm: 'HS256', // Specify algorithm
+  expiresIn: '15m',
+  issuer: 'clientforge-api',
+  audience: 'clientforge-web',
+})
+
+// Verify with strict checks
+try {
+  const decoded = jwt.verify(token, JWT_SECRET, {
+    algorithms: ['HS256'], // Whitelist algorithms
+    issuer: 'clientforge-api',
+    audience: 'clientforge-web',
+  })
+} catch (error) {
+  throw new AppError('Invalid token', 401)
+}
+```
+
+**Session Management**:
+```typescript
+// Store sessions in Redis with expiration
+await redis.setex(
+  `session:${userId}:${tokenId}`,
+  15 * 60, // 15 minutes
+  JSON.stringify(sessionData)
+)
+
+// Invalidate all sessions on password change
+await redis.del(`session:${userId}:*`)
+
+// Implement token rotation
+async function rotateRefreshToken(oldToken: string) {
+  const decoded = jwt.verify(oldToken, REFRESH_SECRET)
+
+  // Blacklist old token
+  await redis.setex(
+    `blacklist:${oldToken}`,
+    7 * 24 * 60 * 60, // 7 days
+    '1'
+  )
+
+  // Issue new token
+  return jwt.sign({ userId: decoded.userId }, REFRESH_SECRET, {
+    expiresIn: '7d'
+  })
+}
+```
+
+### Input Validation
+
+**Schema Validation with Zod**:
+```typescript
+import { z } from 'zod'
+
+const CreateContactSchema = z.object({
+  email: z.string()
+    .email('Invalid email format')
+    .max(255),
+
+  firstName: z.string()
+    .min(1, 'First name required')
+    .max(100)
+    .regex(/^[a-zA-Z\s'-]+$/, 'Invalid characters'),
+
+  lastName: z.string()
+    .min(1, 'Last name required')
+    .max(100)
+    .regex(/^[a-zA-Z\s'-]+$/, 'Invalid characters'),
+
+  phone: z.string()
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number')
+    .optional(),
+
+  leadScore: z.number()
+    .int()
+    .min(0)
+    .max(100)
+    .optional(),
+
+  tags: z.array(z.string().max(50))
+    .max(20)
+    .optional(),
+})
+
+// Validation middleware
+export const validateRequest = (schema: z.ZodSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body)
+      next()
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid request data',
+            details: error.errors,
+          },
+        })
+      }
+      next(error)
+    }
+  }
+}
+
+// Usage
+router.post('/contacts',
+  authenticate,
+  validateRequest(CreateContactSchema),
+  contactController.create
+)
+```
+
+### Rate Limiting
+
+**Multi-Tier Rate Limiting**:
+```typescript
+import rateLimit from 'express-rate-limit'
+import RedisStore from 'rate-limit-redis'
+
+// Global rate limit
+const globalLimiter = rateLimit({
+  store: new RedisStore({
+    client: redis,
+    prefix: 'rl:global:',
+  }),
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Max requests per window
+  message: 'Too many requests from this IP',
+})
+
+// Per-tenant rate limit
+const tenantLimiter = rateLimit({
+  store: new RedisStore({
+    client: redis,
+    prefix: 'rl:tenant:',
+  }),
+  windowMs: 60 * 1000, // 1 minute
+  max: async (req) => {
+    const plan = req.user?.subscription?.planType
+    const limits = {
+      starter: 100,
+      professional: 500,
+      business: 2000,
+      enterprise: 10000,
+    }
+    return limits[plan] || 100
+  },
+  keyGenerator: (req) => req.user?.tenantId || req.ip,
+})
+
+// Sensitive endpoint rate limit (login, password reset)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5, // 5 attempts per 15 minutes
+  skipSuccessfulRequests: true, // Don't count successful logins
+})
+
+// Apply limiters
+app.use('/api', globalLimiter)
+app.use('/api', authenticate, tenantLimiter)
+app.use('/api/v1/auth/login', authLimiter)
+```
+
+### Data Encryption
+
+**Encryption at Rest**:
+```typescript
+import crypto from 'crypto'
+
+class EncryptionService {
+  private algorithm = 'aes-256-gcm'
+  private key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex')
+
+  encrypt(text: string): string {
+    const iv = crypto.randomBytes(16)
+    const cipher = crypto.createCipheriv(this.algorithm, this.key, iv)
+
+    let encrypted = cipher.update(text, 'utf8', 'hex')
+    encrypted += cipher.final('hex')
+
+    const authTag = cipher.getAuthTag()
+
+    // Return: iv:authTag:encryptedData
+    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`
+  }
+
+  decrypt(encryptedData: string): string {
+    const [ivHex, authTagHex, encrypted] = encryptedData.split(':')
+
+    const iv = Buffer.from(ivHex, 'hex')
+    const authTag = Buffer.from(authTagHex, 'hex')
+    const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv)
+
+    decipher.setAuthTag(authTag)
+
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8')
+    decrypted += decipher.final('utf8')
+
+    return decrypted
+  }
+}
+
+// Encrypt sensitive fields before storing
+const encrypted = encryptionService.encrypt(user.ssn)
+await db.query('UPDATE users SET ssn_encrypted = $1 WHERE id = $2', [encrypted, userId])
+```
+
+**Encryption in Transit (HTTPS)**:
+```typescript
+// Force HTTPS in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && !req.secure) {
+    return res.redirect(301, `https://${req.headers.host}${req.url}`)
+  }
+  next()
+})
+
+// HSTS header
+app.use(helmet.hsts({
+  maxAge: 31536000, // 1 year
+  includeSubDomains: true,
+  preload: true,
+}))
+```
+
+### Security Checklist
+
+**Pre-Production Checklist**:
+```
+✅ Authentication & Authorization
+  - JWT tokens with short expiration
+  - Refresh token rotation
+  - Password hashing (bcrypt, cost 12+)
+  - Account lockout after failed attempts
+  - MFA available for sensitive operations
+
+✅ Input Validation
+  - Schema validation on all inputs
+  - SQL injection prevention (parameterized queries)
+  - XSS prevention (sanitize HTML)
+  - CSRF tokens for state-changing operations
+
+✅ Data Protection
+  - Encryption at rest (sensitive fields)
+  - Encryption in transit (HTTPS/TLS 1.3)
+  - Secure cookie flags (httpOnly, secure, sameSite)
+  - Data masking in logs
+
+✅ API Security
+  - Rate limiting (global + per-tenant)
+  - CORS whitelist
+  - Security headers (Helmet.js)
+  - API versioning
+  - Request size limits
+
+✅ Infrastructure
+  - Environment variables for secrets
+  - No secrets in version control
+  - Regular dependency updates (npm audit)
+  - Database connection pooling
+  - Graceful error handling (no stack traces to client)
+
+✅ Monitoring & Logging
+  - Audit logs for sensitive operations
+  - Security event monitoring
+  - Error tracking (Sentry)
+  - Uptime monitoring
+  - Log retention policies
+
+✅ Compliance
+  - GDPR data export/deletion
+  - SOC 2 audit trail
+  - Data retention policies
+  - Privacy policy & terms of service
+```
 
 ---
 

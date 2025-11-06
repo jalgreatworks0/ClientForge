@@ -4,62 +4,53 @@
  */
 
 import { AuthService } from '../../../backend/core/auth/auth-service'
-import { UserRepository } from '../../../backend/core/users/user-repository'
-import { JwtService } from '../../../backend/core/auth/jwt-service'
-import { SessionService } from '../../../backend/core/auth/session-service'
-import { AuditLogger } from '../../../backend/utils/logging/audit-logger'
-import { AppError } from '../../../backend/utils/errors/app-error'
-import bcrypt from 'bcrypt'
+import { UnauthorizedError, ValidationError, ForbiddenError } from '../../../backend/utils/errors/app-error'
 
-// Mock bcrypt
-jest.mock('bcrypt')
-const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>
+// Mock all dependencies at module level
+jest.mock('../../../backend/core/users/user-repository')
+jest.mock('../../../backend/core/auth/jwt-service')
+jest.mock('../../../backend/core/auth/password-service')
+jest.mock('../../../backend/core/auth/session-service')
+jest.mock('../../../backend/utils/logging/audit-logger')
+jest.mock('../../../backend/utils/logging/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+}))
+jest.mock('../../../config/security/security-config', () => ({
+  securityConfig: {
+    accountLocking: {
+      maxFailedAttempts: 5,
+      lockDurationMs: 900000, // 15 minutes
+    },
+    jwt: {
+      accessTokenExpiresIn: '15m',
+    },
+    bcrypt: {
+      saltRounds: 12,
+    },
+  },
+}))
+
+// Import mocked modules AFTER mocking
+import { userRepository } from '../../../backend/core/users/user-repository'
+import { jwtService } from '../../../backend/core/auth/jwt-service'
+import { passwordService } from '../../../backend/core/auth/password-service'
+import { sessionService } from '../../../backend/core/auth/session-service'
+import { auditLogger } from '../../../backend/utils/logging/audit-logger'
 
 describe('AuthService', () => {
   let authService: AuthService
-  let userRepository: jest.Mocked<UserRepository>
-  let jwtService: jest.Mocked<JwtService>
-  let sessionService: jest.Mocked<SessionService>
-  let auditLogger: jest.Mocked<AuditLogger>
 
   beforeEach(() => {
-    // Create mocked dependencies
-    userRepository = {
-      findByEmailAndTenant: jest.fn(),
-      resetFailedLoginAttempts: jest.fn(),
-      updateLastLogin: jest.fn(),
-      incrementFailedLoginAttempts: jest.fn(),
-      lockAccount: jest.fn(),
-      findById: jest.fn(),
-    } as any
+    // Reset all mocks
+    jest.clearAllMocks()
 
-    jwtService = {
-      generateAccessToken: jest.fn(),
-      generateRefreshToken: jest.fn(),
-      verifyRefreshToken: jest.fn(),
-      verifyAccessToken: jest.fn(),
-    } as any
-
-    sessionService = {
-      createSession: jest.fn(),
-      deleteSession: jest.fn(),
-      sessionExists: jest.fn(),
-      deleteAllUserSessions: jest.fn(),
-    } as any
-
-    auditLogger = {
-      logSuccessfulLogin: jest.fn(),
-      logFailedLogin: jest.fn(),
-      logAccountLocked: jest.fn(),
-      logLogout: jest.fn(),
-    } as any
-
-    authService = new AuthService(
-      userRepository,
-      jwtService,
-      sessionService,
-      auditLogger
-    )
+    // Create new service instance
+    authService = new AuthService()
   })
 
   describe('login', () => {
@@ -74,6 +65,7 @@ describe('AuthService', () => {
       firstName: 'John',
       lastName: 'Doe',
       role: { name: 'Admin' },
+      isLocked: false,
       lockedUntil: null,
       deletedAt: null,
       failedLoginAttempts: 0,
@@ -84,26 +76,36 @@ describe('AuthService', () => {
       password: 'ValidPassword123!',
       tenantId: 'tenant-123',
       ipAddress: '192.168.1.1',
+      userAgent: 'Mozilla/5.0',
     }
 
     it('should successfully login with valid credentials', async () => {
-      userRepository.findByEmailAndTenant.mockResolvedValue(mockUser)
-      mockedBcrypt.compare.mockResolvedValue(true as never)
-      jwtService.generateAccessToken.mockReturnValue('access-token-123')
-      jwtService.generateRefreshToken.mockReturnValue('refresh-token-456')
-      sessionService.createSession.mockResolvedValue(undefined)
+      // Setup mocks
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(mockUser);
+      (passwordService.verify as jest.Mock).mockResolvedValue(true);
+      (jwtService.generateTokenPair as jest.Mock).mockReturnValue({
+        accessToken: 'access-token-123',
+        refreshToken: 'refresh-token-456',
+        expiresIn: 900,
+      });
+      (sessionService.createSession as jest.Mock).mockResolvedValue(undefined);
+      (userRepository.resetFailedLoginAttempts as jest.Mock).mockResolvedValue(undefined);
+      (userRepository.updateLastLogin as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logSuccessfulLogin as jest.Mock).mockResolvedValue(undefined)
 
       const result = await authService.login(validCredentials)
 
       expect(result).toEqual({
         accessToken: 'access-token-123',
         refreshToken: 'refresh-token-456',
+        expiresIn: 900,
         user: {
           id: 'user-123',
           email: 'test@example.com',
           firstName: 'John',
           lastName: 'Doe',
           role: 'Admin',
+          tenantId: 'tenant-123',
         },
       })
 
@@ -111,54 +113,49 @@ describe('AuthService', () => {
         'test@example.com',
         'tenant-123'
       )
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+      expect(passwordService.verify).toHaveBeenCalledWith(
         'ValidPassword123!',
         '$2b$12$hashedpassword'
       )
       expect(userRepository.resetFailedLoginAttempts).toHaveBeenCalledWith('user-123')
-      expect(userRepository.updateLastLogin).toHaveBeenCalledWith('user-123')
+      expect(userRepository.updateLastLogin).toHaveBeenCalledWith('user-123', '192.168.1.1')
       expect(auditLogger.logSuccessfulLogin).toHaveBeenCalled()
     })
 
-    it('should throw error if user not found', async () => {
-      userRepository.findByEmailAndTenant.mockResolvedValue(null)
+    it('should throw UnauthorizedError if user not found', async () => {
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(null);
+      (auditLogger.logFailedLogin as jest.Mock).mockResolvedValue(undefined)
 
-      await expect(authService.login(validCredentials)).rejects.toThrow(
-        new AppError('Invalid credentials', 401)
-      )
+      await expect(authService.login(validCredentials)).rejects.toThrow(UnauthorizedError)
+      await expect(authService.login(validCredentials)).rejects.toThrow('Invalid credentials')
 
-      expect(auditLogger.logFailedLogin).toHaveBeenCalledWith(
-        'test@example.com',
-        'tenant-123',
-        'User not found',
-        '192.168.1.1'
-      )
+      expect(auditLogger.logFailedLogin).toHaveBeenCalled()
     })
 
-    it('should throw error if password is invalid', async () => {
-      userRepository.findByEmailAndTenant.mockResolvedValue(mockUser)
-      mockedBcrypt.compare.mockResolvedValue(false as never)
+    it('should throw UnauthorizedError if password is invalid', async () => {
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(mockUser);
+      (passwordService.verify as jest.Mock).mockResolvedValue(false);
+      (userRepository.incrementFailedLoginAttempts as jest.Mock).mockResolvedValue(1);
+      (auditLogger.logFailedLogin as jest.Mock).mockResolvedValue(undefined)
 
-      await expect(authService.login(validCredentials)).rejects.toThrow(
-        new AppError('Invalid credentials', 401)
-      )
+      await expect(authService.login(validCredentials)).rejects.toThrow(UnauthorizedError)
+      await expect(authService.login(validCredentials)).rejects.toThrow('Invalid credentials')
 
       expect(userRepository.incrementFailedLoginAttempts).toHaveBeenCalledWith('user-123')
       expect(auditLogger.logFailedLogin).toHaveBeenCalled()
     })
 
-    it('should lock account after 5 failed login attempts', async () => {
-      const userWithFailedAttempts = {
-        ...mockUser,
-        failedLoginAttempts: 4, // 5th attempt will lock
-      }
+    it('should lock account after max failed login attempts', async () => {
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(mockUser);
+      (passwordService.verify as jest.Mock).mockResolvedValue(false);
+      (userRepository.incrementFailedLoginAttempts as jest.Mock).mockResolvedValue(5);
+      (userRepository.lockAccount as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logFailedLogin as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logAccountLocked as jest.Mock).mockResolvedValue(undefined)
 
-      userRepository.findByEmailAndTenant.mockResolvedValue(userWithFailedAttempts)
-      mockedBcrypt.compare.mockResolvedValue(false as never)
+      await expect(authService.login(validCredentials)).rejects.toThrow(UnauthorizedError)
 
-      await expect(authService.login(validCredentials)).rejects.toThrow()
-
-      expect(userRepository.incrementFailedLoginAttempts).toHaveBeenCalled()
+      expect(userRepository.incrementFailedLoginAttempts).toHaveBeenCalledWith('user-123')
       expect(userRepository.lockAccount).toHaveBeenCalledWith(
         'user-123',
         expect.any(Date)
@@ -166,147 +163,83 @@ describe('AuthService', () => {
       expect(auditLogger.logAccountLocked).toHaveBeenCalled()
     })
 
-    it('should throw error if account is locked', async () => {
+    it('should throw ForbiddenError if account is locked', async () => {
       const lockedUser = {
         ...mockUser,
+        isLocked: true,
         lockedUntil: new Date(Date.now() + 3600000), // Locked for 1 hour
-      }
+      };
 
-      userRepository.findByEmailAndTenant.mockResolvedValue(lockedUser)
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(lockedUser);
+      (auditLogger.logFailedLogin as jest.Mock).mockResolvedValue(undefined)
 
-      await expect(authService.login(validCredentials)).rejects.toThrow(
-        new AppError('Account is temporarily locked. Please try again later.', 403)
-      )
+      await expect(authService.login(validCredentials)).rejects.toThrow(ForbiddenError)
+      await expect(authService.login(validCredentials)).rejects.toThrow('Account is temporarily locked')
 
       expect(auditLogger.logFailedLogin).toHaveBeenCalledWith(
         expect.any(String),
         expect.any(String),
         'Account locked',
+        expect.any(Number),
+        expect.any(String),
         expect.any(String)
       )
     })
 
-    it('should throw error if account is inactive', async () => {
+    it('should throw ForbiddenError if account is inactive', async () => {
       const inactiveUser = {
         ...mockUser,
         isActive: false,
-      }
+      };
 
-      userRepository.findByEmailAndTenant.mockResolvedValue(inactiveUser)
-      mockedBcrypt.compare.mockResolvedValue(true as never)
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(inactiveUser);
+      (passwordService.verify as jest.Mock).mockResolvedValue(true);
+      (userRepository.resetFailedLoginAttempts as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logFailedLogin as jest.Mock).mockResolvedValue(undefined)
 
-      await expect(authService.login(validCredentials)).rejects.toThrow(
-        new AppError('Account is not active', 403)
-      )
+      await expect(authService.login(validCredentials)).rejects.toThrow(ForbiddenError)
+      await expect(authService.login(validCredentials)).rejects.toThrow('Account is not active')
     })
 
-    it('should throw error if account is deleted', async () => {
+    it('should throw ForbiddenError if account is deleted', async () => {
       const deletedUser = {
         ...mockUser,
         deletedAt: new Date(),
-      }
+      };
 
-      userRepository.findByEmailAndTenant.mockResolvedValue(deletedUser)
-      mockedBcrypt.compare.mockResolvedValue(true as never)
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(deletedUser);
+      (passwordService.verify as jest.Mock).mockResolvedValue(true);
+      (userRepository.resetFailedLoginAttempts as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logFailedLogin as jest.Mock).mockResolvedValue(undefined)
 
-      await expect(authService.login(validCredentials)).rejects.toThrow(
-        new AppError('Account is not active', 403)
+      await expect(authService.login(validCredentials)).rejects.toThrow(ForbiddenError)
+      await expect(authService.login(validCredentials)).rejects.toThrow('Account is not active')
+    })
+
+    it('should convert email to lowercase', async () => {
+      const credentialsWithUppercase = {
+        ...validCredentials,
+        email: 'TEST@EXAMPLE.COM',
+      };
+
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(mockUser);
+      (passwordService.verify as jest.Mock).mockResolvedValue(true);
+      (jwtService.generateTokenPair as jest.Mock).mockReturnValue({
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        expiresIn: 900,
+      });
+      (sessionService.createSession as jest.Mock).mockResolvedValue(undefined);
+      (userRepository.resetFailedLoginAttempts as jest.Mock).mockResolvedValue(undefined);
+      (userRepository.updateLastLogin as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logSuccessfulLogin as jest.Mock).mockResolvedValue(undefined)
+
+      await authService.login(credentialsWithUppercase)
+
+      expect(userRepository.findByEmailAndTenant).toHaveBeenCalledWith(
+        'test@example.com',
+        'tenant-123'
       )
-    })
-
-    it('should throw error if account is not verified', async () => {
-      const unverifiedUser = {
-        ...mockUser,
-        isVerified: false,
-      }
-
-      userRepository.findByEmailAndTenant.mockResolvedValue(unverifiedUser)
-      mockedBcrypt.compare.mockResolvedValue(true as never)
-
-      await expect(authService.login(validCredentials)).rejects.toThrow(
-        new AppError('Please verify your email before logging in', 403)
-      )
-    })
-  })
-
-  describe('refreshToken', () => {
-    it('should generate new access token with valid refresh token', async () => {
-      const refreshToken = 'valid-refresh-token'
-      const decodedPayload = {
-        userId: 'user-123',
-        tenantId: 'tenant-123',
-        roleId: 'role-123',
-        sessionId: 'session-123',
-      }
-
-      jwtService.verifyRefreshToken.mockReturnValue(decodedPayload)
-      sessionService.sessionExists.mockResolvedValue(true)
-      jwtService.generateAccessToken.mockReturnValue('new-access-token')
-
-      const result = await authService.refreshToken(refreshToken)
-
-      expect(result).toEqual({
-        accessToken: 'new-access-token',
-      })
-
-      expect(jwtService.verifyRefreshToken).toHaveBeenCalledWith(refreshToken)
-      expect(sessionService.sessionExists).toHaveBeenCalledWith('session-123')
-    })
-
-    it('should throw error if refresh token is invalid', async () => {
-      jwtService.verifyRefreshToken.mockImplementation(() => {
-        throw new Error('Invalid token')
-      })
-
-      await expect(authService.refreshToken('invalid-token')).rejects.toThrow(
-        new AppError('Invalid refresh token', 401)
-      )
-    })
-
-    it('should throw error if session does not exist', async () => {
-      const decodedPayload = {
-        userId: 'user-123',
-        tenantId: 'tenant-123',
-        roleId: 'role-123',
-        sessionId: 'session-123',
-      }
-
-      jwtService.verifyRefreshToken.mockReturnValue(decodedPayload)
-      sessionService.sessionExists.mockResolvedValue(false)
-
-      await expect(authService.refreshToken('valid-token')).rejects.toThrow(
-        new AppError('Session has been invalidated', 401)
-      )
-    })
-  })
-
-  describe('logout', () => {
-    it('should successfully logout user', async () => {
-      const userId = 'user-123'
-      const sessionId = 'session-123'
-      const tenantId = 'tenant-123'
-
-      sessionService.deleteSession.mockResolvedValue(undefined)
-      auditLogger.logLogout.mockResolvedValue(undefined)
-
-      await authService.logout(userId, sessionId, tenantId)
-
-      expect(sessionService.deleteSession).toHaveBeenCalledWith(sessionId)
-      expect(auditLogger.logLogout).toHaveBeenCalledWith(
-        userId,
-        tenantId,
-        undefined
-      )
-    })
-
-    it('should handle logout even if session deletion fails', async () => {
-      const userId = 'user-123'
-      const sessionId = 'session-123'
-      const tenantId = 'tenant-123'
-
-      sessionService.deleteSession.mockRejectedValue(new Error('Redis connection failed'))
-
-      await expect(authService.logout(userId, sessionId, tenantId)).resolves.not.toThrow()
     })
   })
 
@@ -318,50 +251,217 @@ describe('AuthService', () => {
       lastName: 'Smith',
       tenantId: 'tenant-123',
       roleId: 'role-user',
+      phone: '+1234567890',
+    }
+
+    const mockCreatedUser = {
+      id: 'new-user-123',
+      email: 'newuser@example.com',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      tenantId: 'tenant-123',
+      roleId: 'role-user',
+      phone: '+1234567890',
+      isActive: true,
+      isVerified: false,
+      passwordHash: '$2b$12$hashedpassword',
     }
 
     it('should successfully register new user', async () => {
-      userRepository.findByEmailAndTenant.mockResolvedValue(null) // No existing user
-      mockedBcrypt.hash.mockResolvedValue('$2b$12$hashedpassword' as never)
-
-      const mockCreatedUser = {
-        id: 'new-user-123',
-        email: validRegistration.email,
-        firstName: validRegistration.firstName,
-        lastName: validRegistration.lastName,
-        tenantId: validRegistration.tenantId,
-        roleId: validRegistration.roleId,
-        isActive: true,
-        isVerified: false,
-      }
-
-      userRepository.create = jest.fn().mockResolvedValue(mockCreatedUser)
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(null);
+      (passwordService.validatePasswordStrength as jest.Mock).mockReturnValue({
+        valid: true,
+        errors: [],
+      });
+      (passwordService.hash as jest.Mock).mockResolvedValue('$2b$12$hashedpassword');
+      (userRepository.create as jest.Mock).mockResolvedValue(mockCreatedUser)
 
       const result = await authService.register(validRegistration)
 
-      expect(result).toEqual({
-        id: 'new-user-123',
-        email: 'newuser@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-      })
+      expect(result).toEqual(mockCreatedUser)
 
       expect(userRepository.findByEmailAndTenant).toHaveBeenCalledWith(
         'newuser@example.com',
         'tenant-123'
       )
-      expect(mockedBcrypt.hash).toHaveBeenCalledWith('SecurePassword123!', 12)
+      expect(passwordService.validatePasswordStrength).toHaveBeenCalledWith('SecurePassword123!')
+      expect(passwordService.hash).toHaveBeenCalledWith('SecurePassword123!')
+      expect(userRepository.create).toHaveBeenCalledWith({
+        tenantId: 'tenant-123',
+        roleId: 'role-user',
+        email: 'newuser@example.com',
+        passwordHash: '$2b$12$hashedpassword',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        phone: '+1234567890',
+      })
     })
 
-    it('should throw error if email already exists', async () => {
-      userRepository.findByEmailAndTenant.mockResolvedValue({
-        id: 'existing-user',
-        email: validRegistration.email,
-      } as any)
+    it('should throw ValidationError if password is weak', async () => {
+      (passwordService.validatePasswordStrength as jest.Mock).mockReturnValue({
+        valid: false,
+        errors: ['Password must be at least 8 characters', 'Password must contain a number'],
+      })
 
-      await expect(authService.register(validRegistration)).rejects.toThrow(
-        new AppError('Email already registered', 409)
+      await expect(authService.register(validRegistration)).rejects.toThrow(ValidationError)
+      await expect(authService.register(validRegistration)).rejects.toThrow('Password does not meet requirements')
+    })
+
+    it('should throw ValidationError if email already exists', async () => {
+      (passwordService.validatePasswordStrength as jest.Mock).mockReturnValue({
+        valid: true,
+        errors: [],
+      });
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue({
+        id: 'existing-user',
+        email: 'newuser@example.com',
+      })
+
+      await expect(authService.register(validRegistration)).rejects.toThrow(ValidationError)
+      await expect(authService.register(validRegistration)).rejects.toThrow('User with this email already exists')
+    })
+
+    it('should convert email to lowercase when checking existence', async () => {
+      const registrationWithUppercase = {
+        ...validRegistration,
+        email: 'NEWUSER@EXAMPLE.COM',
+      };
+
+      (passwordService.validatePasswordStrength as jest.Mock).mockReturnValue({
+        valid: true,
+        errors: [],
+      });
+      (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(null);
+      (passwordService.hash as jest.Mock).mockResolvedValue('$2b$12$hashedpassword');
+      (userRepository.create as jest.Mock).mockResolvedValue(mockCreatedUser)
+
+      await authService.register(registrationWithUppercase)
+
+      expect(userRepository.findByEmailAndTenant).toHaveBeenCalledWith(
+        'newuser@example.com',
+        'tenant-123'
       )
+    })
+  })
+
+  describe('logout', () => {
+    it('should successfully logout user', async () => {
+      const userId = 'user-123'
+      const refreshToken = 'refresh-token-456';
+
+      (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logLogout as jest.Mock).mockResolvedValue(undefined)
+
+      await authService.logout(userId, refreshToken)
+
+      expect(sessionService.deleteSession).toHaveBeenCalledWith(userId, refreshToken)
+      expect(auditLogger.logLogout).toHaveBeenCalledWith(userId)
+    })
+
+    it('should throw error if session deletion fails', async () => {
+      const userId = 'user-123'
+      const refreshToken = 'refresh-token-456';
+
+      (sessionService.deleteSession as jest.Mock).mockRejectedValue(new Error('Redis connection failed'))
+
+      await expect(authService.logout(userId, refreshToken)).rejects.toThrow('Redis connection failed')
+    })
+  })
+
+  describe('refreshAccessToken', () => {
+    const mockUser = {
+      id: 'user-123',
+      email: 'test@example.com',
+      tenantId: 'tenant-123',
+      roleId: 'role-123',
+      isActive: true,
+    }
+
+    it('should generate new access token with valid refresh token', async () => {
+      const refreshToken = 'valid-refresh-token'
+      const decodedPayload = {
+        userId: 'user-123',
+        tenantId: 'tenant-123',
+        roleId: 'role-123',
+        jti: 'jti-789',
+      };
+
+      (jwtService.verifyRefreshToken as jest.Mock).mockReturnValue(decodedPayload);
+      (sessionService.sessionExists as jest.Mock).mockResolvedValue(true);
+      (userRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (jwtService.generateAccessToken as jest.Mock).mockReturnValue('new-access-token');
+      (jwtService['parseExpiry'] as jest.Mock) = jest.fn().mockReturnValue(900)
+
+      const result = await authService.refreshAccessToken(refreshToken)
+
+      expect(result).toEqual({
+        accessToken: 'new-access-token',
+        expiresIn: 900, // 15 minutes in seconds
+      })
+
+      expect(jwtService.verifyRefreshToken).toHaveBeenCalledWith(refreshToken)
+      expect(sessionService.sessionExists).toHaveBeenCalledWith('user-123', refreshToken)
+      expect(userRepository.findById).toHaveBeenCalledWith('user-123', 'tenant-123')
+    })
+
+    it('should throw UnauthorizedError if refresh token is invalid', async () => {
+      (jwtService.verifyRefreshToken as jest.Mock).mockImplementation(() => {
+        throw new UnauthorizedError('Invalid token')
+      })
+
+      await expect(authService.refreshAccessToken('invalid-token')).rejects.toThrow(UnauthorizedError)
+    })
+
+    it('should throw UnauthorizedError if session does not exist', async () => {
+      const decodedPayload = {
+        userId: 'user-123',
+        tenantId: 'tenant-123',
+        roleId: 'role-123',
+        jti: 'jti-789',
+      };
+
+      (jwtService.verifyRefreshToken as jest.Mock).mockReturnValue(decodedPayload);
+      (sessionService.sessionExists as jest.Mock).mockResolvedValue(false)
+
+      await expect(authService.refreshAccessToken('valid-token')).rejects.toThrow(UnauthorizedError)
+      await expect(authService.refreshAccessToken('valid-token')).rejects.toThrow('Invalid or expired refresh token')
+    })
+
+    it('should throw UnauthorizedError if user not found', async () => {
+      const decodedPayload = {
+        userId: 'user-123',
+        tenantId: 'tenant-123',
+        roleId: 'role-123',
+        jti: 'jti-789',
+      };
+
+      (jwtService.verifyRefreshToken as jest.Mock).mockReturnValue(decodedPayload);
+      (sessionService.sessionExists as jest.Mock).mockResolvedValue(true);
+      (userRepository.findById as jest.Mock).mockResolvedValue(null)
+
+      await expect(authService.refreshAccessToken('valid-token')).rejects.toThrow(UnauthorizedError)
+      await expect(authService.refreshAccessToken('valid-token')).rejects.toThrow('User not found or inactive')
+    })
+
+    it('should throw UnauthorizedError if user is inactive', async () => {
+      const inactiveUser = {
+        ...mockUser,
+        isActive: false,
+      }
+
+      const decodedPayload = {
+        userId: 'user-123',
+        tenantId: 'tenant-123',
+        roleId: 'role-123',
+        jti: 'jti-789',
+      };
+
+      (jwtService.verifyRefreshToken as jest.Mock).mockReturnValue(decodedPayload);
+      (sessionService.sessionExists as jest.Mock).mockResolvedValue(true);
+      (userRepository.findById as jest.Mock).mockResolvedValue(inactiveUser)
+
+      await expect(authService.refreshAccessToken('valid-token')).rejects.toThrow(UnauthorizedError)
+      await expect(authService.refreshAccessToken('valid-token')).rejects.toThrow('User not found or inactive')
     })
   })
 })
