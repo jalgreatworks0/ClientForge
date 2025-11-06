@@ -59,6 +59,7 @@ services:
     plan: starter
     region: oregon
     buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
     envVars:
       - key: NODE_ENV
         value: production

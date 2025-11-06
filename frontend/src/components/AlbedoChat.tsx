@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, MessageSquare, Send, Minimize2, Maximize2 } from 'lucide-react'
+import { X, MessageSquare, Send, Minimize2, Maximize2, Sparkles, Zap, TrendingUp, Users } from 'lucide-react'
 
 interface Message {
   id: string
@@ -26,7 +26,6 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
     if (saved) {
       try {
         const position = JSON.parse(saved)
-        // Validate position is within reasonable bounds
         if (position.bottom >= 0 && position.bottom < 2000 &&
             position.right >= 0 && position.right < 2000) {
           return position
@@ -48,7 +47,7 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
 
   // Handle button drag
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isOpen) return // Don't allow dragging when chat is open
+    if (isOpen) return
     setIsDragging(true)
     setDragStart({
       x: e.clientX - (buttonRef.current?.offsetLeft || 0),
@@ -62,13 +61,11 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
 
       const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
-      const buttonSize = 64 // 16 * 4 (w-16 h-16)
+      const buttonSize = 64
 
-      // Calculate new position relative to viewport edges
       const newRight = viewportWidth - e.clientX - buttonSize / 2
       const newBottom = viewportHeight - e.clientY - buttonSize / 2
 
-      // Clamp to viewport boundaries with comfortable padding
       const clampedRight = Math.max(16, Math.min(viewportWidth - buttonSize - 16, newRight))
       const clampedBottom = Math.max(16, Math.min(viewportHeight - buttonSize - 16, newBottom))
 
@@ -112,20 +109,18 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
     setIsLoading(true)
 
     try {
-      // Call the real AI API
       const response = await fetch('/api/v1/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add auth token if available
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
         body: JSON.stringify({
           message: userInput,
-          enableActions: true, // Enable AI to execute CRM actions
+          enableActions: true,
           context: {
             currentPage: currentPage,
-            systemPrompt: `You are Albedo, a helpful AI assistant for ClientForge CRM. The user is currently on the ${currentPage} page. Be helpful, concise, and action-oriented.`
+            systemPrompt: `You are Albedo, an intelligent AI assistant for ClientForge CRM. The user is currently on the ${currentPage} page. Be helpful, insightful, and action-oriented. Provide clear, concise answers and suggest actionable next steps.`
           }
         })
       })
@@ -136,10 +131,8 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
         throw new Error(data.error || 'Failed to get AI response')
       }
 
-      // Format response based on type
       let content = data.data.message || data.data.content || 'I understand. How can I help further?'
 
-      // If actions were executed, show them
       if (data.data.type === 'action' && data.data.actions && data.data.actions.length > 0) {
         const actionsText = data.data.actions.map((action: any) => {
           if (action.success) {
@@ -165,7 +158,7 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
-        content: `I apologize, but I encountered an error: ${error.message}. Please try again.`,
+        content: `I apologize, but I encountered an error: ${error.message}. Please try again or contact support if the issue persists.`,
         timestamp: new Date(),
       }
       setMessages(prev => [...prev, errorMessage])
@@ -174,60 +167,32 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
     }
   }
 
-  const getContextualResponse = (question: string, page: string): string => {
-    const lowerQ = question.toLowerCase()
-
-    // Page-specific responses
-    if (page === 'dashboard') {
-      if (lowerQ.includes('metric') || lowerQ.includes('stats')) {
-        return "Your dashboard shows key metrics: $2.4M revenue (↑12.5%), 47 active deals (↑8), 32% conversion rate (↑4.3%), and 12 tasks due today."
-      }
-      if (lowerQ.includes('do') || lowerQ.includes('help')) {
-        return "On the dashboard, you can:\n• View key metrics and trends\n• See recent activity\n• Check upcoming tasks\n• Quick actions: Add contact or deal\n• Navigate to specific sections"
-      }
-    }
-
-    if (page === 'contacts') {
-      if (lowerQ.includes('add') || lowerQ.includes('create')) {
-        return "To add a contact, click the '+ Add Contact' button in the top right. Fill in their details like name, email, company, and phone number."
-      }
-      if (lowerQ.includes('import')) {
-        return "You can import contacts from CSV by clicking the 'Import' button. Make sure your CSV has columns for: firstName, lastName, email, company, phone."
-      }
-    }
-
-    if (page === 'deals') {
-      if (lowerQ.includes('stage') || lowerQ.includes('move')) {
-        return "The deal pipeline has 6 stages: Lead → Qualified → Proposal → Negotiation → Closed Won → Closed Lost. Drag deals between columns to update their stage."
-      }
-      if (lowerQ.includes('kanban') || lowerQ.includes('view')) {
-        return "You can switch between Kanban view (pipeline board) and List view using the toggle buttons. Kanban is great for visual pipeline management!"
-      }
-    }
-
-    // General responses
-    if (lowerQ.includes('hello') || lowerQ.includes('hi')) {
-      return `Hi! I'm Albedo, your AI assistant. You're currently on the ${page} page. How can I help you?`
-    }
-
-    if (lowerQ.includes('navigate') || lowerQ.includes('go to')) {
-      return "You can navigate using the sidebar:\n• Dashboard - Overview and metrics\n• Contacts - Manage people\n• Deals - Sales pipeline\n• Accounts - Companies\n• Tasks - To-do list"
-    }
-
-    // Default response
-    return `I'm here to help you with ClientForge CRM! You're on the ${page} page. I can answer questions about features, help you navigate, or explain how to use specific tools. What would you like to know?`
-  }
-
   const quickActions = [
-    { label: '💡 What can I do here?', query: 'What can I do on this page?' },
-    { label: '📊 Get dashboard stats', query: 'Get my dashboard statistics' },
-    { label: '✅ Show upcoming tasks', query: 'Show my upcoming tasks for the next 7 days' },
-    { label: '🔍 Search web', query: 'Search the web for information about CRM best practices' },
+    {
+      icon: <TrendingUp className="w-4 h-4" />,
+      label: 'Show me key metrics',
+      query: 'What are my key performance metrics and trends?'
+    },
+    {
+      icon: <Users className="w-4 h-4" />,
+      label: 'Top contacts this week',
+      query: 'Show me the most engaged contacts from this week'
+    },
+    {
+      icon: <Sparkles className="w-4 h-4" />,
+      label: 'Get AI insights',
+      query: 'Give me AI-powered insights about my sales pipeline'
+    },
+    {
+      icon: <Zap className="w-4 h-4" />,
+      label: 'Quick actions',
+      query: 'What quick actions can I take right now to boost productivity?'
+    },
   ]
 
   return (
     <>
-      {/* Floating Button - Draggable with logo */}
+      {/* Enterprise Floating Button */}
       {!isOpen && (
         <button
           ref={buttonRef}
@@ -237,105 +202,150 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
               setIsOpen(true)
             }
           }}
-          className="fixed z-50 w-16 h-16 bg-gradient-to-br from-charcoal-950 via-charcoal-900 to-charcoal-950 hover:from-charcoal-900 hover:via-charcoal-800 hover:to-charcoal-900 rounded-full shadow-2xl hover:shadow-[0_0_40px_rgba(250,249,247,0.3)] transition-shadow duration-300 flex items-center justify-center group border-2 border-alabaster-300/40 relative overflow-hidden"
+          className="fixed z-50 w-16 h-16 rounded-2xl shadow-2xl transition-all duration-300 flex items-center justify-center group overflow-hidden"
           style={{
             bottom: `${buttonPosition.bottom}px`,
             right: `${buttonPosition.right}px`,
-            cursor: isDragging ? 'grabbing' : 'grab'
+            cursor: isDragging ? 'grabbing' : 'grab',
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
           }}
         >
-          {/* Subtle rotating shimmer */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-alabaster-200/10 to-transparent animate-shimmer rounded-full" style={{ backgroundSize: '200% 100%' }} />
-
-          {/* Logo */}
-          <img
-            src="/logo.png"
-            alt="Albedo AI"
-            className="w-9 h-9 object-contain relative z-10 drop-shadow-lg group-hover:scale-110 transition-transform"
+          {/* Animated gradient border */}
+          <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              background: 'linear-gradient(135deg, #faf9f7 0%, #e8e6e3 50%, #faf9f7 100%)',
+              padding: '2px',
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMaskComposite: 'xor',
+              maskComposite: 'exclude'
+            }}
           />
-          <span className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-alabaster-200 to-alabaster-300 border-2 border-charcoal-900 rounded-full flex items-center justify-center text-[10px] text-charcoal-900 font-bold shadow-lg animate-pulse-slow">
-            AI
-          </span>
+
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
+          {/* Logo container with glow */}
+          <div className="relative z-10 w-10 h-10 rounded-xl bg-gradient-to-br from-alabaster-100 to-alabaster-200 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+            style={{
+              boxShadow: '0 4px 12px rgba(250, 249, 247, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.8)'
+            }}
+          >
+            <MessageSquare className="w-6 h-6 text-charcoal-900" />
+          </div>
+
+          {/* AI Badge */}
+          <div className="absolute -top-1 -right-1 w-7 h-7 bg-gradient-to-br from-emerald-400 to-teal-500 border-2 border-charcoal-900 rounded-full flex items-center justify-center shadow-lg"
+            style={{
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-white" />
+          </div>
         </button>
       )}
 
-      {/* Chat Window - Microsoft Copilot Style */}
+      {/* Premium Chat Window */}
       {isOpen && (
         <div
-          className={`fixed z-50 bg-white dark:bg-dark-secondary rounded-2xl flex flex-col transition-all ${
-            isMinimized ? 'w-80 h-14' : 'w-[420px] h-[640px]'
+          className={`fixed z-50 flex flex-col transition-all duration-300 ${
+            isMinimized ? 'w-96 h-16' : 'w-[480px] h-[700px]'
           }`}
           style={{
             bottom: `${buttonPosition.bottom}px`,
             right: `${buttonPosition.right}px`,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)'
+            background: 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
+            borderRadius: '24px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.08)',
+            backdropFilter: 'blur(20px)'
           }}
         >
-          {/* Header - Premium Black Gradient (Copilot Style) */}
-          <div className="relative bg-gradient-to-r from-charcoal-950 via-charcoal-900 to-charcoal-950 text-alabaster-50 px-5 py-4 rounded-t-2xl flex items-center justify-between overflow-hidden border-b border-alabaster-400/20"
+          {/* Premium Header */}
+          <div className="relative px-6 py-5 rounded-t-3xl flex items-center justify-between overflow-hidden"
             style={{
-              boxShadow: '0 1px 0 0 rgba(250, 249, 247, 0.05) inset'
+              background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)',
+              borderBottom: '1px solid rgba(250, 249, 247, 0.1)'
             }}
           >
-            {/* Subtle gradient overlay (Copilot-style sophistication) */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-alabaster-200/5 to-transparent" />
+            {/* Ambient glow effect */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-full blur-3xl" />
 
-            {/* Ambient light effect */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-alabaster-300/5 rounded-full blur-3xl" />
-
-            <div className="flex items-center gap-3 relative z-10">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-alabaster-100 to-alabaster-200 flex items-center justify-center shadow-lg border border-alabaster-300/40 p-1.5"
-                style={{
-                  boxShadow: '0 2px 8px rgba(250, 249, 247, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.5)'
-                }}
-              >
-                <img
-                  src="/logo.png"
-                  alt="Albedo"
-                  className="w-full h-full object-contain"
+            <div className="flex items-center gap-4 relative z-10">
+              {/* Avatar with animated border */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl animate-spin-slow"
+                  style={{ padding: '2px' }}
                 />
+                <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-alabaster-100 to-alabaster-200 flex items-center justify-center"
+                  style={{
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.8)'
+                  }}
+                >
+                  <MessageSquare className="w-6 h-6 text-charcoal-900" />
+                </div>
               </div>
+
               <div>
-                <h3 className="font-syne font-bold text-alabaster-50 text-base tracking-wide" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>Albedo</h3>
-                <p className="text-xs font-syne-mono text-alabaster-300/90">AI Assistant</p>
+                <h3 className="font-syne font-bold text-alabaster-50 text-lg tracking-tight flex items-center gap-2">
+                  Albedo
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                </h3>
+                <p className="text-xs font-syne-mono text-alabaster-300/80 flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  AI Assistant • Online
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 relative z-10">
+            <div className="flex items-center gap-1.5 relative z-10">
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="p-2 hover:bg-alabaster-100/10 rounded-md transition-all duration-150"
+                className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-200 group"
                 title={isMinimized ? "Expand" : "Minimize"}
               >
-                {isMinimized ? <Maximize2 className="w-4 h-4 text-alabaster-100" /> : <Minimize2 className="w-4 h-4 text-alabaster-100" />}
+                {isMinimized ?
+                  <Maximize2 className="w-5 h-5 text-alabaster-200 group-hover:text-white transition-colors" /> :
+                  <Minimize2 className="w-5 h-5 text-alabaster-200 group-hover:text-white transition-colors" />
+                }
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-alabaster-100/10 rounded-md transition-all duration-150"
+                className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-200 group"
                 title="Close"
               >
-                <X className="w-4 h-4 text-alabaster-100" />
+                <X className="w-5 h-5 text-alabaster-200 group-hover:text-white transition-colors" />
               </button>
             </div>
           </div>
 
           {/* Messages Area */}
           {!isMinimized && (
-            <div className="flex-1 flex flex-col bg-alabaster-50/40 dark:bg-dark-tertiary/40 backdrop-blur-sm">
-              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)' }}>
                 {messages.length === 0 ? (
-                  <div className="text-center text-charcoal-600 dark:text-charcoal-400 mt-12">
-                    <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-alabaster-200 to-alabaster-300 dark:from-charcoal-800 dark:to-charcoal-700 flex items-center justify-center shadow-lg border border-alabaster-400/30 dark:border-charcoal-600/30 p-3">
-                      <img
-                        src="/logo.png"
-                        alt="Albedo"
-                        className="w-full h-full object-contain"
-                      />
+                  <div className="text-center mt-16">
+                    {/* Welcome Avatar */}
+                    <div className="relative w-24 h-24 mx-auto mb-6">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/30 to-teal-500/30 rounded-3xl animate-pulse" />
+                      <div className="relative w-full h-full rounded-3xl bg-gradient-to-br from-alabaster-100 to-alabaster-200 flex items-center justify-center"
+                        style={{
+                          boxShadow: '0 8px 24px rgba(16, 185, 129, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.9)'
+                        }}
+                      >
+                        <MessageSquare className="w-12 h-12 text-charcoal-900" />
+                      </div>
                     </div>
-                    <h4 className="font-syne font-bold text-charcoal-900 dark:text-charcoal-50 mb-2 text-lg">Hi, I'm Albedo</h4>
-                    <p className="text-sm font-syne-mono mb-10 text-charcoal-500 dark:text-charcoal-400 px-4">Your AI assistant for ClientForge CRM</p>
 
-                    <div className="space-y-2.5 px-2">
+                    <h4 className="font-syne font-bold text-charcoal-900 mb-2 text-2xl">Welcome to Albedo</h4>
+                    <p className="text-sm font-syne-mono mb-3 text-charcoal-600 max-w-sm mx-auto">
+                      Your intelligent AI assistant for ClientForge CRM
+                    </p>
+                    <p className="text-xs font-syne-mono text-charcoal-500 mb-12 px-8">
+                      Ask me anything about your CRM data, get insights, or let me help you take action
+                    </p>
+
+                    {/* Quick Actions Grid */}
+                    <div className="grid grid-cols-2 gap-3 px-4">
                       {quickActions.map((action, i) => (
                         <button
                           key={i}
@@ -343,12 +353,26 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
                             setInput(action.query)
                             setTimeout(handleSend, 100)
                           }}
-                          className="w-full text-left px-4 py-3.5 bg-white dark:bg-dark-secondary hover:bg-alabaster-100 dark:hover:bg-dark-hover rounded-lg text-sm font-syne-mono transition-all duration-150 border border-alabaster-600/30 dark:border-dark-border hover:border-alabaster-600/50 dark:hover:border-dark-border/70"
+                          className="group relative text-left px-5 py-4 bg-white hover:bg-alabaster-50 rounded-2xl transition-all duration-200 border border-charcoal-200/40 hover:border-emerald-400/50 overflow-hidden"
                           style={{
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
                           }}
                         >
-                          {action.label}
+                          {/* Hover gradient */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/0 to-teal-500/0 group-hover:from-emerald-400/5 group-hover:to-teal-500/5 transition-all duration-200" />
+
+                          <div className="relative">
+                            <div className="w-9 h-9 mb-3 rounded-xl bg-gradient-to-br from-charcoal-900 to-charcoal-800 flex items-center justify-center text-alabaster-100 group-hover:scale-110 transition-transform duration-200"
+                              style={{
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                              }}
+                            >
+                              {action.icon}
+                            </div>
+                            <p className="text-sm font-syne-mono text-charcoal-800 font-medium leading-snug">
+                              {action.label}
+                            </p>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -357,58 +381,67 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
                   messages.map(msg => (
                     <div
                       key={msg.id}
-                      className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                      className={`flex gap-3.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-fade-in`}
                     >
+                      {/* Avatar */}
                       <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        className={`w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 ${
                           msg.role === 'user'
-                            ? 'bg-charcoal-900 dark:bg-charcoal-700'
-                            : 'bg-gradient-to-br from-alabaster-200 to-alabaster-300 dark:from-charcoal-800 dark:to-charcoal-700'
+                            ? 'bg-gradient-to-br from-charcoal-900 to-charcoal-800'
+                            : 'bg-gradient-to-br from-alabaster-100 to-alabaster-200'
                         }`}
                         style={{
                           boxShadow: msg.role === 'user'
-                            ? '0 1px 3px rgba(0, 0, 0, 0.2)'
-                            : '0 1px 3px rgba(0, 0, 0, 0.1)'
+                            ? '0 2px 8px rgba(0, 0, 0, 0.25)'
+                            : '0 2px 8px rgba(16, 185, 129, 0.15)'
                         }}
                       >
-                        <span className={`text-xs ${msg.role === 'user' ? 'text-alabaster-200' : 'text-charcoal-900 dark:text-alabaster-300'}`}>
-                          {msg.role === 'user' ? '👤' : '🤖'}
-                        </span>
+                        {msg.role === 'user' ? (
+                          <span className="text-sm text-alabaster-200">👤</span>
+                        ) : (
+                          <MessageSquare className="w-5 h-5 text-charcoal-900" />
+                        )}
                       </div>
+
+                      {/* Message Bubble */}
                       <div
-                        className={`max-w-[78%] rounded-2xl px-4 py-2.5 ${
+                        className={`max-w-[75%] rounded-2xl px-5 py-3.5 ${
                           msg.role === 'user'
-                            ? 'bg-gradient-to-br from-charcoal-950 to-charcoal-900 dark:from-charcoal-900 dark:to-charcoal-800 text-alabaster-100 rounded-br-sm'
-                            : 'bg-white dark:from-dark-secondary dark:to-dark-tertiary text-charcoal-900 dark:text-charcoal-50 rounded-bl-sm border border-alabaster-600/25 dark:border-dark-border'
+                            ? 'bg-gradient-to-br from-charcoal-900 to-charcoal-800 text-alabaster-100 rounded-tr-md'
+                            : 'bg-white text-charcoal-900 rounded-tl-md border border-charcoal-200/30'
                         }`}
                         style={{
                           boxShadow: msg.role === 'user'
-                            ? '0 1px 2px rgba(0, 0, 0, 0.2)'
-                            : '0 1px 3px rgba(0, 0, 0, 0.08)'
+                            ? '0 2px 12px rgba(0, 0, 0, 0.15)'
+                            : '0 2px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02)'
                         }}
                       >
-                        <p className="text-sm font-syne-mono whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                        <span className="text-[10px] opacity-50 mt-1.5 block font-syne-mono">
+                        <p className="text-sm font-syne-mono whitespace-pre-wrap leading-relaxed">
+                          {msg.content}
+                        </p>
+                        <span className="text-xs opacity-60 mt-2 block font-syne-mono">
                           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>
                   ))
                 )}
+
+                {/* Typing Indicator */}
                 {isLoading && (
-                  <div className="flex gap-3">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-alabaster-200 to-alabaster-300 dark:from-charcoal-800 dark:to-charcoal-700 flex items-center justify-center flex-shrink-0"
-                      style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}
+                  <div className="flex gap-3.5 animate-fade-in">
+                    <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-alabaster-100 to-alabaster-200 flex items-center justify-center flex-shrink-0"
+                      style={{ boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)' }}
                     >
-                      <span className="text-xs text-charcoal-900 dark:text-alabaster-300">🤖</span>
+                      <MessageSquare className="w-5 h-5 text-charcoal-900" />
                     </div>
-                    <div className="bg-white dark:bg-dark-secondary rounded-2xl rounded-bl-sm px-4 py-3 border border-alabaster-600/25 dark:border-dark-border"
-                      style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}
+                    <div className="bg-white rounded-2xl rounded-tl-md px-5 py-4 border border-charcoal-200/30"
+                      style={{ boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)' }}
                     >
-                      <div className="flex gap-1.5">
-                        <div className="w-1.5 h-1.5 bg-charcoal-500 dark:bg-charcoal-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-1.5 h-1.5 bg-charcoal-500 dark:bg-charcoal-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1.5 h-1.5 bg-charcoal-500 dark:bg-charcoal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="flex gap-2">
+                        <div className="w-2 h-2 bg-charcoal-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-charcoal-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
+                        <div className="w-2 h-2 bg-charcoal-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }} />
                       </div>
                     </div>
                   </div>
@@ -416,37 +449,79 @@ export default function AlbedoChat({ currentPage = 'dashboard' }: AlbedoChatProp
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Area (Copilot-style) */}
-              <div className="border-t border-alabaster-600/30 dark:border-dark-border p-4 bg-white/80 dark:bg-dark-secondary/80 backdrop-blur-sm rounded-b-2xl">
-                <div className="flex gap-2.5">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Ask Albedo anything..."
-                    disabled={isLoading}
-                    className="flex-1 px-4 py-2.5 border border-alabaster-600/40 dark:border-dark-border rounded-lg focus:outline-none focus:border-charcoal-900 dark:focus:border-charcoal-50 disabled:bg-alabaster-200 dark:disabled:bg-dark-tertiary bg-white dark:bg-dark-secondary text-charcoal-900 dark:text-charcoal-50 font-syne-mono text-sm transition-all duration-150"
-                    style={{
-                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                    }}
-                  />
+              {/* Premium Input Area */}
+              <div className="p-5 bg-white border-t border-charcoal-200/30 rounded-b-3xl">
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                      placeholder="Ask Albedo anything..."
+                      disabled={isLoading}
+                      className="w-full px-5 py-3.5 pr-12 border-2 border-charcoal-200/40 focus:border-emerald-400 rounded-2xl focus:outline-none disabled:bg-alabaster-200/50 bg-white text-charcoal-900 font-syne-mono text-sm placeholder:text-charcoal-400 transition-all duration-200"
+                      style={{
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+                      }}
+                    />
+                    {input.length > 0 && (
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-syne-mono text-charcoal-400">
+                        {input.length}
+                      </span>
+                    )}
+                  </div>
                   <button
                     onClick={handleSend}
                     disabled={isLoading || !input.trim()}
-                    className="px-4 py-2.5 bg-gradient-to-br from-charcoal-950 to-charcoal-900 dark:from-charcoal-900 dark:to-charcoal-800 text-alabaster-100 rounded-lg hover:from-charcoal-900 hover:to-charcoal-800 dark:hover:from-charcoal-800 dark:hover:to-charcoal-700 disabled:bg-alabaster-400 dark:disabled:bg-dark-tertiary disabled:cursor-not-allowed transition-all duration-150 disabled:opacity-50"
+                    className="px-5 py-3.5 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl hover:from-emerald-600 hover:to-teal-700 disabled:from-charcoal-300 disabled:to-charcoal-400 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 group"
                     style={{
-                      boxShadow: !isLoading && input.trim() ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none'
+                      boxShadow: !isLoading && input.trim()
+                        ? '0 4px 12px rgba(16, 185, 129, 0.3)'
+                        : 'none'
                     }}
                   >
-                    <Send className="w-4.5 h-4.5" />
+                    <Send className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </button>
                 </div>
+                <p className="text-xs font-syne-mono text-charcoal-500 mt-3 text-center">
+                  Albedo can make mistakes. Verify important information.
+                </p>
               </div>
             </div>
           )}
         </div>
       )}
+
+      <style>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+
+        .animate-spin-slow {
+          animation: spin-slow 4s linear infinite;
+        }
+      `}</style>
     </>
   )
 }

@@ -1,0 +1,74 @@
+========================================
+RENDER MCP SERVER SETUP - QUICK STEPS
+========================================
+
+Follow these steps to enable Claude Code to manage your Render infrastructure:
+
+STEP 1: Get Your Render API Key
+--------------------------------
+1. Open: https://dashboard.render.com/account/api-keys
+2. Click "Create API Key"
+3. Name: "Claude Code MCP Server"
+4. Click "Create" and COPY THE KEY (you won't see it again!)
+   Format: rnd_xxxxxxxxxxxxxxxxxxxxxx
+
+STEP 2: Add API Key to .env
+----------------------------
+1. Open: d:\clientforge-crm\.env
+2. Add these two lines at the bottom:
+
+   # Render Platform (for MCP Server)
+   RENDER_API_KEY=rnd_your_actual_api_key_here
+
+3. Replace "rnd_your_actual_api_key_here" with your actual key
+4. Save the file
+
+STEP 3: Configure Claude Code
+------------------------------
+1. Open (or create): C:\Users\ScrollForge\AppData\Roaming\Claude\claude_code_config.json
+
+2. Add this content:
+
+{
+  "mcpServers": {
+    "render": {
+      "url": "https://mcp.render.com/mcp",
+      "headers": {
+        "Authorization": "Bearer rnd_your_actual_api_key_here"
+      }
+    }
+  }
+}
+
+3. Replace "rnd_your_actual_api_key_here" with your actual key
+4. Save the file
+
+STEP 4: Restart Claude Code
+----------------------------
+1. Close Claude Code completely
+2. Reopen Claude Code
+3. The Render MCP server is now active!
+
+STEP 5: Set Your Workspace
+---------------------------
+Tell Claude Code which Render workspace to use:
+
+    Set my Render workspace to ClientForge
+
+DONE! Now you can use natural language prompts like:
+
+- "List all my Render services"
+- "Show me the deploy logs for clientforge-crm"
+- "Create a new Postgres database named clientforge-staging"
+- "What's the status of my production service?"
+- "Show me error logs from the last hour"
+
+========================================
+FULL DOCUMENTATION
+========================================
+
+See: d:\clientforge-crm\docs\RENDER_MCP_SETUP.md
+
+For detailed examples, troubleshooting, and advanced usage.
+
+========================================
