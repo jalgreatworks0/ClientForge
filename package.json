@@ -25,7 +25,7 @@
     "lint:fix": "eslint backend --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky install",
+    "prepare": "node -e \"try { require('husky').install() } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e }\"",
     "db:migrate": "node scripts/migration/run-migrations.js",
     "db:rollback": "node scripts/migration/rollback.js",
     "db:seed": "node scripts/migration/seed-data.js",
