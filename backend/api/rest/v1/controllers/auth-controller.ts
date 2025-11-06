@@ -11,6 +11,7 @@ import { passwordResetService } from '../../../../core/auth/password-reset-servi
 import { logger } from '../../../../utils/logging/logger'
 import { ValidationError } from '../../../../utils/errors/app-error'
 import { commonSchemas } from '../../../../middleware/validate-request'
+import { AuthRequest as BaseAuthRequest } from '../../../../middleware/auth'
 
 /**
  * Validation schemas
@@ -68,12 +69,8 @@ export const authSchemas = {
 /**
  * Extended request with IP address extraction
  */
-interface AuthRequest extends Request {
-  user?: {
-    userId: string
-    tenantId: string
-    roleId: string
-  }
+interface AuthRequest extends BaseAuthRequest {
+  // Inherits user, body, query, params, headers from BaseAuthRequest
 }
 
 /**

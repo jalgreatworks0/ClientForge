@@ -13,11 +13,13 @@ import type {
   AIStreamChunk,
   ClaudeModel,
   QueryComplexity,
-  AIFeatureType,
-  SubscriptionPlan,
   ModelSelection,
   AIError,
   AIErrorCode,
+} from './ai-types'
+import {
+  AIFeatureType,
+  SubscriptionPlan,
 } from './ai-types'
 import {
   aiConfig,

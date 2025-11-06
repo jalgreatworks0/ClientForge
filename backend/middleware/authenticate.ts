@@ -3,20 +3,11 @@
  * Verifies JWT access token and attaches user to request
  */
 
-import { Request, Response, NextFunction } from 'express'
+import { Response, NextFunction } from 'express'
 import { jwtService } from '../core/auth/jwt-service'
 import { UnauthorizedError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'
-
-export interface AuthRequest extends Request {
-  user?: {
-    userId: string
-    tenantId: string
-    roleId: string
-    email?: string
-    jti?: string
-  }
-}
+import { AuthRequest } from './auth'
 
 /**
  * Middleware to verify JWT access token

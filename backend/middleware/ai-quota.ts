@@ -3,8 +3,8 @@
  * Enforce subscription-based AI quotas and feature access
  */
 
-import type { Response, NextFunction } from 'express'
-import type { AuthRequest } from './auth'
+import { Response, NextFunction } from 'express'
+import { AuthRequest } from './auth'
 import { aiUsageRepository } from '../services/ai/ai-usage-repository'
 import { isFeatureAvailable } from '../services/ai/ai-config'
 import type { AIFeatureType, SubscriptionPlan } from '../services/ai/ai-types'

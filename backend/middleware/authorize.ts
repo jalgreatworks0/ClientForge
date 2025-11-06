@@ -3,20 +3,12 @@
  * Role-based access control (RBAC) middleware
  */
 
-import { Request, Response, NextFunction } from 'express'
+import { Response, NextFunction } from 'express'
 import { ForbiddenError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'
 import { auditLogger } from '../utils/logging/audit-logger'
 import { permissionService } from '../core/permissions/permission-service'
-
-export interface AuthRequest extends Request {
-  user?: {
-    userId: string
-    tenantId: string
-    roleId: string
-    email?: string
-  }
-}
+import { AuthRequest } from './auth'
 
 /**
  * Role hierarchy levels (higher number = more permissions)

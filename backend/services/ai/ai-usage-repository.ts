@@ -8,9 +8,11 @@ import type {
   AIUsageRecord,
   SubscriptionQuota,
   AIUsageStats,
+  QueryComplexity,
+} from './ai-types'
+import {
   AIFeatureType,
   ClaudeModel,
-  QueryComplexity,
   SubscriptionPlan,
 } from './ai-types'
 

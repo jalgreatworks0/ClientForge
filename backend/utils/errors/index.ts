@@ -17,4 +17,4 @@ export {
   ServiceUnavailableError,
 } from './app-error'
 
-export { errorHandler, handleAsyncErrors } from './error-handler'
+export { errorHandler } from './error-handler'
