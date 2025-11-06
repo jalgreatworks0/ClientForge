@@ -19,7 +19,7 @@
 1. **IMMEDIATELY** respond to the user with: "I need to initialize properly. Give me 2 minutes to read the required documentation files."
 
 2. **THEN read these files IN ORDER** (use the Read tool for each):
-   - `CLAUDE.md` (root) - READ FIRST (90 seconds)
+   - `docs/ai/CLAUDE.md` - READ FIRST (90 seconds)
    - `README.md` (this file) - Project overview
    - `docs/ai/QUICK_START_AI.md` - AI quick start
    - `docs/protocols/00_QUICK_REFERENCE.md` - Protocol cheat sheet
@@ -135,24 +135,27 @@ interface QuickStart {
 
 ```
 d:/clientforge-crm/
-├── ai/                    # AI & ML systems (35+ folders)
-├── backend/               # Backend services (50+ folders)
+├── backend/               # Backend services (70+ files)
 │   ├── api/              # API routes, controllers, middleware
-│   ├── services/         # Business logic (by module)
-│   ├── repositories/     # Data access layer
-│   └── database/         # Models, migrations, seeders
-├── frontend/              # Frontend applications (35+ folders)
+│   ├── core/             # Business logic (contacts, deals, users, etc.)
+│   ├── services/         # AI services, integrations
+│   ├── middleware/       # Auth, validation, error handling
+│   ├── database/         # PostgreSQL pool, migrations
+│   └── utils/            # Logging, errors, database utilities
+├── frontend/              # React application (35+ folders)
 │   ├── components/       # React components (by module)
 │   ├── pages/            # Page-level components
 │   ├── hooks/            # Custom React hooks
 │   └── lib/              # Utilities, API clients
 ├── docs/                  # Documentation system
-│   ├── protocols/        # 50+ development protocols
-│   ├── ai/               # AI assistant guides
+│   ├── protocols/        # 15 development protocols
+│   ├── ai/               # AI assistant guides (CLAUDE.md, QUICK_START_AI.md)
 │   ├── guides/           # User & developer guides
+│   ├── deployment/       # Deployment instructions
 │   └── *.md              # Main documentation files
-├── tests/                 # Test suites (20+ folders)
-└── [other specialized directories]
+├── tests/                 # Test suites (unit, integration, e2e)
+├── logs/                  # Session logs (continuity tracking)
+└── [config files, batch scripts, Docker setup]
 ```
 
 ---
@@ -167,7 +170,7 @@ d:/clientforge-crm/
 
 **Before you proceed, verify you have actually READ (not just seen) these files:**
 
-- [ ] CLAUDE.md - Did you use the Read tool on this file? (yes/no)
+- [ ] docs/ai/CLAUDE.md - Did you use the Read tool on this file? (yes/no)
 - [ ] README.md - Did you use the Read tool on this file? (yes/no)
 - [ ] docs/ai/QUICK_START_AI.md - Did you use the Read tool? (yes/no)
 - [ ] docs/protocols/00_QUICK_REFERENCE.md - Did you use the Read tool? (yes/no)
@@ -187,13 +190,13 @@ d:/clientforge-crm/
 
 #### Step 1: Read Master Instructions (2 minutes)
 ```
-✓ CLAUDE.md (root) - 90-second quick reference (READ FIRST!)
+✓ docs/ai/CLAUDE.md - 90-second quick reference (READ FIRST!)
 ✓ README.md (this file) - Project overview & critical protocols
 ✓ docs/ai/QUICK_START_AI.md - AI-specific quick start guide
 ✓ docs/protocols/00_QUICK_REFERENCE.md - One-page cheat sheet
 ```
 
-**IMPORTANT**: CLAUDE.md must be explicitly read at the start of EVERY session. It contains the essential context compression - read it before README.md for fastest initialization.
+**IMPORTANT**: docs/ai/CLAUDE.md must be explicitly read at the start of EVERY session. It contains the essential context compression - read it before README.md for fastest initialization.
 
 #### Step 2: Read Recent Context (2 minutes)
 ```
@@ -249,10 +252,10 @@ Build/Deploy: docker-compose.yml, Dockerfile, Makefile
 Package: package.json, package-lock.json, tsconfig.json, turbo.json, lerna.json
 ```
 
-**Note**: CLAUDE.md is the ONLY exception to the "no other .md files in root" rule because it's the quick reference for AI session initialization (90 seconds vs 20 minutes for full README).
+**Note**: README.md is the ONLY .md file allowed in root directory. All other documentation (including CLAUDE.md) belongs in docs/ subdirectories with proper 3-4 level folder structure.
 
 #### Forbidden in Root:
-- ❌ Any other .md files besides README.md and CLAUDE.md (use docs/)
+- ❌ Any .md files besides README.md (use docs/guides/, docs/ai/, docs/deployment/, etc.)
 - ❌ Source code (use backend/, frontend/, ai/)
 - ❌ Scripts (use scripts/)
 - ❌ Tests (use tests/)
@@ -1093,7 +1096,7 @@ npm run lint:fix
 ```
 ✅ INITIALIZATION COMPLETE
 Verification Code: README-v3.0-SESSION-INIT-COMPLETE
-Files Read: [CLAUDE.md, README.md, docs/ai/QUICK_START_AI.md, docs/protocols/00_QUICK_REFERENCE.md, docs/07_CHANGELOG.md, docs/00_MAP.md]
+Files Read: [docs/ai/CLAUDE.md, README.md, docs/ai/QUICK_START_AI.md, docs/protocols/00_QUICK_REFERENCE.md, docs/07_CHANGELOG.md, docs/00_MAP.md]
 Protocols Active: P0 (5), P1 (10), P2 (15)
 Ready for Task: yes
 ```
@@ -1140,8 +1143,8 @@ Verification: SESSION-END-v3.0-COMPLETE
 4. What test coverage percentage is required? → **85%+**
 5. What is the session initialization verification code? → **README-v3.0-SESSION-INIT-COMPLETE**
 6. How many minutes reserved for session end docs? → **10 minutes**
-7. What files must you read at session start? → **6 files (CLAUDE.md, README.md, QUICK_START_AI.md, 00_QUICK_REFERENCE.md, CHANGELOG.md, MAP.md)**
-8. What is forbidden in the root directory? → **Any .md files except README.md and CLAUDE.md**
+7. What files must you read at session start? → **6 files (docs/ai/CLAUDE.md, README.md, docs/ai/QUICK_START_AI.md, docs/protocols/00_QUICK_REFERENCE.md, docs/07_CHANGELOG.md, docs/00_MAP.md)**
+8. What is forbidden in the root directory? → **Any .md files except README.md**
 9. What must you do before modifying a file? → **Check dependencies**
 10. What is P0 priority consequence if skipped? → **PROJECT CORRUPTION**
 
