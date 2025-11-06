@@ -1,7 +1,10 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+// In production, VITE_API_URL will be set to the backend host from Render
+// We need to append /api to it since Render provides just the host
+const API_HOST = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_BASE_URL = API_HOST.endsWith('/api') ? API_HOST : `${API_HOST}/api`
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
