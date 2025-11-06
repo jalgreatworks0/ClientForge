@@ -4,6 +4,8 @@
     "outDir": "../dist/backend",
     "rootDir": ".",
     "baseUrl": ".",
+    "noEmitOnError": false,
+    "skipLibCheck": true,
     "paths": {
       "@backend/*": ["./*"]
     }
