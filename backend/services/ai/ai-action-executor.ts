@@ -60,7 +60,7 @@ export class AIActionExecutor {
 
       // Call Claude with tool definitions
       const response = await this.client.messages.create({
-        model: 'claude-3-5-sonnet-20240620',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4096,
         system: systemPrompt,
         messages: [
@@ -152,7 +152,7 @@ export class AIActionExecutor {
       });
 
       const finalResponse = await this.client.messages.create({
-        model: 'claude-3-5-sonnet-20240620',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4096,
         system: systemPrompt,
         messages: conversationMessages,

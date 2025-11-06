@@ -73,9 +73,11 @@ export async function chat(req: Request, res: Response): Promise<void> {
     });
   } catch (error: any) {
     console.error('AI chat error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to process AI request',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 }

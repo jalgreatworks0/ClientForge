@@ -5,15 +5,15 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: HUSKY=0 npm install && npm run build:backend
-    startCommand: npm run start:backend
+    buildCommand: HUSKY=0 npm install --legacy-peer-deps && cd backend && npx tsc && npx tsc-alias -p tsconfig.json
+    startCommand: node dist/backend/index.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: APP_NAME
         value: ClientForge CRM
       - key: APP_PORT
-        value: 3000
+        value: "3000"
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -44,9 +44,9 @@ services:
       - key: EMAIL_FROM
         value: noreply@clientforge.com
       - key: ENABLE_AI_FEATURES
-        value: true
+        value: "true"
       - key: ENABLE_ADVANCED_ANALYTICS
-        value: true
+        value: "true"
       - key: LOG_LEVEL
         value: info
     healthCheckPath: /api/v1/health
@@ -59,7 +59,6 @@ services:
     plan: starter
     region: oregon
     buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
     envVars:
       - key: NODE_ENV
         value: production
@@ -68,21 +67,15 @@ services:
           name: clientforge-crm-backend
           type: web
           property: host
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: SAMEORIGIN
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
     autoDeploy: true
+
+  # Redis Cache
+  - type: redis
+    name: clientforge-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
 # Database
 databases:
@@ -91,10 +84,3 @@ databases:
     user: clientforge
     plan: starter
     region: oregon
-
-# Redis Cache
-  - type: redis
-    name: clientforge-redis
-    plan: starter
-    region: oregon
-    maxmemoryPolicy: allkeys-lru

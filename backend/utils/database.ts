@@ -19,9 +19,11 @@ export async function dbRun(
     const pool = getPool()
 
     // Convert SQLite datetime('now') to PostgreSQL NOW()
+    // Convert SQLite-style placeholders (?) to PostgreSQL-style ($1, $2, etc.)
+    let paramIndex = 1
     const pgSql = sql
       .replace(/datetime\('now'\)/g, 'NOW()')
-      .replace(/\?/g, (_, index) => `$${params.findIndex((_, i) => i === index) + 1}`)
+      .replace(/\?/g, () => `$${paramIndex++}`)
 
     // For INSERT queries, try to return the inserted ID
     if (sql.trim().toUpperCase().startsWith('INSERT')) {
