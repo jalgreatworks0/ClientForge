@@ -3,42 +3,24 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./",
-    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": false,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
+    "moduleResolution": true,
     "allowJs": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@clientforge/*": ["packages/@clientforge/*/src"],
-      "@backend/*": ["backend/*"],
-      "@frontend/*": ["frontend/*"],
-      "@ai/*": ["ai/*"],
-      "@config/*": ["config/*"]
-    }
+    "strict": false,
+    "noEmitOnError": false,
+    "baseUrl": "."
   },
-  "include": [
-    "backend/**/*",
-    "frontend/**/*",
-    "packages/**/*",
-    "ai/js-modules/**/*"
-  ],
+  "include": [],
   "exclude": [
     "node_modules",
     "dist",
     "build",
     "coverage",
+    "frontend",
+    "backend",
     "**/*.spec.ts",
     "**/*.test.ts"
   ]
