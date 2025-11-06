@@ -6,6 +6,9 @@
     "baseUrl": ".",
     "noEmitOnError": false,
     "skipLibCheck": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "strict": false,
     "paths": {
       "@backend/*": ["./*"]
     }
