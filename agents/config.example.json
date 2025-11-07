@@ -1,0 +1,17 @@
+{
+  "mode": "local",
+  "adapters": {
+    "planner": {
+      "type": "local",
+      "command": "tsx agents/adapters/planner_local.ts"
+    },
+    "reviewer": {
+      "type": "local",
+      "command": "tsx agents/adapters/reviewer_local.ts"
+    }
+  },
+  "http_endpoints": {
+    "planner": "http://localhost:3001/api/plan",
+    "reviewer": "http://localhost:3002/api/review"
+  }
+}

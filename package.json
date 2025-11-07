@@ -42,7 +42,10 @@
     "docs:session-end": "powershell -ExecutionPolicy Bypass -File ./scripts/documentation/update-main-docs.ps1 -Mode session-end",
     "docs:changelog": "powershell -ExecutionPolicy Bypass -File ./scripts/documentation/update-main-docs.ps1 -Mode changelog-only",
     "docs:check": "echo 'Documentation check - Review main docs in docs/ folder'",
-    "docs:validate": "echo 'Documentation validation - Ensure all main docs are up-to-date'"
+    "docs:validate": "echo 'Documentation validation - Ensure all main docs are up-to-date'",
+    "agents:run": "tsx scripts/agents/orchestrator.ts",
+    "agents:plan": "tsx scripts/agents/orchestrator.ts --mode=plan",
+    "agents:review": "tsx scripts/agents/orchestrator.ts --mode=review"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

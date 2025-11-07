@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClientForgeAgentTask",
+  "type": "object",
+  "required": ["task_id", "role", "objective", "inputs", "constraints", "status"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Unique task identifier"
+    },
+    "role": {
+      "enum": ["planner", "builder", "reviewer"],
+      "description": "Agent role for this task"
+    },
+    "objective": {
+      "type": "string",
+      "description": "What needs to be accomplished"
+    },
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files relevant to this task"
+        },
+        "acceptance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Acceptance criteria"
+        }
+      },
+      "required": ["acceptance"]
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "loc_max": {
+          "type": "number",
+          "default": 300,
+          "description": "Maximum lines of code for changes"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Git branch to work on"
+        },
+        "pack": {
+          "type": "string",
+          "default": "crm_pack",
+          "description": "Context pack to load"
+        }
+      },
+      "required": ["loc_max", "pack"]
+    },
+    "status": {
+      "enum": ["open", "in_progress", "done", "needs_changes"],
+      "description": "Current task status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes or context"
+    }
+  }
+}

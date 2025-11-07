@@ -8,6 +8,16 @@
 
 ---
 
+## 🚀 SESSION BOOTSTRAP (COPY-PASTE)
+
+**Paste this phrase at the start of each session for instant initialization:**
+
+> Read `README.md` once, then load one pack from `docs/claude/11_CONTEXT_PACKS.md` (default `crm_pack`), then read the last two files in `logs/session-logs/`. Do not open any other files unless you ask with a byte cap (<50 KB per file). Use `docs/claude/16_REVIEW_RUBRIC.md` for reviews.
+
+**Verification:** `README-v3.0-SESSION-INIT-COMPLETE`
+
+---
+
 ## 🚨 CRITICAL: AI INITIALIZATION CHECKPOINT
 
 **STOP! Before proceeding, AI assistants MUST complete this initialization:**
@@ -909,6 +919,40 @@ export function UserProfile(props) {
 - **Redis**: Cache, sessions, real-time counters, pub/sub
 - **Elasticsearch**: Full-text search, analytics, log aggregation
 - **S3**: Files, attachments, backups, static assets
+
+---
+
+## 🤖 MULTI-AGENT CONTROL PLANE (CLIENTFORGE-TAILORED)
+
+**Augments existing protocols with lightweight agent coordination.**
+
+### Roles
+- **You (Claude)** → Builder & Orchestrator
+- **Planner (Agent A)** → Decomposes features into small builder tasks
+- **Reviewer (Agent B)** → Rubric review using `docs/claude/16_REVIEW_RUBRIC.md`
+
+### Transport
+- **Append-only JSONL:** `agents/inbox.jsonl` / `agents/outbox.jsonl`
+- **Local or HTTP adapters:** Selected via `agents/config.json` (gitignored)
+- **Canonical schema:** `agents/contracts/task.schema.json`
+
+### Commands
+```bash
+pnpm agents:run          # Start orchestrator loop (local mode)
+pnpm agents:plan         # Plan-only mode
+pnpm agents:review       # Review-only mode
+```
+
+### Integration
+This **augments** (does not replace) existing docs/ai protocols & verification codes. All ClientForge protocols remain active:
+- ✅ README.md P0/P1/P2 protocols
+- ✅ Pack system (`docs/claude/11_CONTEXT_PACKS.md`)
+- ✅ Review rubric (`docs/claude/16_REVIEW_RUBRIC.md`)
+- ✅ Verification codes (`ANTI-DUP-CHECK-COMPLETE`, `SESSION-END-v3.0-COMPLETE`)
+
+**Verification:** `AGENTS-V1-READY`
+
+**See:** [agents/README.md](agents/README.md) for details, rollback instructions.
 
 ---
 

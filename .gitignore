@@ -61,3 +61,7 @@ models/weights/
 # Temporary
 tmp/
 temp/
+
+# Agents
+agents/config.json
+agents/*.lock
