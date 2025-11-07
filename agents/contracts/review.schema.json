@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClientForgeReviewResult",
+  "type": "object",
+  "required": ["pr_url", "scores", "evidence", "verdict", "total", "percentage"],
+  "properties": {
+    "pr_url": {
+      "type": "string",
+      "description": "Pull request URL"
+    },
+    "scores": {
+      "type": "object",
+      "required": ["correctness", "type_safety", "security", "observability", "dx_ergonomics", "test_coverage", "incrementality", "risk_control"],
+      "properties": {
+        "correctness": {"type": "number", "minimum": 0, "maximum": 5},
+        "type_safety": {"type": "number", "minimum": 0, "maximum": 5},
+        "security": {"type": "number", "minimum": 0, "maximum": 5},
+        "observability": {"type": "number", "minimum": 0, "maximum": 5},
+        "dx_ergonomics": {"type": "number", "minimum": 0, "maximum": 5},
+        "test_coverage": {"type": "number", "minimum": 0, "maximum": 5},
+        "incrementality": {"type": "number", "minimum": 0, "maximum": 5},
+        "risk_control": {"type": "number", "minimum": 0, "maximum": 5}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["file", "line", "note"],
+        "properties": {
+          "file": {"type": "string"},
+          "line": {"type": "number"},
+          "note": {"type": "string"}
+        }
+      },
+      "description": "Evidence citations (max 12)"
+    },
+    "verdict": {
+      "enum": ["approve", "approve_with_comments", "request_changes", "reject"],
+      "description": "Review verdict"
+    },
+    "total": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 40,
+      "description": "Total score (sum of 8 dimensions)"
+    },
+    "percentage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percentage score (total/40 * 100)"
+    },
+    "required_changes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Blocking issues"
+    },
+    "optional_suggestions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Nice-to-have improvements"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional review context"
+    }
+  }
+}

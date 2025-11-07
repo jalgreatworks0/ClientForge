@@ -105,10 +105,10 @@ async function runPlanner(objective: string, config: Config): Promise<Task> {
     const output = await executeLocal(config.planner.local!.command, objective);
     return JSON.parse(output);
   } else if (mode === 'claude_sdk') {
-    const { planWithClaude } = await import('../../agents/adapters/planner_claude_sdk');
+    const { planWithFallback } = await import('../../agents/adapters/planner_claude_sdk');
     const apiKey = process.env.CLAUDE_API_KEY;
     if (!apiKey) throw new Error('CLAUDE_API_KEY not set');
-    return planWithClaude(objective, apiKey);
+    return planWithFallback(objective, apiKey);
   } else if (mode === 'http') {
     const { planViaHttp } = await import('../../agents/adapters/planner_http');
     return planViaHttp(config.planner.http!.endpoint, objective);
@@ -124,10 +124,10 @@ async function runReviewer(prUrl: string, config: Config): Promise<any> {
     const output = await executeLocal(config.reviewer.local!.command, prUrl);
     return JSON.parse(output);
   } else if (mode === 'gpt_sdk') {
-    const { reviewWithGPT } = await import('../../agents/adapters/reviewer_gpt_sdk');
+    const { reviewWithFallback } = await import('../../agents/adapters/reviewer_gpt_sdk');
     const apiKey = process.env.GPT_API_KEY;
     if (!apiKey) throw new Error('GPT_API_KEY not set');
-    return reviewWithGPT(prUrl, apiKey);
+    return reviewWithFallback(prUrl, apiKey);
   } else if (mode === 'http') {
     const { reviewViaHttp } = await import('../../agents/adapters/reviewer_http');
     return reviewViaHttp(config.reviewer.http!.endpoint, prUrl);

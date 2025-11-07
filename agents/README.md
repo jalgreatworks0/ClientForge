@@ -160,11 +160,46 @@ This **augments** (does not replace) `docs/ai` protocols.
 
 ---
 
+## Optimization & Reliability (v1.2)
+
+The API helpers (`planner_claude_sdk`, `reviewer_gpt_sdk`) are optimized for production use with:
+
+### Retry & Backoff
+- **Exponential backoff** with jitter (300ms base, 2x multiplier, 5s max)
+- **4 retry attempts** for transient failures (network, rate limits, timeouts)
+- **Circuit breaker**: 3 consecutive failures → 60s cooldown → auto-fallback to local
+
+### Cost Controls
+- **Token limits**: max_tokens=800 (down from 1024/1500)
+- **Temperature tuning**: 0.2 (planner), 0.1 (reviewer) for deterministic outputs
+- **Tighter prompts**: <30 lines, strict JSON-only format
+
+### Graceful Degradation
+- **Auto-fallback**: API failures automatically return local stub responses
+- **No hard failures**: System always produces valid output (review/task)
+- **Metrics emission**: Structured JSON logs to stderr with `{helper, mode, latency_ms, success, fallback_used}`
+
+### Quality Assurance
+- **JSON validation**: Runtime checks using `safeParseJSON()` + `validateFields()`
+- **Schema compliance**: Reviewer output strictly aligns with [review.schema.json](contracts/review.schema.json)
+- **Evidence limiting**: Max 12 findings per review (aligned with rubric)
+- **Rubric alignment**: 8-dimension scoring (correctness, type_safety, security, observability, dx_ergonomics, test_coverage, incrementality, risk_control)
+
+### Configuration
+See `agents/config.example.json` → `limits` section for retry/circuit breaker settings.
+
+### Troubleshooting
+- **Circuit breaker open**: Wait 60s or restart process to reset failures
+- **Fallback mode triggered**: Check stderr logs for error details, verify API keys in `.env`
+- **High latency**: Review `latency_ms` in stderr metrics, consider reducing prompt complexity
+
+---
+
 ## Current Status
 
-**Version:** 1.1.0
-**Status:** ✅ Operational (local stubs + API adapters)
-**Verification:** `AGENTS-V1.1-READY`
+**Version:** 1.2.0
+**Status:** ✅ Operational (local stubs + optimized API adapters with retry/fallback)
+**Verification:** `AGENTS-V1.2-OPTIMIZED`
 
 ---
 
