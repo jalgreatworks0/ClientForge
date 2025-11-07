@@ -13,14 +13,17 @@ const CONFIG = path.join(ROOT, 'agents/config.json');
 const CONFIG_EXAMPLE = path.join(ROOT, 'agents/config.example.json');
 
 interface Config {
-  mode: 'local' | 'http';
-  adapters: {
-    planner: { type: string; command: string };
-    reviewer: { type: string; command: string };
+  planner: {
+    mode: 'local' | 'claude_sdk' | 'http';
+    local?: { command: string };
+    claude_sdk?: { model: string };
+    http?: { endpoint: string };
   };
-  http_endpoints?: {
-    planner: string;
-    reviewer: string;
+  reviewer: {
+    mode: 'local' | 'gpt_sdk' | 'http';
+    local?: { command: string };
+    gpt_sdk?: { model: string };
+    http?: { endpoint: string };
   };
 }
 
@@ -96,26 +99,40 @@ async function executeLocal(command: string, input: string): Promise<string> {
 
 // Run planner
 async function runPlanner(objective: string, config: Config): Promise<Task> {
-  if (config.mode === 'local') {
-    const output = await executeLocal(config.adapters.planner.command, objective);
+  const mode = config.planner.mode;
+
+  if (mode === 'local') {
+    const output = await executeLocal(config.planner.local!.command, objective);
     return JSON.parse(output);
-  } else {
-    // HTTP mode (stub)
+  } else if (mode === 'claude_sdk') {
+    const { planWithClaude } = await import('../../agents/adapters/planner_claude_sdk');
+    const apiKey = process.env.CLAUDE_API_KEY;
+    if (!apiKey) throw new Error('CLAUDE_API_KEY not set');
+    return planWithClaude(objective, apiKey);
+  } else if (mode === 'http') {
     const { planViaHttp } = await import('../../agents/adapters/planner_http');
-    return planViaHttp(config.http_endpoints!.planner, objective);
+    return planViaHttp(config.planner.http!.endpoint, objective);
   }
+  throw new Error(`Unknown planner mode: ${mode}`);
 }
 
 // Run reviewer
 async function runReviewer(prUrl: string, config: Config): Promise<any> {
-  if (config.mode === 'local') {
-    const output = await executeLocal(config.adapters.reviewer.command, prUrl);
+  const mode = config.reviewer.mode;
+
+  if (mode === 'local') {
+    const output = await executeLocal(config.reviewer.local!.command, prUrl);
     return JSON.parse(output);
-  } else {
-    // HTTP mode (stub)
+  } else if (mode === 'gpt_sdk') {
+    const { reviewWithGPT } = await import('../../agents/adapters/reviewer_gpt_sdk');
+    const apiKey = process.env.GPT_API_KEY;
+    if (!apiKey) throw new Error('GPT_API_KEY not set');
+    return reviewWithGPT(prUrl, apiKey);
+  } else if (mode === 'http') {
     const { reviewViaHttp } = await import('../../agents/adapters/reviewer_http');
-    return reviewViaHttp(config.http_endpoints!.reviewer, prUrl);
+    return reviewViaHttp(config.reviewer.http!.endpoint, prUrl);
   }
+  throw new Error(`Unknown reviewer mode: ${mode}`);
 }
 
 // Main orchestrator loop
@@ -124,7 +141,7 @@ async function orchestrate(mode?: string) {
   const config = loadConfig();
 
   console.log(`[Orchestrator] Mode: ${mode || 'loop'}`);
-  console.log(`[Orchestrator] Config: ${config.mode}`);
+  console.log(`[Orchestrator] Planner: ${config.planner.mode}, Reviewer: ${config.reviewer.mode}`);
 
   if (mode === 'plan') {
     // Plan-only mode

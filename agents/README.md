@@ -102,13 +102,69 @@ To disable the agents system:
 3. Delete `scripts/agents/` directory
 4. Revert README.md changes (remove "Multi-Agent Control Plane" section)
 
+## API Helpers (Claude & GPT)
+
+**Added in v1.1:** Real AI-powered adapters using Anthropic Claude SDK and OpenAI GPT SDK.
+
+### Modes
+Each helper (planner, reviewer) supports 3 modes configured in `agents/config.json`:
+- **`local`**: Deterministic stubs (stdin/stdout)
+- **`claude_sdk`** (planner) / **`gpt_sdk`** (reviewer): Live API calls
+- **`http`**: Custom HTTP endpoints
+
+### Required Environment Variables
+Create a `.env` file in the project root with:
+```bash
+CLAUDE_API_KEY=sk-ant-...     # For planner with claude_sdk mode
+GPT_API_KEY=sk-...            # For reviewer with gpt_sdk mode
+```
+
+**Never commit `.env`** — it's gitignored.
+
+### Default Models
+- **Planner (Claude)**: `claude-3-5-sonnet-20241022`
+- **Reviewer (GPT)**: `gpt-4-turbo`
+
+Override in `agents/config.json`:
+```json
+{
+  "planner": {
+    "mode": "claude_sdk",
+    "claude_sdk": { "model": "claude-3-7" }
+  },
+  "reviewer": {
+    "mode": "gpt_sdk",
+    "gpt_sdk": { "model": "gpt-5.1" }
+  }
+}
+```
+
+### Demo Commands
+```bash
+# Set API keys in .env first
+# Then run:
+
+pnpm agents:plan             # Uses planner.mode (e.g., claude_sdk)
+pnpm agents:review           # Uses reviewer.mode (e.g., gpt_sdk)
+pnpm agents:run              # Full orchestrator loop
+```
+
+### Integration with ClientForge
+All helpers follow ClientForge protocols:
+- ✅ Pack system (`crm_pack`, `auth_pack`, etc.)
+- ✅ Review rubric (8-dimension scoring)
+- ✅ Task schema with LOC constraints
+- ✅ Verification codes
+
+This **augments** (does not replace) `docs/ai` protocols.
+
+---
+
 ## Current Status
 
-**Version:** 1.0.0
-**Status:** ✅ Operational (stub adapters)
-**Verification:** `AGENTS-V1-READY`
-
-The adapters currently return deterministic sample data. Replace with real implementations (AI calls, GitHub API, etc.) as needed.
+**Version:** 1.1.0
+**Status:** ✅ Operational (local stubs + API adapters)
+**Verification:** `AGENTS-V1.1-READY`
 
 ---
 

@@ -1,17 +1,28 @@
 {
-  "mode": "local",
-  "adapters": {
-    "planner": {
-      "type": "local",
+  "planner": {
+    "mode": "local",
+    "local": {
       "command": "tsx agents/adapters/planner_local.ts"
     },
-    "reviewer": {
-      "type": "local",
-      "command": "tsx agents/adapters/reviewer_local.ts"
+    "claude_sdk": {
+      "model": "claude-3-5-sonnet-20241022",
+      "notes": "Uses CLAUDE_API_KEY from env"
+    },
+    "http": {
+      "endpoint": "http://localhost:3001/api/plan"
     }
   },
-  "http_endpoints": {
-    "planner": "http://localhost:3001/api/plan",
-    "reviewer": "http://localhost:3002/api/review"
+  "reviewer": {
+    "mode": "local",
+    "local": {
+      "command": "tsx agents/adapters/reviewer_local.ts"
+    },
+    "gpt_sdk": {
+      "model": "gpt-4-turbo",
+      "notes": "Uses GPT_API_KEY from env"
+    },
+    "http": {
+      "endpoint": "http://localhost:3002/api/review"
+    }
   }
 }
