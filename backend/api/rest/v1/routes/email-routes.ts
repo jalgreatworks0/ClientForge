@@ -5,7 +5,6 @@
 
 import { Router, Request, Response } from 'express'
 import { authenticate } from '../../../../middleware/authenticate'
-import { requirePermission } from '../../../../middleware/authorize'
 import { emailIntegrationService } from '../../../../core/email/email-integration-service'
 import { logger } from '../../../../utils/logging/logger'
 import type { EmailSearchFilters, SendEmailDto } from '../../../../core/email/email-types'
@@ -139,7 +138,7 @@ router.post('/callback', async (req: Request, res: Response) => {
  * GET /api/v1/email/accounts
  * List all email accounts for the authenticated user
  */
-router.get('/accounts', requirePermission('emails:read'), async (req: Request, res: Response) => {
+router.get('/accounts', async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id
     const tenantId = req.user?.tenantId
@@ -183,7 +182,6 @@ router.get('/accounts', requirePermission('emails:read'), async (req: Request, r
  */
 router.post(
   '/accounts/:accountId/sync',
-  requirePermission('emails:read'),
   async (req: Request, res: Response) => {
     try {
       const { accountId } = req.params
@@ -231,7 +229,6 @@ router.post(
  */
 router.delete(
   '/accounts/:accountId',
-  requirePermission('emails:delete'),
   async (req: Request, res: Response) => {
     try {
       const { accountId } = req.params
@@ -276,7 +273,7 @@ router.delete(
  * Search and filter email messages
  * Query params: from, subject, isRead, dateFrom, dateTo, contactId, dealId, page, limit
  */
-router.get('/messages', requirePermission('emails:read'), async (req: Request, res: Response) => {
+router.get('/messages', async (req: Request, res: Response) => {
   try {
     const tenantId = req.user?.tenantId
     if (!tenantId) {
@@ -339,7 +336,6 @@ router.get('/messages', requirePermission('emails:read'), async (req: Request, r
  */
 router.get(
   '/messages/:messageId',
-  requirePermission('emails:read'),
   async (req: Request, res: Response) => {
     try {
       const { messageId } = req.params
@@ -392,7 +388,7 @@ router.get(
  * Send an email via a connected account
  * Body: { accountId: string, to: EmailAddress[], subject: string, bodyHtml?: string, bodyText?: string, ... }
  */
-router.post('/send', requirePermission('emails:create'), async (req: Request, res: Response) => {
+router.post('/send', async (req: Request, res: Response) => {
   try {
     const { accountId, to, cc, bcc, subject, bodyHtml, bodyText, replyTo } = req.body
 
@@ -451,7 +447,6 @@ router.post('/send', requirePermission('emails:create'), async (req: Request, re
  */
 router.patch(
   '/messages/:messageId/link',
-  requirePermission('emails:update'),
   async (req: Request, res: Response) => {
     try {
       const { messageId } = req.params
