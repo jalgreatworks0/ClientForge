@@ -312,9 +312,10 @@ interface DatabaseArchitecture {
 - **Deal Pipeline** - Drag-and-drop Kanban board (@dnd-kit), multi-pipeline support, 6-stage default pipeline (Lead → Qualification → Proposal → Negotiation → Won/Lost), probability tracking (0-100%), weighted revenue forecasting, stage history tracking, bulk operations
 - **Email Integration** - 100% Complete: Gmail & Outlook OAuth2 integration, bidirectional sync (every 5 minutes), full inbox UI, compose/reply, CRM linking (contacts/deals), background job processing with Bull queue
 - **Reporting & Analytics Dashboard** - 100% Complete: 6 REST API endpoints with PostgreSQL aggregations, interactive charts (revenue trend, sales funnel, lead sources), team performance metrics, date range filters, CSV/PDF export functionality
+- **AI-Powered Features** - 100% Complete: Lead Scoring with ML (0-100 scores, A-F grades, hot/warm/cold priority), Next Action Suggestions (analyzes deal context, suggests calls/emails/meetings with timing), AI Email Composition (purpose-driven, tone-adjustable, personalized), Pattern Recognition (identifies at-risk deals, upsell/cross-sell opportunities, expansion readiness), Sentiment Analysis (email emotion detection, urgency levels, trend tracking)
 
 #### 🟡 In Progress (Partial Implementation)
-- **AI Companion (Albedo)** - Basic implementation, natural language interface in progress
+- **AI Companion (Albedo)** - Natural language interface, chat functionality, action execution
 - **User Management** - Authentication, authorization, role-based access control implemented
 
 #### 📋 Planned Features
