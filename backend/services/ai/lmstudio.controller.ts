@@ -6,9 +6,10 @@
 
 import { Controller, Get, Post, Body, Query, Param, Sse, MessageEvent } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Observable, from, map } from 'rxjs';
+
 import { LmStudioService, ChatOptions } from './lmstudio.service';
 import { LmStudioStructuredService } from './lmstudio-structured.service';
-import { Observable, from, map } from 'rxjs';
 
 @ApiTags('AI')
 @Controller('ai')

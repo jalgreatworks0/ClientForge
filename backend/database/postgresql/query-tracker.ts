@@ -4,6 +4,7 @@
  */
 
 import { Pool, QueryResult, QueryResultRow } from 'pg'
+
 import { logger } from '../../utils/logging/logger'
 
 interface QueryContext {

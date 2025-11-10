@@ -3,11 +3,21 @@
  * Unified search across contacts, accounts, and deals using Elasticsearch
  */
 
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
+
 import { authenticate } from '../../../../middleware/authenticate'
 import { getElasticsearchClient } from '../../../../../config/database/elasticsearch-config'
 import { logger } from '../../../../utils/logging/logger'
-import { BadRequestError } from '../../../../utils/errors/app-error'
+import { ValidationError } from '../../../../utils/errors/app-error'
+
+// Extend Express Request type to include user
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string
+    tenantId: string
+    role: string
+  }
+}
 
 const router = Router()
 
@@ -15,17 +25,17 @@ const router = Router()
  * GET /api/v1/search
  * Unified search across all entities
  */
-router.get('/', authenticate, async (req, res, next) => {
+router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { q, type, limit = 20, offset = 0 } = req.query
     const tenantId = req.user?.tenantId
 
     if (!q || typeof q !== 'string') {
-      throw new BadRequestError('Search query (q) is required')
+      throw new ValidationError('Search query (q) is required')
     }
 
     if (!tenantId) {
-      throw new BadRequestError('Tenant ID is required')
+      throw new ValidationError('Tenant ID is required')
     }
 
     // Determine which indexes to search
@@ -37,8 +47,7 @@ router.get('/', authenticate, async (req, res, next) => {
 
     const response = await elasticClient.search({
       index: indexes.join(','),
-      body: {
-        query: {
+      query: {
           bool: {
             must: [
               {
@@ -66,17 +75,16 @@ router.get('/', authenticate, async (req, res, next) => {
             ],
           },
         },
-        highlight: {
-          fields: {
-            '*': {
-              pre_tags: ['<mark>'],
-              post_tags: ['</mark>'],
-            },
+      highlight: {
+        fields: {
+          '*': {
+            pre_tags: ['<mark>'],
+            post_tags: ['</mark>'],
           },
         },
-        from: Number(offset),
-        size: Number(limit),
       },
+      from: Number(offset),
+      size: Number(limit),
     })
 
     const results = response.hits.hits.map((hit: any) => ({
@@ -112,25 +120,24 @@ router.get('/', authenticate, async (req, res, next) => {
  * GET /api/v1/search/suggest
  * Autocomplete suggestions
  */
-router.get('/suggest', authenticate, async (req, res, next) => {
+router.get('/suggest', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { q, type = 'contacts', limit = 5 } = req.query
     const tenantId = req.user?.tenantId
 
     if (!q || typeof q !== 'string') {
-      throw new BadRequestError('Search query (q) is required')
+      throw new ValidationError('Search query (q) is required')
     }
 
     if (!tenantId) {
-      throw new BadRequestError('Tenant ID is required')
+      throw new ValidationError('Tenant ID is required')
     }
 
     const elasticClient = await getElasticsearchClient()
 
     const response = await elasticClient.search({
       index: type as string,
-      body: {
-        query: {
+      query: {
           bool: {
             must: [
               {
@@ -149,8 +156,7 @@ router.get('/suggest', authenticate, async (req, res, next) => {
             ],
           },
         },
-        size: Number(limit),
-      },
+      size: Number(limit),
     })
 
     const suggestions = response.hits.hits.map((hit: any) => ({
@@ -172,12 +178,12 @@ router.get('/suggest', authenticate, async (req, res, next) => {
  * GET /api/v1/search/stats
  * Search index statistics
  */
-router.get('/stats', authenticate, async (req, res, next) => {
+router.get('/stats', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.user?.tenantId
 
     if (!tenantId) {
-      throw new BadRequestError('Tenant ID is required')
+      throw new ValidationError('Tenant ID is required')
     }
 
     const elasticClient = await getElasticsearchClient()
@@ -185,26 +191,20 @@ router.get('/stats', authenticate, async (req, res, next) => {
     const [contactsCount, accountsCount, dealsCount] = await Promise.all([
       elasticClient.count({
         index: 'contacts',
-        body: {
-          query: {
-            term: { tenant_id: tenantId },
-          },
+        query: {
+          term: { tenant_id: tenantId },
         },
       }),
       elasticClient.count({
         index: 'accounts',
-        body: {
-          query: {
-            term: { tenant_id: tenantId },
-          },
+        query: {
+          term: { tenant_id: tenantId },
         },
       }),
       elasticClient.count({
         index: 'deals',
-        body: {
-          query: {
-            term: { tenant_id: tenantId },
-          },
+        query: {
+          term: { tenant_id: tenantId },
         },
       }),
     ])
@@ -212,10 +212,10 @@ router.get('/stats', authenticate, async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        contacts: contactsCount.count,
-        accounts: accountsCount.count,
-        deals: dealsCount.count,
-        total: contactsCount.count + accountsCount.count + dealsCount.count,
+        contacts: (contactsCount as any).count || 0,
+        accounts: (accountsCount as any).count || 0,
+        deals: (dealsCount as any).count || 0,
+        total: ((contactsCount as any).count || 0) + ((accountsCount as any).count || 0) + ((dealsCount as any).count || 0),
       },
     })
   } catch (error) {

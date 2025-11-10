@@ -4,9 +4,11 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
-import { contactService } from './contact-service'
+
 import { AuthRequest } from '../../middleware/authenticate'
 import { logger } from '../../utils/logging/logger'
+
+import { contactService } from './contact-service'
 import {
   createContactSchema,
   updateContactSchema,

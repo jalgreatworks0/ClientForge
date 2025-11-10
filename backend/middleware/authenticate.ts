@@ -4,9 +4,11 @@
  */
 
 import { Response, NextFunction } from 'express'
+
 import { jwtService } from '../core/auth/jwt-service'
 import { UnauthorizedError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'
+
 import { AuthRequest } from './auth'
 
 // Re-export AuthRequest for use in controllers

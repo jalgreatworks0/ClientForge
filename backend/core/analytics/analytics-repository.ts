@@ -4,7 +4,9 @@
  */
 
 import { Pool } from 'pg'
+
 import { logger } from '../../utils/logging/logger'
+
 import {
   DashboardMetrics,
   ContactAnalytics,

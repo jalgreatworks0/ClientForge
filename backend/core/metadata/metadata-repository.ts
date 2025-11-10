@@ -4,7 +4,9 @@
  */
 
 import { Pool } from 'pg'
+
 import { getPool } from '../../database/postgresql/pool'
+
 import {
   Note,
   NoteWithCreator,
@@ -80,8 +82,8 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    let whereConditions: string[] = ['n.tenant_id = $1', 'n.deleted_at IS NULL']
-    let params: any[] = [tenantId]
+    const whereConditions: string[] = ['n.tenant_id = $1', 'n.deleted_at IS NULL']
+    const params: any[] = [tenantId]
     let paramIndex = 2
 
     if (filters) {
@@ -252,8 +254,8 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    let whereConditions: string[] = ['c.tenant_id = $1', 'c.deleted_at IS NULL']
-    let params: any[] = [tenantId]
+    const whereConditions: string[] = ['c.tenant_id = $1', 'c.deleted_at IS NULL']
+    const params: any[] = [tenantId]
     let paramIndex = 2
 
     if (filters) {
@@ -382,8 +384,8 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    let whereConditions: string[] = ['t.tenant_id = $1', 't.deleted_at IS NULL']
-    let params: any[] = [tenantId]
+    const whereConditions: string[] = ['t.tenant_id = $1', 't.deleted_at IS NULL']
+    const params: any[] = [tenantId]
     let paramIndex = 2
 
     if (filters) {
@@ -551,8 +553,8 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    let whereConditions: string[] = ['cf.tenant_id = $1', 'cf.deleted_at IS NULL']
-    let params: any[] = [tenantId]
+    const whereConditions: string[] = ['cf.tenant_id = $1', 'cf.deleted_at IS NULL']
+    const params: any[] = [tenantId]
     let paramIndex = 2
 
     if (filters) {

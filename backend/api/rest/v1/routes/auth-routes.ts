@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express'
+
 import * as authController from '../controllers/auth-controller'
 import { authenticate } from '../../../../middleware/authenticate'
 import { validateRequest } from '../../../../middleware/validate-request'

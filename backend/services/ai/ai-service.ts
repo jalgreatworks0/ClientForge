@@ -5,6 +5,9 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, type RedisClientType } from 'redis'
+
+import { ValidationError } from '../../utils/errors'
+
 import type {
   AIRequest,
   AIResponse,
@@ -29,7 +32,6 @@ import {
   shouldUseCache,
   getCacheTTL,
 } from './ai-config'
-import { ValidationError } from '../../utils/errors'
 
 // =====================================================
 // AI SERVICE CLASS

@@ -4,7 +4,9 @@
  */
 
 import { Response, NextFunction } from 'express'
+
 import { AuthRequest } from '../../middleware/authenticate'
+
 import { taskService } from './task-service'
 import {
   createTaskSchema,

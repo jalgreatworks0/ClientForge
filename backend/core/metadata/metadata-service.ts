@@ -3,8 +3,9 @@
  * Business logic for notes, tags, comments, and custom fields
  */
 
-import { metadataRepository } from './metadata-repository'
 import { ValidationError, NotFoundError } from '../../utils/errors'
+
+import { metadataRepository } from './metadata-repository'
 import type {
   Note,
   Comment,

@@ -6,6 +6,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { HealthIndicator, HealthIndicatorResult, HealthCheckError } from '@nestjs/terminus';
+
 import { LmStudioService } from './lmstudio.service';
 
 @Injectable()

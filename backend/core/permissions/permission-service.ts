@@ -3,9 +3,10 @@
  * Business logic for permission checking and role management
  */
 
-import { permissionRepository, Permission, Role, RoleWithPermissions } from './permission-repository'
 import { logger } from '../../utils/logging/logger'
 import { ForbiddenError, NotFoundError } from '../../utils/errors/app-error'
+
+import { permissionRepository, Permission, Role, RoleWithPermissions } from './permission-repository'
 
 export class PermissionService {
   /**

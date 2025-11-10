@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
+
 import { getRedisClient } from '../../config/database/redis-config'
 import { TooManyRequestsError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'

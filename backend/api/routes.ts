@@ -4,8 +4,11 @@
  */
 
 import { Application } from 'express'
+
 import { appConfig } from '../../config/app/app-config'
 import { getPool } from '../database/postgresql/pool'
+import { performanceStatsEndpoint } from '../middleware/performance-monitoring'
+
 import authRoutes from './rest/v1/routes/auth-routes'
 import healthRoutes from './rest/v1/routes/health-routes'
 import contactsRoutes from './rest/v1/routes/contacts-routes'
@@ -20,7 +23,6 @@ import customFieldsRoutes from './rest/v1/routes/custom-fields-routes'
 import aiRoutes from './rest/v1/routes/ai-routes'
 import searchRoutes from './rest/v1/routes/search-routes'
 import { createAnalyticsRoutes } from './rest/v1/routes/analytics-routes'
-import { performanceStatsEndpoint } from '../middleware/performance-monitoring'
 
 /**
  * Configure all application routes

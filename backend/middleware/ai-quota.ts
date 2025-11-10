@@ -4,10 +4,12 @@
  */
 
 import { Response, NextFunction } from 'express'
-import { AuthRequest } from './auth'
+
 import { aiUsageRepository } from '../services/ai/ai-usage-repository'
 import { isFeatureAvailable } from '../services/ai/ai-config'
 import type { AIFeatureType, SubscriptionPlan } from '../services/ai/ai-types'
+
+import { AuthRequest } from './auth'
 
 // =====================================================
 // QUOTA CHECK MIDDLEWARE

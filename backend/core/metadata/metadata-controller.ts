@@ -4,7 +4,10 @@
  */
 
 import type { Response, NextFunction } from 'express'
+
 import type { AuthRequest } from '../../middleware/auth'
+import { ValidationError } from '../../utils/errors'
+
 import { noteService, commentService, tagService, customFieldService } from './metadata-service'
 import {
   createNoteSchema,
@@ -33,7 +36,6 @@ import {
   AssignTagInput,
   SetCustomFieldValueInput,
 } from './metadata-types'
-import { ValidationError } from '../../utils/errors'
 
 // =====================================================
 // NOTE CONTROLLER

@@ -4,6 +4,7 @@
  */
 
 import bcrypt from 'bcrypt'
+
 import { securityConfig, validatePassword } from '../../../config/security/security-config'
 import { ValidationError } from '../../utils/errors/app-error'
 import { logger } from '../../utils/logging/logger'

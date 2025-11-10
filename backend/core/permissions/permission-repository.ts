@@ -4,6 +4,7 @@
  */
 
 import { Pool } from 'pg'
+
 import { getPostgresPool } from '../../../config/database/postgres-config'
 import { logger } from '../../utils/logging/logger'
 

@@ -4,6 +4,7 @@
  */
 
 import jwt, { Algorithm } from 'jsonwebtoken'
+
 import { securityConfig } from '../../../config/security/security-config'
 import { UnauthorizedError } from '../../utils/errors/app-error'
 import { logger } from '../../utils/logging/logger'

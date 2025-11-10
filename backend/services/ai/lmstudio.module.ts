@@ -5,6 +5,7 @@
  */
 
 import { Module } from '@nestjs/common';
+
 import { LmStudioService } from './lmstudio.service';
 import { LmStudioStructuredService } from './lmstudio-structured.service';
 import { LmStudioController } from './lmstudio.controller';

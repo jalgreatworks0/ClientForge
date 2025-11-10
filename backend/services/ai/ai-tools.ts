@@ -10,8 +10,9 @@
  * - Execute workflows
  */
 
-import { dbAll, dbRun, dbGet } from '../../utils/database';
 import fetch from 'node-fetch';
+
+import { dbAll, dbRun, dbGet } from '../../utils/database';
 
 // =====================================================
 // TOOL DEFINITIONS

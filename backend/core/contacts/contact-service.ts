@@ -3,9 +3,10 @@
  * Business logic for contacts management
  */
 
-import { contactRepository } from './contact-repository'
 import { logger } from '../../utils/logging/logger'
 import { AppError, NotFoundError, ValidationError } from '../../utils/errors/app-error'
+import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
+
 import {
   Contact,
   ContactFilters,
@@ -17,7 +18,7 @@ import {
   ContactWithRelations,
   ContactStatistics,
 } from './contact-types'
-import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
+import { contactRepository } from './contact-repository'
 
 export class ContactService {
   /**

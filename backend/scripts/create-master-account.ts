@@ -3,9 +3,10 @@
  * Creates the default tenant and master admin user
  */
 
+import { v4 as uuidv4 } from 'uuid'
+
 import { getPool } from '../database/postgresql/pool'
 import { hashPassword } from '../core/auth/password-service'
-import { v4 as uuidv4 } from 'uuid'
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'
 const MASTER_EMAIL = 'master@clientforge.io'

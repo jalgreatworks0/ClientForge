@@ -5,6 +5,7 @@
  */
 
 import { getPool } from '../database/postgresql/pool'
+
 import { logger } from './logging/logger'
 
 /**

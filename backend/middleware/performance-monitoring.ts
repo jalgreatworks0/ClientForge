@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
+
 import { logger } from '../utils/logging/logger'
 import { getPool } from '../database/postgresql/pool'
 

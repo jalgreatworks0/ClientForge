@@ -4,7 +4,9 @@
  */
 
 import { Pool } from 'pg'
+
 import { getPool } from '../../database/postgresql/pool'
+
 import {
   Task,
   TaskWithRelations,
@@ -102,8 +104,8 @@ export class TaskRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    let whereConditions: string[] = ['t.tenant_id = $1', 't.deleted_at IS NULL']
-    let params: any[] = [tenantId]
+    const whereConditions: string[] = ['t.tenant_id = $1', 't.deleted_at IS NULL']
+    const params: any[] = [tenantId]
     let paramIndex = 2
 
     // Build WHERE clause from filters
@@ -329,8 +331,8 @@ export class TaskRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    let whereConditions: string[] = ['a.tenant_id = $1', 'a.deleted_at IS NULL']
-    let params: any[] = [tenantId]
+    const whereConditions: string[] = ['a.tenant_id = $1', 'a.deleted_at IS NULL']
+    const params: any[] = [tenantId]
     let paramIndex = 2
 
     // Build WHERE clause from filters

@@ -10,6 +10,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+
 import { ALL_TOOLS, getToolByName, getAllToolDefinitions, AIToolContext } from './ai-tools';
 
 export interface ActionRequest {
@@ -73,7 +74,7 @@ export class AIActionExecutor {
       });
 
       const actions: ActionResult[] = [];
-      let conversationMessages: any[] = [
+      const conversationMessages: any[] = [
         {
           role: 'user',
           content: request.message,

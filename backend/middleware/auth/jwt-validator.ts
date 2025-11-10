@@ -11,11 +11,12 @@
  */
 
 import { Response, NextFunction } from 'express'
+import { RedisClient } from 'redis'
+
 import { jwtService } from '../../core/auth/jwt-service'
 import { UnauthorizedError } from '../../utils/errors/app-error'
 import { logger } from '../../utils/logging/logger'
 import { AuthRequest } from '../auth'
-import { RedisClient } from 'redis'
 
 // Re-export AuthRequest
 export { AuthRequest } from '../auth'

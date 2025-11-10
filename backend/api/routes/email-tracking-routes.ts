@@ -4,6 +4,7 @@
  */
 
 import { Router, Request, Response } from 'express'
+
 import { logger } from '../../utils/logging/logger'
 import { pool } from '../../../config/database/postgres-config'
 import { authenticateOptional } from '../middleware/auth-middleware'

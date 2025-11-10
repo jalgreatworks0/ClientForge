@@ -4,6 +4,7 @@
  */
 
 import { Pool, PoolConfig } from 'pg'
+
 import { logger } from '../../utils/logging/logger'
 
 // Get database configuration from environment

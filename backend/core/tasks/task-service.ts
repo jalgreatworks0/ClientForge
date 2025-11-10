@@ -3,6 +3,8 @@
  * Business logic for task and activity management
  */
 
+import { ValidationError, NotFoundError } from '../../utils/errors/app-error'
+
 import { taskRepository } from './task-repository'
 import {
   Task,
@@ -27,7 +29,6 @@ import {
   TaskStatus,
   TaskPriority,
 } from './task-types'
-import { ValidationError, NotFoundError } from '../../utils/errors/app-error'
 
 export class TaskService {
   // =====================================================

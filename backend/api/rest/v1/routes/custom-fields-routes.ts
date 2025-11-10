@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express'
+
 import { customFieldController } from '../../../../core/metadata/metadata-controller'
 import { authenticate } from '../../../../middleware/authenticate'
 import { requirePermission } from '../../../../middleware/authorize'

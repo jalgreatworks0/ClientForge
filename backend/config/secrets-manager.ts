@@ -6,8 +6,9 @@
  * Development: Use encrypted .env files
  */
 
-import { logger } from '../utils/logging/logger'
 import crypto from 'crypto'
+
+import { logger } from '../utils/logging/logger'
 
 export interface Secret {
   name: string

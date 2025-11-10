@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod'
+
 import { LeadStatus, LifecycleStage, LeadSource } from './contact-types'
 
 // Common field validators

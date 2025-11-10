@@ -11,6 +11,7 @@
 
 import cors, { CorsOptions, CorsOptionsDelegate } from 'cors'
 import { Request } from 'express'
+
 import { logger } from '../../utils/logging/logger'
 
 /**

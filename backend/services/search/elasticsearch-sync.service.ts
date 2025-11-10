@@ -8,6 +8,7 @@
  */
 
 import { Client } from '@elastic/elasticsearch'
+
 import { getElasticsearchClient } from '../../../config/database/elasticsearch-config'
 import { logger } from '../../utils/logging/logger'
 

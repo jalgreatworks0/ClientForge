@@ -4,7 +4,9 @@
  */
 
 import { Pool } from 'pg'
+
 import { getPool } from '../../database/postgresql/pool'
+
 import {
   Account,
   CreateAccountInput,

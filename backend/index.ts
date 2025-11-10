@@ -7,11 +7,12 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import { Server } from './api/server'
-import { logger } from './utils/logging/logger'
 import { appConfig } from '../config/app/app-config'
 import { initializeMongoCollections } from '../config/database/mongodb-config'
 import { initializeSearchIndexes } from '../config/database/elasticsearch-config'
+
+import { logger } from './utils/logging/logger'
+import { Server } from './api/server'
 
 /**
  * Start the server

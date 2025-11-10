@@ -4,9 +4,11 @@
  */
 
 import { Pool } from 'pg'
-import { AnalyticsRepository } from './analytics-repository'
+
 import { logger } from '../../utils/logging/logger'
 import { AppError } from '../../utils/errors/app-error'
+
+import { AnalyticsRepository } from './analytics-repository'
 import {
   DashboardMetrics,
   ContactAnalytics,

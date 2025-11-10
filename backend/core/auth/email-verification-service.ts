@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto'
+
 import { getPostgresPool } from '../../../config/database/postgres-config'
 import { emailService } from '../email/email-service'
 import { logger } from '../../utils/logging/logger'

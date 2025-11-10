@@ -11,6 +11,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
+
 import { logger } from '../../utils/logging/logger'
 import { TooManyRequestsError, UnauthorizedError } from '../../utils/errors/app-error'
 

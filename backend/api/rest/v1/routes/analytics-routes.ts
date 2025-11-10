@@ -5,6 +5,7 @@
 
 import { Router } from 'express'
 import { Pool } from 'pg'
+
 import { authenticate } from '../../../../middleware/authenticate'
 import { requirePermission } from '../../../../middleware/authorize'
 import { validateRequest } from '../../../../middleware/validate-request'

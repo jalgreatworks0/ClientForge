@@ -4,6 +4,7 @@
  */
 
 import { getMongoDatabase } from '../../../config/database/mongodb-config'
+
 import { logger } from './logger'
 
 export interface AuditLogEntry {

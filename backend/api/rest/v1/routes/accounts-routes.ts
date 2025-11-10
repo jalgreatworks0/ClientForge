@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express'
+
 import { authenticate } from '../../../../middleware/authenticate'
 import { authorize, RoleLevel } from '../../../../middleware/authorize'
 import { requirePermission } from '../../../../middleware/authorize'

@@ -5,10 +5,12 @@
 
 import { Response, NextFunction } from 'express'
 import { Pool } from 'pg'
+
 import { AuthRequest } from '../../middleware/auth'
-import { AnalyticsService } from './analytics-service'
 import { logger } from '../../utils/logging/logger'
 import { AppError } from '../../utils/errors/app-error'
+
+import { AnalyticsService } from './analytics-service'
 
 export class AnalyticsController {
   private service: AnalyticsService

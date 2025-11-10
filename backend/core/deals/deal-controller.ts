@@ -4,7 +4,9 @@
  */
 
 import { Response, NextFunction } from 'express'
+
 import { AuthRequest } from '../../middleware/authenticate'
+
 import { dealService } from './deal-service'
 import {
   createDealSchema,

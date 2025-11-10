@@ -5,6 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
+
 import { authService } from '../../../../core/auth/auth-service'
 import { emailVerificationService } from '../../../../core/auth/email-verification-service'
 import { passwordResetService } from '../../../../core/auth/password-reset-service'

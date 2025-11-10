@@ -746,11 +746,13 @@ export class MCPRouter extends EventEmitter {
    * Handle answer from agent (for broadcast questions)
    */
   private handleQuestionAnswer(message: any): void {
-    this.collaborativeIntelligence.submitAnswer(
-      message.question_id,
-      message.agent_id,
-      message.answer
-    );
+    // TODO: Re-enable when collaborative intelligence submitAnswer is implemented
+    logger.warn('[MCP Router] submitAnswer not yet implemented', { message });
+    // this.collaborativeIntelligence.submitAnswer(
+    //   message.question_id,
+    //   message.agent_id,
+    //   message.answer
+    // );
   }
 
   /**
@@ -790,12 +792,14 @@ export class MCPRouter extends EventEmitter {
    * Handle debate position from agent
    */
   private handleDebatePosition(message: any): void {
-    this.collaborativeIntelligence.submitDebatePosition(
-      message.debate_id,
-      message.agent_id,
-      message.position,
-      message.arguments
-    );
+    // TODO: Re-enable when collaborative intelligence submitDebatePosition is implemented
+    logger.warn('[MCP Router] submitDebatePosition not yet implemented', { message });
+    // this.collaborativeIntelligence.submitDebatePosition(
+    //   message.debate_id,
+    //   message.agent_id,
+    //   message.position,
+    //   message.arguments
+    // );
   }
 
   /**
@@ -817,8 +821,8 @@ export class MCPRouter extends EventEmitter {
 
       logger.info('[MCP Router] Collaborative solution created', {
         problem_length: message.problem.length,
-        proposals_count: solution.proposals.length,
-        selected_agent: solution.selected_proposal.agent_id
+        proposals_count: solution.proposed_solutions?.size || 0,
+        selected_agent: solution.selected_solution || 'none'
       });
     } catch (error) {
       logger.error('[MCP Router] Collaboration failed', { error });

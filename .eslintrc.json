@@ -8,7 +8,6 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:security/recommended",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
@@ -19,7 +18,6 @@
   },
   "plugins": [
     "@typescript-eslint",
-    "security",
     "import"
   ],
   "rules": {
@@ -31,7 +29,6 @@
     }],
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-explicit-any": "warn",
-    "security/detect-object-injection": "off",
     "import/order": ["error", {
       "groups": [
         "builtin",
@@ -48,8 +45,7 @@
     {
       "files": ["*.test.ts", "*.spec.ts"],
       "rules": {
-        "@typescript-eslint/no-explicit-any": "off",
-        "security/detect-non-literal-fs-filename": "off"
+        "@typescript-eslint/no-explicit-any": "off"
       }
     }
   ]

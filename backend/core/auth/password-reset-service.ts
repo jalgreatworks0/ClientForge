@@ -4,12 +4,14 @@
  */
 
 import crypto from 'crypto'
+
 import { getPostgresPool } from '../../../config/database/postgres-config'
 import { emailService } from '../email/email-service'
-import { passwordService } from './password-service'
 import { logger } from '../../utils/logging/logger'
 import { auditLogger } from '../../utils/logging/audit-logger'
 import { NotFoundError, ValidationError } from '../../utils/errors/app-error'
+
+import { passwordService } from './password-service'
 
 export interface RequestPasswordResetData {
   email: string

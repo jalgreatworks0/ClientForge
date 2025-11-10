@@ -5,9 +5,10 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+
 import { LmStudioService } from './lmstudio.service';
 import { CRMSchemas, type ContactAnalysis, type DealPrediction, type EmailGeneration, type MeetingSummary } from './schemas/crm-schemas';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 @Injectable()
 export class LmStudioStructuredService {

@@ -4,10 +4,12 @@
  */
 
 import { Response, NextFunction } from 'express'
+
 import { ForbiddenError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'
 import { auditLogger } from '../utils/logging/audit-logger'
 import { permissionService } from '../core/permissions/permission-service'
+
 import { AuthRequest } from './auth'
 
 /**

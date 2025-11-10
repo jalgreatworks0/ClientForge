@@ -4,6 +4,7 @@
  */
 
 import nodemailer from 'nodemailer'
+
 import { logger } from '../../utils/logging/logger'
 import { appConfig } from '../../../config/app/app-config'
 

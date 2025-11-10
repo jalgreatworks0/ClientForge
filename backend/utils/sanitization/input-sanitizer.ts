@@ -4,6 +4,7 @@
  */
 
 import DOMPurify from 'isomorphic-dompurify'
+
 import { logger } from '../logging/logger'
 
 /**

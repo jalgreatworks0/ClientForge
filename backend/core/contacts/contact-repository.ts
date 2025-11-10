@@ -4,9 +4,11 @@
  */
 
 import { Pool, PoolClient } from 'pg'
+
 import { getPostgresPool } from '../../../config/database/postgres-config'
 import { logger } from '../../utils/logging/logger'
 import { trackedQuery } from '../../database/postgresql/query-tracker'
+
 import {
   Contact,
   ContactFilters,

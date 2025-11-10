@@ -4,8 +4,10 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
-import { AppError } from './app-error'
+
 import { logger } from '../logging/logger'
+
+import { AppError } from './app-error'
 
 /**
  * Global error handling middleware

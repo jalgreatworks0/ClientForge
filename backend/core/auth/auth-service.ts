@@ -4,13 +4,14 @@
  */
 
 import { userRepository, User } from '../users/user-repository'
-import { jwtService, TokenPair } from './jwt-service'
-import { passwordService } from './password-service'
-import { sessionService } from './session-service'
 import { auditLogger } from '../../utils/logging/audit-logger'
 import { UnauthorizedError, ValidationError, ForbiddenError } from '../../utils/errors/app-error'
 import { logger } from '../../utils/logging/logger'
 import { securityConfig } from '../../../config/security/security-config'
+
+import { sessionService } from './session-service'
+import { passwordService } from './password-service'
+import { jwtService, TokenPair } from './jwt-service'
 
 export interface LoginCredentials {
   email: string

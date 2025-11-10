@@ -3,7 +3,10 @@
  * Business logic for accounts/companies management
  */
 
-import { accountRepository } from './account-repository'
+import { ValidationError, NotFoundError, ConflictError } from '../../utils/errors/app-error'
+import { logger } from '../../utils/logging/logger'
+import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
+
 import {
   Account,
   CreateAccountInput,
@@ -14,9 +17,7 @@ import {
   AccountWithRelations,
   AccountHierarchy,
 } from './account-types'
-import { ValidationError, NotFoundError, ConflictError } from '../../utils/errors/app-error'
-import { logger } from '../../utils/logging/logger'
-import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
+import { accountRepository } from './account-repository'
 
 export class AccountService {
   /**

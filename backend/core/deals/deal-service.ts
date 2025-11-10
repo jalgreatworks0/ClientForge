@@ -3,9 +3,12 @@
  * Business logic for deals/opportunities management
  */
 
-import { dealRepository } from './deal-repository'
 import { accountRepository } from '../accounts/account-repository'
 import { contactRepository } from '../contacts/contact-repository'
+import { ValidationError, NotFoundError } from '../../utils/errors/app-error'
+import { logger } from '../../utils/logging/logger'
+import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
+
 import {
   Deal,
   CreateDealInput,
@@ -18,9 +21,7 @@ import {
   CloseDealInput,
   DealStatistics,
 } from './deal-types'
-import { ValidationError, NotFoundError } from '../../utils/errors/app-error'
-import { logger } from '../../utils/logging/logger'
-import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
+import { dealRepository } from './deal-repository'
 
 export class DealService {
   /**

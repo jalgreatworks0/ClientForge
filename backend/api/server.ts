@@ -3,17 +3,20 @@
  * Main server setup and configuration
  */
 
+import { createServer, Server as HTTPServer } from 'http'
+
 import express, { Application } from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
 import compression from 'compression'
-import { createServer, Server as HTTPServer } from 'http'
+
 import { corsConfig } from '../../config/security/cors-config'
 import { appConfig } from '../../config/app/app-config'
 import { logger } from '../utils/logging/logger'
 import { errorHandler, setupGlobalErrorHandlers } from '../utils/errors/error-handler'
-import { configureRoutes } from './routes'
 import { performanceMonitoring } from '../middleware/performance-monitoring'
+
+import { configureRoutes } from './routes'
 
 export class Server {
   private app: Application

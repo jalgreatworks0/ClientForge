@@ -3,8 +3,10 @@
  * Protects against Cross-Site Request Forgery attacks
  */
 
-import { Request, Response, NextFunction } from 'express'
 import crypto from 'crypto'
+
+import { Request, Response, NextFunction } from 'express'
+
 import { ForbiddenError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'
 

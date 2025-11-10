@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
+
 import { logger } from '../utils/logging/logger'
 import { TooManyRequestsError } from '../utils/errors/app-error'
 
@@ -109,7 +110,7 @@ export function createRateLimiter(options: RateLimitOptions) {
     skipFailedRequests = false,
     keyGenerator = (req: Request) => {
       // Default: IP address + tenantId (if available)
-      const ip = req.ip || req.socket.remoteAddress || 'unknown'
+      const ip = req.ip || req.socket?.remoteAddress || 'unknown'
       const tenantId = (req as any).user?.tenantId || 'anonymous'
       return `${ip}:${tenantId}`
     },
