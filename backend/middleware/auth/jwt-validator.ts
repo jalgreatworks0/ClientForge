@@ -11,7 +11,7 @@
  */
 
 import { Response, NextFunction } from 'express'
-import { RedisClient } from 'redis'
+import { createClient, RedisClientType } from 'redis'
 
 import { jwtService } from '../../core/auth/jwt-service'
 import { UnauthorizedError } from '../../utils/errors/app-error'
@@ -28,7 +28,41 @@ export { AuthRequest } from '../auth'
 class TokenBlacklist {
   private blacklistedTokens: Set<string> = new Set()
   private blacklistedJTIs: Set<string> = new Set()
-  private redisClient?: RedisClient
+  private redisClient?: RedisClientType
+  private isConnected: boolean = false
+
+  constructor() {
+    this.initRedis()
+  }
+
+  /**
+   * Initialize Redis connection
+   */
+  private async initRedis(): Promise<void> {
+    try {
+      this.redisClient = createClient({
+        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        socket: {
+          reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
+        },
+      })
+
+      this.redisClient.on('error', (err) => {
+        logger.error('Redis client error', { error: err })
+        this.isConnected = false
+      })
+
+      this.redisClient.on('connect', () => {
+        logger.info('Redis client connected for token blacklist')
+        this.isConnected = true
+      })
+
+      await this.redisClient.connect()
+    } catch (error) {
+      logger.warn('Failed to initialize Redis client, using in-memory blacklist only', { error })
+      this.isConnected = false
+    }
+  }
 
   /**
    * Add token to blacklist
@@ -40,10 +74,16 @@ class TokenBlacklist {
       this.blacklistedJTIs.add(jti)
     }
 
-    // TODO: If Redis is available, also store in Redis with TTL
-    // if (this.redisClient) {
-    //   await this.redisClient.setEx(`blacklist:${jti}`, expiresIn || 86400, '1')
-    // }
+    // Store in Redis with TTL if available
+    if (this.redisClient && this.isConnected && jti) {
+      try {
+        await this.redisClient.setEx(`blacklist:${jti}`, expiresIn || 86400, '1')
+        logger.debug('Token blacklisted in Redis', { jti: jti.substring(0, 10) + '...' })
+      } catch (error) {
+        logger.error('Failed to blacklist token in Redis', { error, jti })
+        // Continue with in-memory blacklist
+      }
+    }
 
     logger.info('Token added to blacklist', {
       jti: jti ? jti.substring(0, 10) + '...' : 'unknown',
@@ -64,11 +104,16 @@ class TokenBlacklist {
       return true
     }
 
-    // TODO: Check Redis if available
-    // if (this.redisClient && jti) {
-    //   const result = await this.redisClient.get(`blacklist:${jti}`)
-    //   return result !== null
-    // }
+    // Check Redis if available
+    if (this.redisClient && this.isConnected && jti) {
+      try {
+        const result = await this.redisClient.get(`blacklist:${jti}`)
+        return result !== null
+      } catch (error) {
+        logger.error('Failed to check Redis blacklist', { error, jti })
+        // Fall back to in-memory check
+      }
+    }
 
     return false
   }
@@ -81,6 +126,15 @@ class TokenBlacklist {
 
     if (jti) {
       this.blacklistedJTIs.delete(jti)
+
+      // Remove from Redis if available
+      if (this.redisClient && this.isConnected) {
+        try {
+          await this.redisClient.del(`blacklist:${jti}`)
+        } catch (error) {
+          logger.error('Failed to remove token from Redis', { error, jti })
+        }
+      }
     }
   }
 
@@ -92,6 +146,21 @@ class TokenBlacklist {
     // In-memory blacklist grows indefinitely without cleanup
     // In production, Redis handles this with TTL automatically
     logger.debug('Token blacklist cleanup completed')
+  }
+
+  /**
+   * Graceful shutdown - disconnect Redis
+   */
+  async disconnect(): Promise<void> {
+    if (this.redisClient && this.isConnected) {
+      try {
+        await this.redisClient.quit()
+        this.isConnected = false
+        logger.info('Redis client disconnected')
+      } catch (error) {
+        logger.error('Failed to disconnect Redis client', { error })
+      }
+    }
   }
 }
 

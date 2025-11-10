@@ -1,7 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "ignoreDeprecations": "5.9",
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
@@ -50,8 +49,6 @@
     "**/*.spec.ts",
     "**/*.test.ts",
     "test-ai-import.js",
-    "backend/services/ai/experimental/**/*",
-    "backend/api/routes/email-tracking-routes.ts",
-    "backend/middleware/auth/jwt-validator.ts"
+    "backend/services/ai/experimental/**/*"
   ]
 }

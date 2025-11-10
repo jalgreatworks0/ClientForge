@@ -6,10 +6,11 @@
 import { Router, Request, Response } from 'express'
 
 import { logger } from '../../utils/logging/logger'
-import { pool } from '../../../config/database/postgres-config'
-import { authenticateOptional } from '../middleware/auth-middleware'
+import { getPostgresPool } from '../../../config/database/postgres-config'
+import { optionalAuthenticate as authenticateOptional } from '../../middleware/authenticate'
 
 const router = Router()
+const pool = getPostgresPool()
 
 /**
  * Track email open via 1x1 tracking pixel
