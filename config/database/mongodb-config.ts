@@ -110,35 +110,53 @@ export async function initializeMongoCollections(): Promise<void> {
     const collections = ['audit_logs', 'event_logs', 'error_logs', 'activity_logs']
 
     for (const collectionName of collections) {
-      const collectionExists = (await database.listCollections({ name: collectionName }).toArray()).length > 0
+      try {
+        const collectionExists = (await database.listCollections({ name: collectionName }).toArray()).length > 0
 
-      if (!collectionExists) {
-        await database.createCollection(collectionName)
-        logger.info(`[MongoDB] Created collection: ${collectionName}`)
+        if (!collectionExists) {
+          await database.createCollection(collectionName)
+          logger.info(`[MongoDB] Created collection: ${collectionName}`)
+        }
+      } catch (collError) {
+        // Skip authentication errors - MongoDB might not be configured with auth
+        if (collError instanceof Error && collError.message.includes('authentication')) {
+          logger.debug(`[MongoDB] Skipping collection ${collectionName} - authentication required`)
+          continue
+        }
+        throw collError
       }
     }
 
-    // Create indexes
-    await database.collection('audit_logs').createIndexes([
-      { key: { tenant_id: 1, created_at: -1 } },
-      { key: { user_id: 1, created_at: -1 } },
-      { key: { action: 1, created_at: -1 } },
-      { key: { created_at: -1 }, expireAfterSeconds: 7776000 }, // 90 days TTL
-    ])
+    // Create indexes (skip if authentication error)
+    try {
+      await database.collection('audit_logs').createIndexes([
+        { key: { tenant_id: 1, created_at: -1 } },
+        { key: { user_id: 1, created_at: -1 } },
+        { key: { action: 1, created_at: -1 } },
+        { key: { created_at: -1 }, expireAfterSeconds: 7776000 }, // 90 days TTL
+      ])
 
-    await database.collection('event_logs').createIndexes([
-      { key: { event_type: 1, created_at: -1 } },
-      { key: { tenant_id: 1, created_at: -1 } },
-      { key: { created_at: -1 }, expireAfterSeconds: 2592000 }, // 30 days TTL
-    ])
+      await database.collection('event_logs').createIndexes([
+        { key: { event_type: 1, created_at: -1 } },
+        { key: { tenant_id: 1, created_at: -1 } },
+        { key: { created_at: -1 }, expireAfterSeconds: 2592000 }, // 30 days TTL
+      ])
 
-    await database.collection('error_logs').createIndexes([
-      { key: { level: 1, created_at: -1 } },
-      { key: { tenant_id: 1, created_at: -1 } },
-      { key: { created_at: -1 }, expireAfterSeconds: 2592000 }, // 30 days TTL
-    ])
+      await database.collection('error_logs').createIndexes([
+        { key: { level: 1, created_at: -1 } },
+        { key: { tenant_id: 1, created_at: -1 } },
+        { key: { created_at: -1 }, expireAfterSeconds: 2592000 }, // 30 days TTL
+      ])
 
-    logger.info('[MongoDB] Collections and indexes initialized')
+      logger.info('[MongoDB] Collections and indexes initialized')
+    } catch (indexError) {
+      // Skip authentication errors
+      if (indexError instanceof Error && indexError.message.includes('authentication')) {
+        logger.debug('[MongoDB] Skipping index creation - authentication required')
+        return
+      }
+      throw indexError
+    }
   } catch (error) {
     logger.error('[MongoDB] Failed to initialize collections', { error: error instanceof Error ? error.message : String(error) })
     throw error
