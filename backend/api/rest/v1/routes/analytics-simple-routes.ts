@@ -176,7 +176,7 @@ router.get('/team-performance', async (req: Request, res: Response) => {
          AND d.created_at <= $3
          AND d.deleted_at IS NULL
        WHERE u.tenant_id = $1
-         AND u.deleted_at IS NULL
+         AND u.is_active = true
        GROUP BY u.id, u.first_name, u.last_name
        HAVING COUNT(d.id) > 0
        ORDER BY deals_won DESC, pipeline_value DESC`,
