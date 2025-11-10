@@ -13,6 +13,7 @@ import { initializeSearchIndexes } from '../config/database/elasticsearch-config
 
 import { logger } from './utils/logging/logger'
 import { Server } from './api/server'
+import { startRecurringEmailSync } from './queues/email-sync-queue'
 
 /**
  * Start the server
@@ -42,6 +43,14 @@ async function startServer(): Promise<void> {
 
     const server = new Server()
     await server.start()
+
+    // Start email sync background job
+    try {
+      await startRecurringEmailSync()
+      logger.info('[OK] Email sync queue started (syncs every 5 minutes)')
+    } catch (error) {
+      logger.warn('[WARNING] Failed to start email sync queue (non-critical):', error)
+    }
 
     logger.info('Server initialization complete', {
       port: appConfig.port,

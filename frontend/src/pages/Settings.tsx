@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { User, Bell, Lock, Palette, Globe, Shield } from 'lucide-react'
+import { User, Bell, Lock, Palette, Globe, Shield, Mail } from 'lucide-react'
+import EmailIntegrationSettings from '../components/email/EmailIntegrationSettings'
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile')
 
   const tabs = [
     { id: 'profile', name: 'Profile', icon: User },
+    { id: 'email', name: 'Email Integration', icon: Mail },
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'security', name: 'Security', icon: Lock },
     { id: 'appearance', name: 'Appearance', icon: Palette },
@@ -52,6 +54,7 @@ export default function Settings() {
         {/* Content */}
         <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           {activeTab === 'profile' && <ProfileSettings />}
+          {activeTab === 'email' && <EmailIntegrationSettings />}
           {activeTab === 'notifications' && <NotificationSettings />}
           {activeTab === 'security' && <SecuritySettings />}
           {activeTab === 'appearance' && <AppearanceSettings />}

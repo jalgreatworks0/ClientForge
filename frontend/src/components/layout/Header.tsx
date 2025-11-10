@@ -10,6 +10,7 @@ export default function Header() {
     { name: 'Contacts', path: '/contacts', icon: '👥' },
     { name: 'Accounts', path: '/accounts', icon: '🏢' },
     { name: 'Deals', path: '/deals', icon: '💼' },
+    { name: 'Emails', path: '/emails', icon: '📧' },
     { name: 'Tasks', path: '/tasks', icon: '✓' },
     { name: 'Activities', path: '/activities', icon: '📅' },
     { name: 'Notes', path: '/notes', icon: '📝' },

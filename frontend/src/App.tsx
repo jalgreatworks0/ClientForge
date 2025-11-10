@@ -12,7 +12,9 @@ import AccountDetail from './pages/AccountDetail'
 import Notes from './pages/Notes'
 import Activities from './pages/Activities'
 import Settings from './pages/Settings'
+import Emails from './pages/Emails'
 import Login from './pages/Login'
+import EmailOAuthCallback from './pages/EmailOAuthCallback'
 import { useAuthStore } from './store/authStore'
 
 function App() {
@@ -36,6 +38,7 @@ function App() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/email/callback" element={<EmailOAuthCallback />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     )
@@ -54,7 +57,9 @@ function App() {
         <Route path="/accounts/:id" element={<AccountDetail />} />
         <Route path="/notes" element={<Notes />} />
         <Route path="/activities" element={<Activities />} />
+        <Route path="/emails" element={<Emails />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/email/callback" element={<EmailOAuthCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
