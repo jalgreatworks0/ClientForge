@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added - 2025-11-10
 
+#### Deal Pipeline 100% Complete - Pipeline & Stage Management + Enhanced Modal
+**Summary**: Completed the remaining 20% of Deal Pipeline by adding pipeline and deal stage management routes, plus a fully enhanced DealModal supporting 11+ fields.
+
+**Backend Routes Added**:
+- Created [backend/api/rest/v1/routes/pipelines-routes.ts](backend/api/rest/v1/routes/pipelines-routes.ts) (268 lines)
+  - GET /api/v1/pipelines - List all pipelines for tenant
+  - GET /api/v1/pipelines/:id?include=stages - Get pipeline with optional stages
+  - POST /api/v1/pipelines - Create new pipeline
+  - PUT /api/v1/pipelines/:id - Update pipeline properties
+  - DELETE /api/v1/pipelines/:id - Soft delete with validation (prevents deleting only default)
+  - Auto-unsets other pipelines when setting new default
+- Created [backend/api/rest/v1/routes/deal-stages-routes.ts](backend/api/rest/v1/routes/deal-stages-routes.ts) (361 lines)
+  - GET /api/v1/deal-stages?pipelineId=xxx - List stages with optional pipeline filter
+  - GET /api/v1/deal-stages/:id - Get single stage details
+  - POST /api/v1/deal-stages - Create new stage with validation
+  - PUT /api/v1/deal-stages/:id - Update stage properties (name, probability, color, order)
+  - DELETE /api/v1/deal-stages/:id - Delete with safety check (blocks if active deals exist)
+  - Validates probability is 0-100, verifies pipeline exists before creating stage
+- Wired both routes to main Express router in [backend/api/routes.ts](backend/api/routes.ts:17-18)
+
+**Frontend Modal Enhancement**:
+- Updated [frontend/src/components/deals/DealModal.tsx](frontend/src/components/deals/DealModal.tsx) from 5 fields to 11+ fields:
+  - **Pipeline Selector**: Dropdown with default pipeline indicator
+  - **Stage Selector**: Dynamically filtered by selected pipeline, shows probability
+  - **Amount & Currency**: Number input + dropdown (USD, EUR, GBP, CAD, AUD, JPY, CNY)
+  - **Expected Close Date**: Date picker for forecasting
+  - **Probability**: Read-only field that auto-updates based on selected stage
+  - **Description**: Multi-line textarea for deal details
+  - **Tags**: Comma-separated input for categorization
+  - **Weighted Value Display**: Shows currency + calculated expected revenue
+- Real-time API integration: Fetches pipelines and stages on modal open
+- Smart defaults: Auto-selects default pipeline and first stage for new deals
+- Enhanced validation: Checks pipeline, stage, and amount requirements
+
+**Implementation Status**: ✅ Deal Pipeline 100% Complete
+- Database schema: 100% (3 tables, 13 columns, 15+ indexes, seeded data)
+- Backend routes: 100% (deals, pipelines, stages CRUD)
+- Frontend Kanban: 100% (drag-and-drop, visual pipeline, SortableDealCard)
+- Frontend service: 100% (deals.service.ts with full API integration)
+- Frontend modal: 100% (DealModal.tsx with 11+ fields)
+
+
 #### Deal Pipeline with Drag-and-Drop Kanban Board 🎯
 **Summary**: Implemented fully functional Deal Pipeline module with visual Kanban board, drag-and-drop deal management, and complete database schema supporting pipeline stages and deal progression tracking.
 
