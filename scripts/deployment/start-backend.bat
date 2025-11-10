@@ -12,6 +12,9 @@ echo  ClientForge CRM - Backend Server
 echo ========================================
 echo.
 
+REM Change to project root directory
+cd /d "%~dp0..\.."
+
 REM Check if .env file exists
 if not exist ".env" (
     echo [ERROR] .env file not found!

@@ -21,9 +21,12 @@ echo.
 echo ========================================
 echo.
 
+REM Change to project root directory
+cd /d "%~dp0..\.."
+
 REM Check if .env file exists
 if not exist ".env" (
-    echo [ERROR] .env file not found!
+    echo [ERROR] .env file not found in %CD%!
     echo Please create .env file with required environment variables.
     echo See .env.example for reference.
     echo.
@@ -33,7 +36,7 @@ if not exist ".env" (
 
 REM Start backend in a new window
 echo [INFO] Starting backend server...
-start "ClientForge Backend" cmd /k "start-backend.bat"
+start "ClientForge Backend" cmd /k "cd /d %CD%\scripts\deployment && start-backend.bat"
 
 REM Wait 3 seconds for backend to initialize
 echo [INFO] Waiting for backend to initialize...
@@ -41,7 +44,7 @@ timeout /t 3 /nobreak >nul
 
 REM Start frontend in a new window
 echo [INFO] Starting frontend development server...
-start "ClientForge Frontend" cmd /k "start-frontend.bat"
+start "ClientForge Frontend" cmd /k "cd /d %CD%\scripts\deployment && start-frontend.bat"
 
 echo.
 echo ========================================

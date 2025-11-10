@@ -12,8 +12,8 @@ echo  ClientForge CRM - Frontend Server
 echo ========================================
 echo.
 
-REM Navigate to frontend directory
-cd /d "%~dp0frontend"
+REM Navigate to frontend directory (from scripts/deployment to project root, then to frontend)
+cd /d "%~dp0..\..\frontend"
 
 REM Check if node_modules exists
 if not exist "node_modules" (

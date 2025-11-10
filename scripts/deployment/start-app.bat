@@ -17,9 +17,12 @@ echo.
 echo Starting full-stack CRM application...
 echo.
 
+REM Change to project root directory
+cd /d "%~dp0..\.."
+
 REM Check if .env file exists
 if not exist ".env" (
-    echo [WARNING] .env file not found!
+    echo [WARNING] .env file not found in %CD%!
     echo The application may not work correctly without environment variables.
     echo See .env.example for reference.
     echo.
@@ -38,7 +41,7 @@ if "%ERRORLEVEL%"=="0" (
 
 REM Start backend in a new minimized window
 echo [INFO] Starting backend server on port 3000...
-start "ClientForge Backend API" /MIN cmd /c "cd /d %~dp0 && npm run dev:backend"
+start "ClientForge Backend API" /MIN cmd /c "cd /d %~dp0..\.. && npm run dev:backend"
 
 REM Wait for backend to initialize
 echo [INFO] Waiting for backend to initialize...
@@ -46,7 +49,7 @@ timeout /t 5 /nobreak >nul
 
 REM Start frontend in a new minimized window
 echo [INFO] Starting frontend server on port 3001...
-start "ClientForge Frontend UI" /MIN cmd /c "cd /d %~dp0frontend && npm run dev"
+start "ClientForge Frontend UI" /MIN cmd /c "cd /d %~dp0..\..\frontend && npm run dev"
 
 REM Wait for frontend to initialize
 echo [INFO] Waiting for frontend to start...
