@@ -15,6 +15,8 @@ import { appConfig } from '../../config/app/app-config'
 import { logger } from '../utils/logging/logger'
 import { errorHandler, setupGlobalErrorHandlers } from '../utils/errors/error-handler'
 import { performanceMonitoring } from '../middleware/performance-monitoring'
+import { websocketService } from '../services/websocket/websocket.service'
+import { queueService } from '../services/queue/queue.service'
 
 import { configureRoutes } from './routes'
 
@@ -29,6 +31,25 @@ export class Server {
     this.setupRoutes()
     this.setupErrorHandling()
     setupGlobalErrorHandlers()
+    this.initializeServices()
+  }
+
+  /**
+   * Initialize WebSocket and Queue services
+   */
+  private initializeServices(): void {
+    try {
+      // Initialize WebSocket server
+      websocketService.initialize(this.httpServer)
+      logger.info('[OK] WebSocket service initialized')
+
+      // Initialize Job Queue service
+      queueService.initialize()
+      logger.info('[OK] Job Queue service initialized')
+    } catch (error) {
+      logger.error('Failed to initialize services', { error })
+      throw error
+    }
   }
 
   /**
@@ -127,6 +148,17 @@ export class Server {
    * Stop server gracefully
    */
   public async stop(): Promise<void> {
+    try {
+      // Shutdown services first
+      await websocketService.shutdown()
+      logger.info('WebSocket service shut down')
+
+      await queueService.shutdown()
+      logger.info('Job Queue service shut down')
+    } catch (error) {
+      logger.error('Error shutting down services', { error })
+    }
+
     return new Promise((resolve, reject) => {
       this.httpServer.close((err) => {
         if (err) {

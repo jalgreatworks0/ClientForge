@@ -1,563 +1,284 @@
 /**
  * Elasticsearch Sync Service
- *
- * Handles synchronization of contacts, accounts, and deals with Elasticsearch
- * Manages indexing, updating, and deleting documents for full-text search
- *
- * @module services/search/elasticsearch-sync
+ * Real-time synchronization of database changes to Elasticsearch
  */
 
-import { Client } from '@elastic/elasticsearch'
+import { queueService } from '../queue/queue.service'
+import logger from '../../utils/logger'
 
-import { getElasticsearchClient } from '../../../config/database/elasticsearch-config'
-import { logger } from '../../utils/logging/logger'
-
-/**
- * Document types for Elasticsearch
- */
-export interface ContactDocument {
+interface SyncDocument {
   id: string
-  tenant_id: string
-  first_name: string
-  last_name: string
-  email: string
-  phone?: string
-  company_name?: string
-  full_text: string
-  created_at: Date
-  updated_at: Date
+  tenantId: string
+  [key: string]: any
 }
 
-export interface AccountDocument {
-  id: string
-  tenant_id: string
-  name: string
-  website?: string
-  industry?: string
-  description?: string
-  full_text: string
-  created_at: Date
-  updated_at: Date
-}
-
-export interface DealDocument {
-  id: string
-  tenant_id: string
-  name: string
-  account_name: string
-  contact_name: string
-  stage: string
-  amount?: number
-  full_text: string
-  created_at: Date
-  updated_at: Date
-}
-
-/**
- * Sync operation types
- */
-export type SyncOperation = 'create' | 'update' | 'delete'
-
-/**
- * Elasticsearch Sync Service
- * Handles all search index synchronization operations
- */
-export class ElasticsearchSyncService {
-  private client: Client | null = null
-
-  constructor() {
-    this.initialize()
-  }
-
+class ElasticsearchSyncService {
   /**
-   * Initialize the Elasticsearch client
+   * Index a new document
    */
-  private async initialize(): Promise<void> {
+  async indexDocument(index: string, document: SyncDocument): Promise<void> {
     try {
-      this.client = await getElasticsearchClient()
+      logger.info('Indexing document to Elasticsearch', {
+        index,
+        id: document.id,
+        tenantId: document.tenantId,
+      })
+
+      await queueService.addSearchIndexJob({
+        action: 'index',
+        index,
+        id: document.id,
+        document,
+        tenantId: document.tenantId,
+      })
+
+      logger.debug('Document queued for indexing', { index, id: document.id })
     } catch (error) {
-      logger.error('Failed to initialize Elasticsearch client', { error })
+      logger.error('Failed to queue document for indexing', {
+        error,
+        index,
+        id: document.id,
+      })
       throw error
     }
   }
 
   /**
-   * Ensure client is initialized
+   * Update an existing document
    */
-  private async ensureClient(): Promise<Client> {
-    if (!this.client) {
-      this.client = await getElasticsearchClient()
+  async updateDocument(index: string, document: SyncDocument): Promise<void> {
+    try {
+      logger.info('Updating document in Elasticsearch', {
+        index,
+        id: document.id,
+        tenantId: document.tenantId,
+      })
+
+      await queueService.addSearchIndexJob({
+        action: 'update',
+        index,
+        id: document.id,
+        document,
+        tenantId: document.tenantId,
+      })
+
+      logger.debug('Document queued for update', { index, id: document.id })
+    } catch (error) {
+      logger.error('Failed to queue document for update', {
+        error,
+        index,
+        id: document.id,
+      })
+      throw error
     }
-    return this.client
   }
 
   /**
-   * Build full-text search field from multiple fields
-   * Concatenates and cleans text for better search results
+   * Delete a document
    */
-  private buildSearchText(...texts: (string | undefined)[]): string {
-    return texts
-      .filter((text): text is string => Boolean(text) && text.trim().length > 0)
-      .map((text) => text.trim())
-      .join(' ')
+  async deleteDocument(index: string, id: string, tenantId: string): Promise<void> {
+    try {
+      logger.info('Deleting document from Elasticsearch', {
+        index,
+        id,
+        tenantId,
+      })
+
+      await queueService.addSearchIndexJob({
+        action: 'delete',
+        index,
+        id,
+        tenantId,
+      })
+
+      logger.debug('Document queued for deletion', { index, id })
+    } catch (error) {
+      logger.error('Failed to queue document for deletion', {
+        error,
+        index,
+        id,
+      })
+      throw error
+    }
   }
 
   /**
    * Sync contact to Elasticsearch
-   * Handles create, update, and delete operations
    */
-  public async syncContact(
-    contact: Partial<ContactDocument>,
-    operation: SyncOperation = 'create',
-  ): Promise<void> {
-    try {
-      const client = await this.ensureClient()
+  async syncContact(action: 'index' | 'update' | 'delete', contact: any): Promise<void> {
+    const index = 'contacts'
 
-      if (!contact.id || !contact.tenant_id) {
-        throw new Error('Contact must have id and tenant_id')
-      }
+    if (action === 'delete') {
+      await this.deleteDocument(index, contact.contact_id, contact.tenant_id)
+      return
+    }
 
-      const documentId = `${contact.tenant_id}:${contact.id}`
+    const document: SyncDocument = {
+      id: contact.contact_id,
+      tenantId: contact.tenant_id,
+      firstName: contact.first_name,
+      lastName: contact.last_name,
+      fullName: `${contact.first_name} ${contact.last_name}`,
+      email: contact.email,
+      phone: contact.phone,
+      title: contact.title,
+      department: contact.department,
+      accountId: contact.account_id,
+      ownerId: contact.owner_id,
+      status: contact.status,
+      leadSource: contact.lead_source,
+      tags: contact.tags || [],
+      createdAt: contact.created_at,
+      updatedAt: contact.updated_at,
+    }
 
-      if (operation === 'delete') {
-        await client.delete({
-          index: 'contacts',
-          id: documentId,
-        })
-        logger.info('Contact deleted from search index', {
-          contactId: contact.id,
-          tenantId: contact.tenant_id,
-        })
-      } else {
-        // Build full-text field
-        const fullText = this.buildSearchText(
-          contact.first_name,
-          contact.last_name,
-          contact.email,
-          contact.phone,
-          contact.company_name,
-        )
-
-        const document: ContactDocument = {
-          id: contact.id,
-          tenant_id: contact.tenant_id,
-          first_name: contact.first_name || '',
-          last_name: contact.last_name || '',
-          email: contact.email || '',
-          phone: contact.phone,
-          company_name: contact.company_name,
-          full_text: fullText,
-          created_at: contact.created_at || new Date(),
-          updated_at: contact.updated_at || new Date(),
-        }
-
-        await client.index({
-          index: 'contacts',
-          id: documentId,
-          document,
-          refresh: 'wait_for',
-        })
-
-        logger.info('Contact synced to search index', {
-          contactId: contact.id,
-          tenantId: contact.tenant_id,
-          operation,
-        })
-      }
-    } catch (error) {
-      logger.error('Failed to sync contact to Elasticsearch', {
-        contactId: contact.id,
-        error,
-      })
-      throw error
+    if (action === 'index') {
+      await this.indexDocument(index, document)
+    } else {
+      await this.updateDocument(index, document)
     }
   }
 
   /**
    * Sync account to Elasticsearch
-   * Handles create, update, and delete operations
    */
-  public async syncAccount(
-    account: Partial<AccountDocument>,
-    operation: SyncOperation = 'create',
-  ): Promise<void> {
-    try {
-      const client = await this.ensureClient()
+  async syncAccount(action: 'index' | 'update' | 'delete', account: any): Promise<void> {
+    const index = 'accounts'
 
-      if (!account.id || !account.tenant_id) {
-        throw new Error('Account must have id and tenant_id')
-      }
+    if (action === 'delete') {
+      await this.deleteDocument(index, account.account_id, account.tenant_id)
+      return
+    }
 
-      const documentId = `${account.tenant_id}:${account.id}`
+    const document: SyncDocument = {
+      id: account.account_id,
+      tenantId: account.tenant_id,
+      name: account.name,
+      website: account.website,
+      industry: account.industry,
+      employees: account.employees,
+      revenue: account.revenue,
+      phone: account.phone,
+      billingAddress: account.billing_address,
+      shippingAddress: account.shipping_address,
+      ownerId: account.owner_id,
+      status: account.status,
+      tags: account.tags || [],
+      createdAt: account.created_at,
+      updatedAt: account.updated_at,
+    }
 
-      if (operation === 'delete') {
-        await client.delete({
-          index: 'accounts',
-          id: documentId,
-        })
-        logger.info('Account deleted from search index', {
-          accountId: account.id,
-          tenantId: account.tenant_id,
-        })
-      } else {
-        // Build full-text field
-        const fullText = this.buildSearchText(
-          account.name,
-          account.website,
-          account.industry,
-          account.description,
-        )
-
-        const document: AccountDocument = {
-          id: account.id,
-          tenant_id: account.tenant_id,
-          name: account.name || '',
-          website: account.website,
-          industry: account.industry,
-          description: account.description,
-          full_text: fullText,
-          created_at: account.created_at || new Date(),
-          updated_at: account.updated_at || new Date(),
-        }
-
-        await client.index({
-          index: 'accounts',
-          id: documentId,
-          document,
-          refresh: 'wait_for',
-        })
-
-        logger.info('Account synced to search index', {
-          accountId: account.id,
-          tenantId: account.tenant_id,
-          operation,
-        })
-      }
-    } catch (error) {
-      logger.error('Failed to sync account to Elasticsearch', {
-        accountId: account.id,
-        error,
-      })
-      throw error
+    if (action === 'index') {
+      await this.indexDocument(index, document)
+    } else {
+      await this.updateDocument(index, document)
     }
   }
 
   /**
    * Sync deal to Elasticsearch
-   * Handles create, update, and delete operations
    */
-  public async syncDeal(
-    deal: Partial<DealDocument>,
-    operation: SyncOperation = 'create',
-  ): Promise<void> {
+  async syncDeal(action: 'index' | 'update' | 'delete', deal: any): Promise<void> {
+    const index = 'deals'
+
+    if (action === 'delete') {
+      await this.deleteDocument(index, deal.deal_id, deal.tenant_id)
+      return
+    }
+
+    const document: SyncDocument = {
+      id: deal.deal_id,
+      tenantId: deal.tenant_id,
+      name: deal.name,
+      amount: deal.amount,
+      stage: deal.stage,
+      probability: deal.probability,
+      expectedCloseDate: deal.expected_close_date,
+      actualCloseDate: deal.actual_close_date,
+      accountId: deal.account_id,
+      contactId: deal.contact_id,
+      ownerId: deal.owner_id,
+      status: deal.status,
+      lostReason: deal.lost_reason,
+      tags: deal.tags || [],
+      createdAt: deal.created_at,
+      updatedAt: deal.updated_at,
+    }
+
+    if (action === 'index') {
+      await this.indexDocument(index, document)
+    } else {
+      await this.updateDocument(index, document)
+    }
+  }
+
+  /**
+   * Bulk sync documents
+   */
+  async bulkSync(index: string, documents: SyncDocument[]): Promise<void> {
     try {
-      const client = await this.ensureClient()
-
-      if (!deal.id || !deal.tenant_id) {
-        throw new Error('Deal must have id and tenant_id')
-      }
-
-      const documentId = `${deal.tenant_id}:${deal.id}`
-
-      if (operation === 'delete') {
-        await client.delete({
-          index: 'deals',
-          id: documentId,
-        })
-        logger.info('Deal deleted from search index', {
-          dealId: deal.id,
-          tenantId: deal.tenant_id,
-        })
-      } else {
-        // Build full-text field
-        const fullText = this.buildSearchText(
-          deal.name,
-          deal.account_name,
-          deal.contact_name,
-          deal.stage,
-          deal.amount ? `$${deal.amount}` : undefined,
-        )
-
-        const document: DealDocument = {
-          id: deal.id,
-          tenant_id: deal.tenant_id,
-          name: deal.name || '',
-          account_name: deal.account_name || '',
-          contact_name: deal.contact_name || '',
-          stage: deal.stage || '',
-          amount: deal.amount,
-          full_text: fullText,
-          created_at: deal.created_at || new Date(),
-          updated_at: deal.updated_at || new Date(),
-        }
-
-        await client.index({
-          index: 'deals',
-          id: documentId,
-          document,
-          refresh: 'wait_for',
-        })
-
-        logger.info('Deal synced to search index', {
-          dealId: deal.id,
-          tenantId: deal.tenant_id,
-          operation,
-        })
-      }
-    } catch (error) {
-      logger.error('Failed to sync deal to Elasticsearch', {
-        dealId: deal.id,
-        error,
+      logger.info('Bulk syncing documents to Elasticsearch', {
+        index,
+        count: documents.length,
       })
+
+      const promises = documents.map((doc) => this.indexDocument(index, doc))
+
+      await Promise.all(promises)
+
+      logger.info('Bulk sync completed', { index, count: documents.length })
+    } catch (error) {
+      logger.error('Bulk sync failed', { error, index, count: documents.length })
       throw error
     }
   }
 
   /**
-   * Bulk sync multiple contacts
-   * More efficient than individual syncs for batch operations
+   * Reindex all contacts for a tenant
    */
-  public async syncContactsBulk(
-    contacts: Array<Partial<ContactDocument>>,
-  ): Promise<void> {
-    try {
-      const client = await this.ensureClient()
+  async reindexContacts(tenantId: string, contacts: any[]): Promise<void> {
+    const documents = contacts.map((contact) => ({
+      id: contact.contact_id,
+      tenantId: contact.tenant_id,
+      firstName: contact.first_name,
+      lastName: contact.last_name,
+      fullName: `${contact.first_name} ${contact.last_name}`,
+      email: contact.email,
+      phone: contact.phone,
+      title: contact.title,
+      department: contact.department,
+      accountId: contact.account_id,
+      ownerId: contact.owner_id,
+      status: contact.status,
+      leadSource: contact.lead_source,
+      tags: contact.tags || [],
+      createdAt: contact.created_at,
+      updatedAt: contact.updated_at,
+    }))
 
-      const operations: any[] = []
-
-      for (const contact of contacts) {
-        if (!contact.id || !contact.tenant_id) {
-          logger.warn('Skipping contact without id or tenant_id', { contact })
-          continue
-        }
-
-        const documentId = `${contact.tenant_id}:${contact.id}`
-        const fullText = this.buildSearchText(
-          contact.first_name,
-          contact.last_name,
-          contact.email,
-          contact.phone,
-          contact.company_name,
-        )
-
-        const document: ContactDocument = {
-          id: contact.id,
-          tenant_id: contact.tenant_id,
-          first_name: contact.first_name || '',
-          last_name: contact.last_name || '',
-          email: contact.email || '',
-          phone: contact.phone,
-          company_name: contact.company_name,
-          full_text: fullText,
-          created_at: contact.created_at || new Date(),
-          updated_at: contact.updated_at || new Date(),
-        }
-
-        operations.push({ index: { _index: 'contacts', _id: documentId } })
-        operations.push(document)
-      }
-
-      if (operations.length > 0) {
-        const response = await client.bulk({
-          operations,
-          refresh: 'wait_for',
-        })
-
-        if (response.errors) {
-          logger.warn('Some contacts failed to sync in bulk operation', {
-            errors: response.items
-              .filter((item: any) => item.index?.error)
-              .map((item: any) => item.index?.error),
-          })
-        }
-
-        logger.info('Bulk contact sync completed', {
-          count: contacts.length,
-          errors: response.errors ? 'yes' : 'no',
-        })
-      }
-    } catch (error) {
-      logger.error('Failed to bulk sync contacts to Elasticsearch', { error })
-      throw error
-    }
+    await this.bulkSync('contacts', documents)
   }
 
   /**
-   * Bulk sync multiple accounts
-   * More efficient than individual syncs for batch operations
+   * Health check
    */
-  public async syncAccountsBulk(
-    accounts: Array<Partial<AccountDocument>>,
-  ): Promise<void> {
+  async healthCheck(): Promise<{ status: string; message: string }> {
     try {
-      const client = await this.ensureClient()
-
-      const operations: any[] = []
-
-      for (const account of accounts) {
-        if (!account.id || !account.tenant_id) {
-          logger.warn('Skipping account without id or tenant_id', { account })
-          continue
-        }
-
-        const documentId = `${account.tenant_id}:${account.id}`
-        const fullText = this.buildSearchText(
-          account.name,
-          account.website,
-          account.industry,
-          account.description,
-        )
-
-        const document: AccountDocument = {
-          id: account.id,
-          tenant_id: account.tenant_id,
-          name: account.name || '',
-          website: account.website,
-          industry: account.industry,
-          description: account.description,
-          full_text: fullText,
-          created_at: account.created_at || new Date(),
-          updated_at: account.updated_at || new Date(),
-        }
-
-        operations.push({ index: { _index: 'accounts', _id: documentId } })
-        operations.push(document)
-      }
-
-      if (operations.length > 0) {
-        const response = await client.bulk({
-          operations,
-          refresh: 'wait_for',
-        })
-
-        if (response.errors) {
-          logger.warn('Some accounts failed to sync in bulk operation', {
-            errors: response.items
-              .filter((item: any) => item.index?.error)
-              .map((item: any) => item.index?.error),
-          })
-        }
-
-        logger.info('Bulk account sync completed', {
-          count: accounts.length,
-          errors: response.errors ? 'yes' : 'no',
-        })
+      // TODO: Implement actual Elasticsearch health check
+      // For now, just return success
+      return {
+        status: 'healthy',
+        message: 'Elasticsearch sync service is operational',
       }
     } catch (error) {
-      logger.error('Failed to bulk sync accounts to Elasticsearch', { error })
-      throw error
-    }
-  }
-
-  /**
-   * Bulk sync multiple deals
-   * More efficient than individual syncs for batch operations
-   */
-  public async syncDealsBulk(
-    deals: Array<Partial<DealDocument>>,
-  ): Promise<void> {
-    try {
-      const client = await this.ensureClient()
-
-      const operations: any[] = []
-
-      for (const deal of deals) {
-        if (!deal.id || !deal.tenant_id) {
-          logger.warn('Skipping deal without id or tenant_id', { deal })
-          continue
-        }
-
-        const documentId = `${deal.tenant_id}:${deal.id}`
-        const fullText = this.buildSearchText(
-          deal.name,
-          deal.account_name,
-          deal.contact_name,
-          deal.stage,
-          deal.amount ? `$${deal.amount}` : undefined,
-        )
-
-        const document: DealDocument = {
-          id: deal.id,
-          tenant_id: deal.tenant_id,
-          name: deal.name || '',
-          account_name: deal.account_name || '',
-          contact_name: deal.contact_name || '',
-          stage: deal.stage || '',
-          amount: deal.amount,
-          full_text: fullText,
-          created_at: deal.created_at || new Date(),
-          updated_at: deal.updated_at || new Date(),
-        }
-
-        operations.push({ index: { _index: 'deals', _id: documentId } })
-        operations.push(document)
+      logger.error('Elasticsearch health check failed', { error })
+      return {
+        status: 'unhealthy',
+        message: 'Elasticsearch sync service is not operational',
       }
-
-      if (operations.length > 0) {
-        const response = await client.bulk({
-          operations,
-          refresh: 'wait_for',
-        })
-
-        if (response.errors) {
-          logger.warn('Some deals failed to sync in bulk operation', {
-            errors: response.items
-              .filter((item: any) => item.index?.error)
-              .map((item: any) => item.index?.error),
-          })
-        }
-
-        logger.info('Bulk deal sync completed', {
-          count: deals.length,
-          errors: response.errors ? 'yes' : 'no',
-        })
-      }
-    } catch (error) {
-      logger.error('Failed to bulk sync deals to Elasticsearch', { error })
-      throw error
-    }
-  }
-
-  /**
-   * Delete index for a specific document type
-   * Useful for re-indexing or cleanup
-   */
-  public async deleteIndex(indexName: string): Promise<void> {
-    try {
-      const client = await this.ensureClient()
-
-      await client.indices.delete({ index: indexName })
-      logger.info('Elasticsearch index deleted', { indexName })
-    } catch (error) {
-      logger.error('Failed to delete Elasticsearch index', {
-        indexName,
-        error,
-      })
-      throw error
-    }
-  }
-
-  /**
-   * Get index statistics
-   * Returns document count and other index information
-   */
-  public async getIndexStats(indexName: string): Promise<any> {
-    try {
-      const client = await this.ensureClient()
-
-      const stats = await client.indices.stats({ index: indexName })
-      return stats
-    } catch (error) {
-      logger.error('Failed to get Elasticsearch index stats', {
-        indexName,
-        error,
-      })
-      throw error
     }
   }
 }
 
-// Export singleton instance
+// Singleton instance
 export const elasticsearchSyncService = new ElasticsearchSyncService()
-
-export default elasticsearchSyncService

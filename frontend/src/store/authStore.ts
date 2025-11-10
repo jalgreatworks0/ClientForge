@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import api from '../lib/api'
+import { websocketService } from '../services/websocket.service'
 
 interface User {
   id: string
@@ -42,6 +43,9 @@ export const useAuthStore = create<AuthState>()(
             // Verify token is still valid
             await api.get('/v1/auth/verify')
             set({ isLoading: false })
+
+            // Connect to WebSocket with valid token
+            websocketService.connect(accessToken)
           } catch (error) {
             // Token expired or invalid, logout
             console.warn('Token verification failed, logging out')
@@ -69,9 +73,15 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           isLoading: false,
         })
+
+        // Connect to WebSocket after successful login
+        websocketService.connect(accessToken)
       },
 
       logout: () => {
+        // Disconnect WebSocket before clearing state
+        websocketService.disconnect()
+
         set({
           user: null,
           accessToken: null,

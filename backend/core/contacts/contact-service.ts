@@ -53,20 +53,23 @@ export class ContactService {
 
       // Sync to Elasticsearch for search
       try {
-        await elasticsearchSyncService.syncContact(
-          {
-            id: contact.id,
-            tenant_id: tenantId,
-            first_name: contact.firstName,
-            last_name: contact.lastName,
-            email: contact.email || '',
-            phone: contact.phone,
-            company_name: undefined, // TODO: Fetch from account if accountId exists
-            created_at: contact.createdAt,
-            updated_at: contact.updatedAt,
-          },
-          'create'
-        )
+        await elasticsearchSyncService.syncContact('index', {
+          contact_id: contact.id,
+          tenant_id: tenantId,
+          first_name: contact.firstName,
+          last_name: contact.lastName,
+          email: contact.email || '',
+          phone: contact.phone,
+          title: contact.title,
+          department: contact.department,
+          account_id: contact.accountId,
+          owner_id: contact.ownerId,
+          status: contact.status,
+          lead_source: contact.leadSource,
+          tags: contact.tags || [],
+          created_at: contact.createdAt,
+          updated_at: contact.updatedAt,
+        })
       } catch (error) {
         logger.warn('[Elasticsearch] Failed to sync new contact', {
           contactId: contact.id,
@@ -151,20 +154,23 @@ export class ContactService {
 
     // Sync to Elasticsearch for search
     try {
-      await elasticsearchSyncService.syncContact(
-        {
-          id: updatedContact.id,
-          tenant_id: tenantId,
-          first_name: updatedContact.firstName,
-          last_name: updatedContact.lastName,
-          email: updatedContact.email || '',
-          phone: updatedContact.phone,
-          company_name: undefined, // TODO: Fetch from account if accountId exists
-          created_at: updatedContact.createdAt,
-          updated_at: updatedContact.updatedAt,
-        },
-        'update'
-      )
+      await elasticsearchSyncService.syncContact('update', {
+        contact_id: updatedContact.id,
+        tenant_id: tenantId,
+        first_name: updatedContact.firstName,
+        last_name: updatedContact.lastName,
+        email: updatedContact.email || '',
+        phone: updatedContact.phone,
+        title: updatedContact.title,
+        department: updatedContact.department,
+        account_id: updatedContact.accountId,
+        owner_id: updatedContact.ownerId,
+        status: updatedContact.status,
+        lead_source: updatedContact.leadSource,
+        tags: updatedContact.tags || [],
+        created_at: updatedContact.createdAt,
+        updated_at: updatedContact.updatedAt,
+      })
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to sync updated contact', {
         contactId: id,
@@ -197,13 +203,10 @@ export class ContactService {
 
     // Remove from Elasticsearch search index
     try {
-      await elasticsearchSyncService.syncContact(
-        {
-          id,
-          tenant_id: tenantId,
-        },
-        'delete'
-      )
+      await elasticsearchSyncService.syncContact('delete', {
+        contact_id: id,
+        tenant_id: tenantId,
+      })
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to delete contact from search index', {
         contactId: id,
