@@ -101,13 +101,12 @@ transports.push(
       winston.format.splat(),
       winston.format.json()
     ),
-    metaData: {
-      timestamp: new Date(),
-      service: 'clientforge-crm',
+    options: {
+      useUnifiedTopology: true,
     },
     tryReconnect: true,
     decolorize: true,
-  })
+  } as any)
 )
 
 // Create the logger

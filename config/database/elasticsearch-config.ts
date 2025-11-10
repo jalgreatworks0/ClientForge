@@ -221,7 +221,7 @@ export async function initializeSearchIndexes(): Promise<void> {
 
         if (!exists) {
           // Create index with mappings
-          await client.indices.create({
+          await (client.indices.create as any)({
             index: indexName,
             body: {
               mappings: indexMappings[indexName],

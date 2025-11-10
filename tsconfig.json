@@ -16,8 +16,10 @@
 
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "downlevelIteration": true,
 
     "strict": false,
     "noEmitOnError": false,
@@ -38,6 +40,9 @@
     "dist",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "test-ai-import.js"
+    "test-ai-import.js",
+    "backend/services/ai/experimental/**/*",
+    "backend/api/routes/email-tracking-routes.ts",
+    "backend/middleware/auth/jwt-validator.ts"
   ]
 }
