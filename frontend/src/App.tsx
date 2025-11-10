@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
 import Contacts from './pages/Contacts'
@@ -15,7 +16,21 @@ import Login from './pages/Login'
 import { useAuthStore } from './store/authStore'
 
 function App() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, isLoading, initialize } = useAuthStore()
+
+  // Initialize auth state on mount
+  useEffect(() => {
+    initialize()
+  }, [initialize])
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   if (!isAuthenticated) {
     return (

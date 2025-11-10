@@ -16,9 +16,11 @@ interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
+  isLoading: boolean
   login: (email: string, password: string, tenantId?: string) => Promise<void>
   logout: () => void
   setTokens: (accessToken: string, refreshToken: string, user: User) => void
+  initialize: () => Promise<void>
 }
 
 // Default tenant ID for development (will be replaced with proper tenant selection)
@@ -26,11 +28,29 @@ const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      isLoading: true,
+
+      initialize: async () => {
+        const { accessToken } = get()
+        if (accessToken) {
+          try {
+            // Verify token is still valid
+            await api.get('/v1/auth/verify')
+            set({ isLoading: false })
+          } catch (error) {
+            // Token expired or invalid, logout
+            console.warn('Token verification failed, logging out')
+            get().logout()
+          }
+        } else {
+          set({ isLoading: false })
+        }
+      },
 
       login: async (email: string, password: string, tenantId?: string) => {
         const response = await api.post('/v1/auth/login', {
@@ -47,6 +67,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken,
           refreshToken,
           isAuthenticated: true,
+          isLoading: false,
         })
       },
 
@@ -56,6 +77,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          isLoading: false,
         })
       },
 
@@ -65,11 +87,18 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
           user,
           isAuthenticated: true,
+          isLoading: false,
         })
       },
     }),
     {
       name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        // After rehydration from localStorage, verify the token
+        if (state) {
+          state.initialize()
+        }
+      },
     }
   )
 )

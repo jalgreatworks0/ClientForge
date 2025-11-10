@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "5.6",
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
@@ -11,7 +11,9 @@
     "paths": {
       "@backend/*": ["backend/*"],
       "@config/*": ["config/*"],
-      "@agents/*": ["agents/*"]
+      "@agents/*": ["agents/*"],
+      "@database/*": ["database/*"],
+      "@scripts/*": ["scripts/*"]
     },
 
     "moduleResolution": "node",
@@ -21,13 +23,20 @@
     "skipLibCheck": true,
     "downlevelIteration": true,
 
+    // Gradual strict mode adoption - enable incrementally
     "strict": false,
+    "noImplicitAny": true,
+    "strictNullChecks": false,
     "noEmitOnError": false,
-    "allowJs": true,
-    "sourceMap": false,
-    "declaration": false,
+    "allowJs": false,
+    "sourceMap": true,
+    "declaration": true,
 
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true
   },
   "include": [
     "backend/**/*",
