@@ -4,7 +4,7 @@
  */
 
 import { queueService } from '../queue/queue.service'
-import logger from '../../utils/logger'
+import { logger } from '../../utils/logging/logger'
 
 interface SyncDocument {
   id: string

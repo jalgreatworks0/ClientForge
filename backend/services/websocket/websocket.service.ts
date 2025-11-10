@@ -6,7 +6,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io'
 import { Server as HTTPServer } from 'http'
 import { verify } from 'jsonwebtoken'
-import logger from '../../utils/logger'
+import { logger } from '../../utils/logging/logger'
 
 interface JWTPayload {
   userId: string

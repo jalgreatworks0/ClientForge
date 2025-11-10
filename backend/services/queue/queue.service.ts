@@ -4,7 +4,7 @@
  */
 
 import Queue, { Job, JobOptions } from 'bull'
-import logger from '../../utils/logger'
+import { logger } from '../../utils/logging/logger'
 
 // Job type definitions
 export interface EmailJob {
