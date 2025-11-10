@@ -27,7 +27,6 @@
     "noImplicitAny": false,
     "strictNullChecks": false,
     "noEmitOnError": false,
-    "suppressImplicitAnyIndexErrors": true,
     "allowJs": false,
     "sourceMap": true,
     "declaration": true,
