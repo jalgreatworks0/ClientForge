@@ -46,14 +46,23 @@ REM Start frontend in a new window
 echo [INFO] Starting frontend development server...
 start "ClientForge Frontend" cmd /k "cd /d %CD%\scripts\deployment && start-frontend.bat"
 
+REM Wait 5 seconds for frontend to fully initialize
+echo [INFO] Waiting for frontend to initialize...
+timeout /t 5 /nobreak >nul
+
+REM Open browser to ClientForge UI
+echo [INFO] Opening browser to http://localhost:3001...
+start "" "http://localhost:3001"
+
 echo.
 echo ========================================
-echo [SUCCESS] Both servers are starting!
+echo [SUCCESS] Both servers are running!
 echo ========================================
 echo.
 echo Backend:  http://localhost:3000/api
 echo Frontend: http://localhost:3001
 echo.
+echo Browser opened automatically to the UI.
 echo Check the separate windows for server logs.
 echo Close those windows to stop the servers.
 echo.
