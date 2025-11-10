@@ -68,9 +68,10 @@ export function configureRoutes(app: Application): void {
   app.use(`${apiPrefix}/custom-fields`, customFieldsRoutes)
 
   // Analytics routes (authentication required)
+  // Both simplified (for Analytics page) and complex (for Dashboard) routes
   app.use(`${apiPrefix}/analytics`, analyticsSimpleRoutes)
-  // const pool = getPool()
-  // app.use(`${apiPrefix}/analytics`, createAnalyticsRoutes(pool))
+  const pool = getPool()
+  app.use(`${apiPrefix}/analytics`, createAnalyticsRoutes(pool))
 
   console.log('[OK] All routes configured including AI, Analytics, and Email Integration endpoints')
 }
