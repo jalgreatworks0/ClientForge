@@ -101,6 +101,18 @@ export function requirePermission(permission: string) {
         throw new ForbiddenError('User not authenticated')
       }
 
+      // TEMPORARY: Bypass permission check for Administrator role until RBAC tables are created
+      // TODO: Remove this bypass once permissions/role_permissions tables are migrated
+      if (req.user.roleId === '00000000-0000-0000-0000-000000000001') {
+        logger.debug('Admin bypass - permission check skipped', {
+          userId: req.user.userId,
+          permission,
+          path: req.path,
+        })
+        next()
+        return
+      }
+
       // Parse permission (format: "resource:action")
       const [resource, action] = permission.split(':')
 

@@ -1,0 +1,285 @@
+{
+  "mcpServers": {
+    "clientforge-filesystem": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\filesystem-server.js"
+      ],
+      "description": "ClientForge-aware filesystem navigation with smart path completion and workspace constraints",
+      "capabilities": [
+        "read_file",
+        "write_file",
+        "list_directory",
+        "search_files",
+        "glob_pattern",
+        "smart_navigate",
+        "workspace_tree",
+        "recent_files",
+        "staged_files"
+      ],
+      "workspace_root": "D:\\clientforge-crm",
+      "exclude_patterns": [
+        "node_modules/**",
+        ".next/**",
+        "dist/**",
+        ".turbo/**",
+        "coverage/**",
+        "**/*.map",
+        "**/*.{png,jpg,jpeg,gif,svg,webp,mp4}"
+      ],
+      "staging_directory": "D:\\clientforge-crm\\_staging",
+      "auto_stage": true
+    },
+
+    "clientforge-database": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\database-server.js"
+      ],
+      "description": "Multi-database operations manager for PostgreSQL, MongoDB, Elasticsearch, Redis",
+      "capabilities": [
+        "query_postgresql",
+        "query_mongodb",
+        "search_elasticsearch",
+        "cache_redis",
+        "run_migration",
+        "verify_schema",
+        "check_tenant_isolation",
+        "database_health"
+      ],
+      "connections": {
+        "postgresql": "postgres://localhost:5432/clientforge",
+        "mongodb": "mongodb://localhost:27017/clientforge?authSource=admin",
+        "elasticsearch": "http://localhost:9200",
+        "redis": "redis://localhost:6379"
+      },
+      "safe_mode": true,
+      "require_tenant_id": true
+    },
+
+    "clientforge-codebase": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\codebase-server.js"
+      ],
+      "description": "Intelligent codebase navigation and analysis with dependency tracking",
+      "capabilities": [
+        "find_definition",
+        "find_references",
+        "find_implementations",
+        "dependency_graph",
+        "import_chain",
+        "breaking_change_analysis",
+        "type_hierarchy",
+        "call_graph",
+        "module_structure"
+      ],
+      "index_paths": [
+        "backend/**/*.ts",
+        "frontend/src/**/*.{ts,tsx}",
+        "tests/**/*.test.ts"
+      ],
+      "language_server": "typescript"
+    },
+
+    "clientforge-testing": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\testing-server.js"
+      ],
+      "description": "Test execution, coverage analysis, and test generation assistant",
+      "capabilities": [
+        "run_tests",
+        "run_coverage",
+        "generate_tests",
+        "identify_untested",
+        "test_impact_analysis",
+        "mutation_testing",
+        "test_recommendations"
+      ],
+      "test_runner": "jest",
+      "coverage_threshold": {
+        "global": 85,
+        "auth": 95,
+        "payment": 95
+      }
+    },
+
+    "clientforge-git": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\git-server.js"
+      ],
+      "description": "Git operations with commit message generation and branch management",
+      "capabilities": [
+        "git_status",
+        "git_diff",
+        "git_log",
+        "git_commit",
+        "git_branch",
+        "generate_commit_message",
+        "find_conflicts",
+        "blame_analysis",
+        "branch_diff"
+      ],
+      "repository_root": "D:\\clientforge-crm",
+      "conventional_commits": true,
+      "auto_sign": false
+    },
+
+    "clientforge-documentation": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\documentation-server.js"
+      ],
+      "description": "Documentation search, generation, and maintenance",
+      "capabilities": [
+        "search_docs",
+        "generate_jsdoc",
+        "update_changelog",
+        "update_api_docs",
+        "generate_readme",
+        "find_outdated_docs",
+        "cross_reference"
+      ],
+      "docs_root": "D:\\clientforge-crm\\docs",
+      "formats": ["markdown", "jsdoc", "typedoc"]
+    },
+
+    "clientforge-build": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\build-server.js"
+      ],
+      "description": "Build orchestration, CI/CD pipeline management, and deployment",
+      "capabilities": [
+        "run_build",
+        "run_lint",
+        "run_typecheck",
+        "run_ci_gate",
+        "deploy",
+        "rollback",
+        "build_status",
+        "artifact_management"
+      ],
+      "scripts_root": "D:\\clientforge-crm\\scripts",
+      "ci_gate_script": "gate-ci.ps1",
+      "deploy_script": "deploy-render.ps1"
+    },
+
+    "clientforge-rag": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\rag-server.js"
+      ],
+      "description": "Local RAG system for semantic documentation search",
+      "capabilities": [
+        "query",
+        "reindex",
+        "add_document",
+        "remove_document",
+        "semantic_search",
+        "get_similar",
+        "get_context"
+      ],
+      "vector_store": "chroma",
+      "embedding_model": "all-MiniLM-L6-v2",
+      "index_path": "D:\\clientforge-crm\\agents\\rag-index",
+      "endpoint": "http://127.0.0.1:8920"
+    },
+
+    "clientforge-orchestrator": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\router.js"
+      ],
+      "description": "Multi-agent task orchestrator coordinating 7 local agents + 2 SDK bots",
+      "capabilities": [
+        "list_bots",
+        "submit_task",
+        "get_task",
+        "cancel_task",
+        "agent_status",
+        "task_history",
+        "route_task"
+      ],
+      "endpoint": "http://127.0.0.1:8979",
+      "agents": [
+        "agent-0-claude-code",
+        "agent-1-phi3mini",
+        "agent-2-deepseek6.7b",
+        "agent-3-mistral7b",
+        "agent-4-deepseek6.7b-q5",
+        "agent-5-llama3.1-8b",
+        "agent-6-claude-planner",
+        "agent-7-gpt-reviewer",
+        "sdk-bot-albedo",
+        "sdk-bot-openai"
+      ]
+    },
+
+    "clientforge-security": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\security-server.js"
+      ],
+      "description": "Security analysis, OWASP compliance, and vulnerability scanning",
+      "capabilities": [
+        "owasp_audit",
+        "dependency_audit",
+        "secret_scan",
+        "sql_injection_check",
+        "xss_check",
+        "tenant_isolation_verify",
+        "auth_check",
+        "security_score"
+      ],
+      "owasp_checklist": "docs/protocols/02_SECURITY.md",
+      "safe_mode": true
+    },
+
+    "clientforge-logger": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\logger-server.js"
+      ],
+      "description": "Structured logging interface to MongoDB with query capabilities",
+      "capabilities": [
+        "log_info",
+        "log_error",
+        "log_warn",
+        "query_logs",
+        "log_stats",
+        "error_analysis",
+        "performance_logs"
+      ],
+      "mongodb_uri": "mongodb://localhost:27017/clientforge?authSource=admin",
+      "collections": {
+        "app_logs": "app_logs",
+        "error_logs": "error_logs",
+        "audit_logs": "audit_logs"
+      },
+      "mask_sensitive": true
+    },
+
+    "clientforge-context-pack": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\context-pack-server.js"
+      ],
+      "description": "Smart context loading using pack system with 120KB budget enforcement",
+      "capabilities": [
+        "list_packs",
+        "load_pack",
+        "unload_pack",
+        "switch_pack",
+        "pack_info",
+        "budget_status",
+        "suggest_pack"
+      ],
+      "packs_definition": "D:\\clientforge-crm\\docs\\claude\\11_CONTEXT_PACKS.md",
+      "budget_limit_kb": 120,
+      "auto_unload": true
+    }
+  }
+}

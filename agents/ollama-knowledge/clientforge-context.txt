@@ -1,0 +1,218 @@
+===========================================
+CLIENTFORGE CRM - MASTER KNOWLEDGE BASE
+Version: 3.1.0 | Last Updated: 2025-11-07
+For: All AI Agents (Local & Cloud)
+===========================================
+
+## PROJECT IDENTITY
+
+Name: ClientForge CRM v3.0
+Owner: Abstract Creatives LLC  
+Purpose: Enterprise AI-powered CRM with polyglot persistence architecture
+Workspace: D:\clientforge-crm (MANDATORY - never access other drives)
+Status: 90% complete - Production-ready
+
+## CORE ARCHITECTURE
+
+Stack:
+- Frontend: React 18 + TypeScript 5.3 + Vite + Zustand + Tailwind
+- Backend: Node.js 18+ + Express + TypeScript 5.3
+- Databases (4-DB polyglot):
+  * PostgreSQL (Port 5432): Primary DB, 17 tables, multi-tenant
+  * MongoDB (Port 27017): Structured logging, TTL indexes
+  * Elasticsearch (Port 9200): Full-text search, 13-25x faster
+  * Redis (Port 6379): Cache, sessions, rate limiting
+
+Data Flow:
+1. Client → API endpoint
+2. PostgreSQL → Write/read (source of truth)
+3. Elasticsearch → Index for search  
+4. MongoDB → Write audit log
+5. Redis → Cache/invalidate
+6. Response → Client
+
+## LOGGING (CRITICAL)
+
+PRIMARY: MongoDB via Winston
+- Collections: app_logs, error_logs, audit_logs
+- Format: Structured JSON
+- Query by: tenant_id, user_id, level, timestamp
+
+BACKUP: File logs (fallback only)
+- Location: logs/combined.log, logs/error.log
+
+RULES (NON-NEGOTIABLE):
+✅ ALWAYS: logger.info(), logger.error(), logger.warn()
+❌ NEVER: console.log() - bypasses MongoDB
+❌ NEVER: emoji in logs - use [OK], [ERROR], [WARNING]
+✅ ALWAYS: mask sensitive data (passwords, tokens, emails)
+
+## FILE STRUCTURE
+
+D:\clientforge-crm\
+├── backend\
+│   ├── api\rest\v1\routes\      # API endpoints
+│   ├── core\                     # Business logic (3-4 levels deep)
+│   │   ├── analytics\           # Session 10: 2,500+ lines
+│   │   ├── auth\
+│   │   └── crm\
+│   ├── services\                 # External services
+│   ├── middleware\               # Auth, rate-limiting, errors
+│   ├── database\postgresql\      # Connection pool
+│   └── utils\logging\logger.ts   # Winston MongoDB transport
+├── frontend\
+│   ├── src\
+│   │   ├── components\          # React components (3-4 levels)
+│   │   ├── hooks\               # React Query hooks
+│   │   ├── services\            # API service layer
+│   │   └── types\               # TypeScript interfaces
+├── config\database\             # 4 database configs
+├── docs\protocols\              # 15 development protocols
+├── tests\                       # 85%+ coverage target
+└── agents\                      # MCP multi-agent system
+
+## P0 PROTOCOLS (NEVER SKIP)
+
+1. UPDATE > CREATE
+   - Search 2-3 min before creating files
+   - Verification: ANTI-DUP-CHECK-COMPLETE
+
+2. Deep Folders (3-4 levels)
+   ❌ backend/services/user-service.ts
+   ✅ backend/services/user/user-service.ts
+
+3. Dependency Check  
+   - grep -r 'from.*filename' before modifying
+   - Verification: DEP-CHAIN-CHECK-COMPLETE
+
+4. Test Coverage: 85%+ (auth: 95%, security: 90%)
+
+5. Security (OWASP Top 10)
+   ✅ Parameterized queries ($1, $2, $3)
+   ✅ Input validation (Zod schemas)
+   ✅ Authorization checks (tenant_id)
+   ✅ Mask sensitive data in logs
+
+6. Zero 'any' Types
+   ✅ Explicit types on all functions
+   ✅ Promise<User | null> not Promise<any>
+
+## NAMING CONVENTIONS
+
+- Directories: kebab-case
+- Files: kebab-case.ext
+- React Components: PascalCase.tsx
+- Functions: camelCase
+- Constants: UPPER_SNAKE_CASE
+- DB Tables: snake_case (plural)
+- API Endpoints: /api/v1/kebab-case
+
+## CODE PATTERNS
+
+TypeScript:
+```typescript
+// ✅ ALWAYS
+const user: User = { id: '123', name: 'John' }
+async function getUser(id: string): Promise<User | null>
+```
+
+Error Handling:
+```typescript
+// ✅ ALWAYS
+import { logger } from '../utils/logging/logger'
+try {
+  const result = await operation()
+  logger.info('[OK] Success', { result })
+  return result
+} catch (error) {
+  logger.error('[ERROR] Failed', { error })
+  throw new AppError('Failed', 500, { originalError: error })
+}
+```
+
+Database:
+```typescript
+// ✅ SQL injection safe
+const user = await db.query(
+  'SELECT * FROM users WHERE email = $1 AND tenant_id = $2',
+  [email, tenantId]
+)
+```
+
+## ANALYTICS MODULE (Reference)
+
+8 Endpoints (Session 10):
+1. GET /api/v1/analytics/dashboard
+2. GET /api/v1/analytics/contacts
+3. GET /api/v1/analytics/deals  
+4. GET /api/v1/analytics/revenue-forecast
+5. GET /api/v1/analytics/pipeline/:id
+6. GET /api/v1/analytics/tasks
+7. GET /api/v1/analytics/activities
+8. GET /api/v1/analytics/team-performance
+
+All have:
+- Multi-tenant isolation (WHERE tenant_id = $1)
+- Parameterized queries
+- JWT auth required
+- Permission check: analytics:read
+
+## MCP AGENTS (7 Total)
+
+Local (RTX 4090):
+1. Phi3:mini (2.2GB) - Fast tasks, 150 tok/sec
+2. DeepSeek 6.7B (3.8GB) - Code gen, 120 tok/sec
+3. Mistral 7B (4.4GB) - Docs/refactor, 110 tok/sec
+4. DeepSeek Q5 (4.8GB) - Tests, 115 tok/sec
+5. Llama 3.1 8B (5.7GB) - Planning, 100 tok/sec
+
+Cloud (API):
+6. Claude Sonnet 4 - Design, $15/1M
+7. GPT-4 Turbo - Review, $10/1M
+
+Routing:
+- Simple → Phi3
+- Code → DeepSeek
+- Tests → DeepSeek Q5
+- Docs → Mistral
+- Planning → Llama
+- Review → GPT-4
+
+## TOP 10 MISTAKES (AVOID)
+
+1. console.log() instead of logger
+2. Shallow folders (2 levels)
+3. Not searching before creating
+4. Not checking dependencies
+5. Using 'any' types
+6. SQL string concatenation
+7. Not masking sensitive data
+8. Forgetting tenant_id filtering
+9. No error handling
+10. Skipping tests
+
+## SESSION END (MANDATORY)
+
+✅ SESSION-END-v3.0-COMPLETE
+CHANGELOG Updated: yes
+Session Log: logs/session-logs/YYYY-MM-DD-task.md
+Files Created: [list]
+Files Modified: [list]
+Tests Added: [count]
+
+## FINAL REMINDERS
+
+1. Workspace: D:\clientforge-crm (ONLY)
+2. Logging: logger.* (NEVER console.log)
+3. Search: 2-3 min (ANTI-DUP-CHECK-COMPLETE)
+4. Folders: 3-4 levels deep
+5. Types: Zero 'any'
+6. Security: Parameterized queries
+7. Multi-Tenant: tenant_id filter
+8. Tests: 85%+ coverage
+9. Dependencies: Check before modify
+10. Documentation: CHANGELOG + session log
+
+Built with ❤️ by Abstract Creatives LLC
+Version: 3.1.0 | For: All AI Agents
+Last Updated: 2025-11-07

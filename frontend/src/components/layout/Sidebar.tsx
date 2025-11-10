@@ -1,11 +1,14 @@
 import { NavLink } from 'react-router-dom'
+import { Settings as SettingsIcon } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: '📊' },
   { name: 'Contacts', href: '/contacts', icon: '👥' },
-  { name: 'Deals', href: '/deals', icon: '💼' },
   { name: 'Accounts', href: '/accounts', icon: '🏢' },
+  { name: 'Deals', href: '/deals', icon: '💼' },
   { name: 'Tasks', href: '/tasks', icon: '✓' },
+  { name: 'Activities', href: '/activities', icon: '📅' },
+  { name: 'Notes', href: '/notes', icon: '📝' },
 ]
 
 export default function Sidebar() {
@@ -38,6 +41,23 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Settings Link */}
+      <div className="p-4 border-t border-gray-800">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3 rounded-lg transition-colors ${
+              isActive
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            }`
+          }
+        >
+          <SettingsIcon className="w-5 h-5 mr-3" />
+          <span className="font-medium">Settings</span>
+        </NavLink>
+      </div>
 
       {/* User info */}
       <div className="p-4 border-t border-gray-800">

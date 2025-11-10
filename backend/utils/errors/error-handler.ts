@@ -123,5 +123,5 @@ export function setupGlobalErrorHandlers(): void {
   process.on('unhandledRejection', handleUnhandledRejection)
   process.on('uncaughtException', handleUncaughtException)
 
-  logger.info('✅ Global error handlers configured')
+  logger.info('[OK] Global error handlers configured')
 }

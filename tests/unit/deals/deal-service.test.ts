@@ -122,7 +122,10 @@ describe('DealService', () => {
       )
 
       expect(result).toEqual(mockDeal)
-      expect(mockedDealRepo.create).toHaveBeenCalledWith('tenant-123', createData)
+      expect(mockedDealRepo.create).toHaveBeenCalledWith('tenant-123', {
+        ...createData,
+        probability: 25, // Service adds stage probability
+      })
     })
 
     it('should throw error if pipeline does not exist', async () => {

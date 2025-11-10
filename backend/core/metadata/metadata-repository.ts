@@ -134,6 +134,7 @@ export class MetadataRepository {
 
     return {
       notes: dataResult.rows.map((row) => this.mapNote(row)),
+      items: dataResult.rows.map((row) => this.mapNote(row)),
       total,
       page,
       limit,
@@ -187,6 +188,15 @@ export class MetadataRepository {
       `UPDATE notes SET deleted_at = NOW()
        WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND deleted_at IS NULL`,
       [ids, tenantId]
+    )
+    return result.rowCount || 0
+  }
+
+  async bulkPinNotes(ids: string[], tenantId: string, isPinned: boolean): Promise<number> {
+    const result = await this.pool.query(
+      `UPDATE notes SET is_pinned = $1, updated_at = NOW()
+       WHERE id = ANY($2::uuid[]) AND tenant_id = $3 AND deleted_at IS NULL`,
+      [isPinned, ids, tenantId]
     )
     return result.rowCount || 0
   }
@@ -294,6 +304,7 @@ export class MetadataRepository {
 
     return {
       comments: dataResult.rows.map((row) => this.mapComment(row)),
+      items: dataResult.rows.map((row) => this.mapComment(row)),
       total,
       page,
       limit,
@@ -407,6 +418,7 @@ export class MetadataRepository {
 
     return {
       tags: dataResult.rows.map((row) => this.mapTag(row)),
+      items: dataResult.rows.map((row) => this.mapTag(row)),
       total,
       page,
       limit,
@@ -575,11 +587,101 @@ export class MetadataRepository {
 
     return {
       customFields: dataResult.rows.map((row) => this.mapCustomField(row)),
+      items: dataResult.rows.map((row) => this.mapCustomField(row)),
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     }
+  }
+
+  async updateCustomField(
+    id: string,
+    tenantId: string,
+    data: UpdateCustomFieldInput
+  ): Promise<CustomField> {
+    const fields: string[] = []
+    const params: any[] = []
+    let paramIndex = 1
+
+    if (data.fieldLabel !== undefined) {
+      fields.push(`field_label = $${paramIndex}`)
+      params.push(data.fieldLabel)
+      paramIndex++
+    }
+
+    if (data.fieldOptions !== undefined) {
+      fields.push(`field_options = $${paramIndex}`)
+      params.push(JSON.stringify(data.fieldOptions))
+      paramIndex++
+    }
+
+    if (data.defaultValue !== undefined) {
+      fields.push(`default_value = $${paramIndex}`)
+      params.push(data.defaultValue)
+      paramIndex++
+    }
+
+    if (data.isRequired !== undefined) {
+      fields.push(`is_required = $${paramIndex}`)
+      params.push(data.isRequired)
+      paramIndex++
+    }
+
+    if (data.isSearchable !== undefined) {
+      fields.push(`is_searchable = $${paramIndex}`)
+      params.push(data.isSearchable)
+      paramIndex++
+    }
+
+    if (data.isVisible !== undefined) {
+      fields.push(`is_visible = $${paramIndex}`)
+      params.push(data.isVisible)
+      paramIndex++
+    }
+
+    if (data.validationRules !== undefined) {
+      fields.push(`validation_rules = $${paramIndex}`)
+      params.push(JSON.stringify(data.validationRules))
+      paramIndex++
+    }
+
+    if (data.displayOrder !== undefined) {
+      fields.push(`display_order = $${paramIndex}`)
+      params.push(data.displayOrder)
+      paramIndex++
+    }
+
+    if (data.helpText !== undefined) {
+      fields.push(`help_text = $${paramIndex}`)
+      params.push(data.helpText)
+      paramIndex++
+    }
+
+    if (data.placeholderText !== undefined) {
+      fields.push(`placeholder_text = $${paramIndex}`)
+      params.push(data.placeholderText)
+      paramIndex++
+    }
+
+    fields.push(`updated_at = NOW()`)
+
+    const result = await this.pool.query<CustomField>(
+      `UPDATE custom_fields
+       SET ${fields.join(', ')}
+       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       RETURNING *`,
+      [...params, id, tenantId]
+    )
+
+    return this.mapCustomField(result.rows[0])
+  }
+
+  async deleteCustomField(id: string, tenantId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE custom_fields SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+      [id, tenantId]
+    )
   }
 
   async setCustomFieldValue(tenantId: string, data: SetCustomFieldValueInput): Promise<CustomFieldValue> {

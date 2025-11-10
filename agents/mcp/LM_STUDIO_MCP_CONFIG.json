@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "clientforge-filesystem": {
+      "command": "node",
+      "args": ["D:\\\\clientforge-crm\\\\agents\\\\mcp\\\\servers\\\\filesystem-mcp-server.js"],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\\\clientforge-crm"
+      },
+      "timeout": 30000
+    },
+    "clientforge-git": {
+      "command": "node",
+      "args": ["D:\\\\clientforge-crm\\\\agents\\\\mcp\\\\servers\\\\git-mcp-server.js"],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\\\clientforge-crm"
+      },
+      "timeout": 15000
+    },
+    "clientforge-codebase": {
+      "command": "node",
+      "args": ["D:\\\\clientforge-crm\\\\agents\\\\mcp\\\\servers\\\\codebase-mcp-server.js"],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\\\clientforge-crm"
+      },
+      "timeout": 45000
+    }
+  }
+}

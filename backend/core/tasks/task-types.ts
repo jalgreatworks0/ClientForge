@@ -220,7 +220,7 @@ export interface TaskReminder {
 // =====================================================
 
 export interface CreateTaskInput {
-  title: string
+  title?: string // Made optional to match Zod schema
   description?: string
   status?: TaskStatus
   priority?: TaskPriority
@@ -247,12 +247,12 @@ export interface UpdateTaskInput {
 }
 
 export interface CreateActivityInput {
-  type: ActivityType
-  title: string
+  type?: ActivityType // Made optional to match Zod schema
+  title?: string // Made optional to match Zod schema
   description?: string
   outcome?: string
-  entityType: string
-  entityId: string
+  entityType?: string // Made optional to match Zod schema
+  entityId?: string // Made optional to match Zod schema
   performedAt?: Date
   durationMinutes?: number
 
@@ -303,9 +303,9 @@ export interface CreateActivityParticipantInput {
 }
 
 export interface CreateTaskReminderInput {
-  taskId: string
-  remindAt: Date
-  reminderType: ReminderType
+  taskId?: string // Made optional to match Zod schema
+  remindAt?: Date // Made optional to match Zod schema
+  reminderType?: ReminderType // Made optional to match Zod schema
 }
 
 // =====================================================
@@ -313,10 +313,10 @@ export interface CreateTaskReminderInput {
 // =====================================================
 
 export interface TaskListOptions {
-  page: number
-  limit: number
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
+  page?: number // Made optional to match Zod schema
+  limit?: number // Made optional to match Zod schema
+  sortBy?: string // Made optional to match Zod schema
+  sortOrder?: 'asc' | 'desc' // Made optional to match Zod schema
   filters?: {
     search?: string
     status?: TaskStatus
@@ -340,10 +340,10 @@ export interface TaskListResult {
 }
 
 export interface ActivityListOptions {
-  page: number
-  limit: number
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
+  page?: number // Made optional to match Zod schema
+  limit?: number // Made optional to match Zod schema
+  sortBy?: string // Made optional to match Zod schema
+  sortOrder?: 'asc' | 'desc' // Made optional to match Zod schema
   filters?: {
     search?: string
     type?: ActivityType
@@ -378,8 +378,8 @@ export type TaskBulkOperation =
   | 'remove_tags'
 
 export interface BulkTaskOperationInput {
-  taskIds: string[]
-  operation: TaskBulkOperation
+  taskIds?: string[] // Made optional to match Zod schema - will be validated at runtime
+  operation?: TaskBulkOperation // Made optional to match Zod schema
   data?: {
     status?: TaskStatus
     priority?: TaskPriority

@@ -89,7 +89,7 @@ export interface DealProduct {
 }
 
 export interface CreateDealInput {
-  ownerId: string
+  ownerId?: string // Optional - will default to authenticated user if not provided
   accountId?: string
   contactId?: string
   pipelineId: string
@@ -170,7 +170,7 @@ export interface DealListResponse {
 }
 
 export interface BulkDealOperation {
-  dealIds: string[]
+  dealIds?: string[] // Optional - will be validated at runtime
   operation: 'update' | 'delete' | 'assign' | 'add_tags' | 'remove_tags' | 'change_stage' | 'close_won' | 'close_lost'
   data?: Record<string, any>
 }
@@ -289,15 +289,13 @@ export interface DealExportOptions {
 
 // Deal stage change
 export interface ChangeDealStageInput {
-  dealId: string
-  toStageId: string
+  toStageId?: string // Made optional to match Zod schema
   notes?: string
 }
 
 // Deal close
 export interface CloseDealInput {
-  dealId: string
-  isWon: boolean
+  isWon?: boolean // Made optional to match Zod schema - validated at runtime
   actualCloseDate?: Date
   lostReason?: string
   notes?: string

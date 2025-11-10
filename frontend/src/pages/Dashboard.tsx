@@ -1,38 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Responsive, WidthProvider, Layout } from 'react-grid-layout'
-import { Lock, Unlock, RotateCcw, Eye, EyeOff, Plus, Phone, Mail, Calendar } from 'lucide-react'
+import { Lock, Unlock, RotateCcw, Eye, EyeOff, Plus, Phone, Mail, Calendar, TrendingUp, TrendingDown } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, rectSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import 'react-grid-layout/css/styles.css'
+import { useDashboardMetrics, useTaskAnalytics, useActivityAnalytics, useDealAnalytics } from '../hooks/useAnalytics'
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
-
-// Mock data - will be replaced with real data later
-const initialContacts = [
-  { id: '1', firstName: 'Sarah', lastName: 'Johnson', email: 'sarah.j@example.com', company: 'Acme Corp', status: 'active' },
-  { id: '2', firstName: 'Michael', lastName: 'Chen', email: 'mchen@beta.com', company: 'Beta Inc', status: 'active' },
-  { id: '3', firstName: 'Emma', lastName: 'Davis', email: 'emma.d@gamma.com', company: 'Gamma LLC', status: 'inactive' },
-]
-
-const initialDeals = [
-  { id: '1', name: 'Enterprise Package - Acme Corp', value: 125000, stage: 'Proposal', probability: 70 },
-  { id: '2', name: 'Premium Subscription - Beta Inc', value: 45000, stage: 'Negotiation', probability: 85 },
-  { id: '3', name: 'Starter Plan - Gamma LLC', value: 12000, stage: 'Qualified', probability: 50 },
-]
-
-const initialTasks = [
-  { id: '1', title: 'Follow up with Acme Corp', dueDate: '2024-03-05', priority: 'high', status: 'pending' },
-  { id: '2', title: 'Prepare proposal for Beta Inc', dueDate: '2024-03-06', priority: 'medium', status: 'in_progress' },
-  { id: '3', title: 'Review contract with Gamma LLC', dueDate: '2024-03-06', priority: 'low', status: 'pending' },
-]
-
-const recentActivities = [
-  { id: '1', type: 'call', title: 'Call with Sarah Johnson', time: '2 hours ago', icon: Phone },
-  { id: '2', type: 'email', title: 'Sent proposal to Michael Chen', time: '4 hours ago', icon: Mail },
-  { id: '3', type: 'meeting', title: 'Demo scheduled with Emma Davis', time: '1 day ago', icon: Calendar },
-]
 
 const defaultLayout: Layout[] = [
   { i: 'metrics', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
@@ -46,7 +22,7 @@ const defaultLayout: Layout[] = [
 
 // Sortable Metric Item Component
 interface SortableMetricProps {
-  metric: { name: string; value: string; link: string; icon: string; iconBg: string }
+  metric: { name: string; value: string; link: string; icon: string; iconBg: string; trend?: number }
   id: string
 }
 
@@ -66,6 +42,18 @@ function SortableMetric({ metric, id }: SortableMetricProps) {
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const formatTrend = (trend: number | undefined) => {
+    if (trend === undefined) return null
+    const isPositive = trend >= 0
+    const TrendIcon = isPositive ? TrendingUp : TrendingDown
+    return (
+      <div className={`flex items-center text-xs font-syne-mono ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+        <TrendIcon className="w-3 h-3 mr-1" />
+        <span>{Math.abs(trend).toFixed(1)}%</span>
+      </div>
+    )
+  }
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Link
@@ -76,6 +64,7 @@ function SortableMetric({ metric, id }: SortableMetricProps) {
           <div className={`${metric.iconBg} w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm`}>
             {metric.icon}
           </div>
+          {formatTrend(metric.trend)}
         </div>
         <div className="text-2xl font-syne font-bold text-charcoal-900 dark:text-charcoal-50 mb-1">
           {metric.value}
@@ -88,12 +77,32 @@ function SortableMetric({ metric, id }: SortableMetricProps) {
   )
 }
 
+// Skeleton Metric Component
+function SkeletonMetric() {
+  return (
+    <div className="p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary animate-pulse">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-10 h-10 rounded-lg bg-alabaster-300 dark:bg-dark-hover"></div>
+        <div className="w-12 h-4 rounded bg-alabaster-300 dark:bg-dark-hover"></div>
+      </div>
+      <div className="w-16 h-8 rounded bg-alabaster-300 dark:bg-dark-hover mb-2"></div>
+      <div className="w-24 h-3 rounded bg-alabaster-300 dark:bg-dark-hover"></div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const [isLocked, setIsLocked] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
   const [layouts, setLayouts] = useState<{ lg: Layout[] }>({ lg: defaultLayout })
   const [hiddenWidgets, setHiddenWidgets] = useState<Set<string>>(new Set())
   const [metricsOrder, setMetricsOrder] = useState(['metric-0', 'metric-1', 'metric-2', 'metric-3'])
+
+  // Fetch real analytics data
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useDashboardMetrics()
+  const { data: taskAnalytics, isLoading: tasksLoading } = useTaskAnalytics()
+  const { data: activityAnalytics, isLoading: activitiesLoading } = useActivityAnalytics()
+  const { data: dealAnalytics, isLoading: dealsLoading } = useDealAnalytics()
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -160,25 +169,46 @@ export default function Dashboard() {
     }
   }
 
-  const allMetrics = [
-    { name: 'Total Contacts', value: initialContacts.length.toString(), link: '/contacts', icon: '👥', iconBg: 'bg-blue-500' },
-    { name: 'Active Deals', value: initialDeals.length.toString(), link: '/deals', icon: '💼', iconBg: 'bg-green-500' },
-    { name: 'Total Value', value: `$${(initialDeals.reduce((sum, d) => sum + d.value, 0) / 1000).toFixed(0)}K`, link: '/deals', icon: '💰', iconBg: 'bg-orange-500' },
-    { name: 'Pending Tasks', value: initialTasks.filter(t => t.status === 'pending').length.toString(), link: '/tasks', icon: '📋', iconBg: 'bg-purple-500' },
-  ]
+  // Build metrics array from real data
+  const allMetrics = metrics ? [
+    {
+      name: 'Total Contacts',
+      value: metrics.totalContacts.toString(),
+      link: '/contacts',
+      icon: '👥',
+      iconBg: 'bg-blue-500',
+      trend: metrics.contactsChange
+    },
+    {
+      name: 'Active Deals',
+      value: metrics.totalDeals.toString(),
+      link: '/deals',
+      icon: '💼',
+      iconBg: 'bg-green-500',
+      trend: metrics.dealsChange
+    },
+    {
+      name: 'Total Revenue',
+      value: `$${(metrics.totalRevenue / 1000).toFixed(0)}K`,
+      link: '/deals',
+      icon: '💰',
+      iconBg: 'bg-orange-500',
+      trend: metrics.revenueChange
+    },
+    {
+      name: 'Pending Tasks',
+      value: metrics.pendingTasks.toString(),
+      link: '/tasks',
+      icon: '📋',
+      iconBg: 'bg-purple-500',
+      trend: metrics.tasksChange
+    },
+  ] : []
 
-  const metrics = metricsOrder.map(id => {
+  const metricsToDisplay = metricsOrder.map(id => {
     const index = parseInt(id.split('-')[1])
     return allMetrics[index]
   })
-
-  const pipelineStages = [
-    { stage: 'Lead', count: 0, value: 0 },
-    { stage: 'Qualified', count: 1, value: 12000 },
-    { stage: 'Proposal', count: 1, value: 125000 },
-    { stage: 'Negotiation', count: 1, value: 45000 },
-    { stage: 'Closed Won', count: 0, value: 0 },
-  ]
 
   const widgets = [
     { id: 'metrics', name: 'Key Metrics', icon: '📊' },
@@ -304,26 +334,52 @@ export default function Dashboard() {
                   📊 Key Metrics
                 </h2>
               </div>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={metricsOrder}
-                  strategy={rectSortingStrategy}
+
+              {/* Error State */}
+              {metricsError && (
+                <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <p className="text-sm font-syne text-red-800 dark:text-red-300">
+                    Failed to load metrics. Please try again later.
+                  </p>
+                  <p className="text-xs font-syne-mono text-red-600 dark:text-red-400 mt-1">
+                    {metricsError.message}
+                  </p>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {metricsLoading && (
+                <div className="grid grid-cols-4 gap-4">
+                  <SkeletonMetric />
+                  <SkeletonMetric />
+                  <SkeletonMetric />
+                  <SkeletonMetric />
+                </div>
+              )}
+
+              {/* Data Loaded State */}
+              {!metricsLoading && !metricsError && metrics && (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
-                  <div className="grid grid-cols-4 gap-4">
-                    {metricsOrder.map((id, index) => (
-                      <SortableMetric
-                        key={id}
-                        id={id}
-                        metric={metrics[index]}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+                  <SortableContext
+                    items={metricsOrder}
+                    strategy={rectSortingStrategy}
+                  >
+                    <div className="grid grid-cols-4 gap-4">
+                      {metricsOrder.map((id, index) => (
+                        <SortableMetric
+                          key={id}
+                          id={id}
+                          metric={metricsToDisplay[index]}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
             </div>
           </div>
         )}
@@ -334,35 +390,58 @@ export default function Dashboard() {
             <div className="floating-box p-6 h-full flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-syne font-normal text-charcoal-900 dark:text-charcoal-50">
-                  👥 Recent Contacts
+                  👥 Top Contacts
                 </h2>
               </div>
               <div className="space-y-3 flex-1 overflow-y-auto">
-                {initialContacts.map((contact) => (
-                  <Link
-                    key={contact.id}
-                    to={`/contacts/${contact.id}`}
-                    className="block p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
-                          {contact.firstName} {contact.lastName}
-                        </div>
-                        <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
-                          {contact.company}
-                        </div>
+                {activitiesLoading ? (
+                  // Loading skeleton
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary animate-pulse"
+                      >
+                        <div className="h-4 bg-alabaster-300 dark:bg-dark-hover rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-alabaster-300 dark:bg-dark-hover rounded w-1/2"></div>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-syne font-semibold rounded ${
-                        contact.status === 'active'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                      }`}>
-                        {contact.status}
-                      </span>
+                    ))}
+                  </>
+                ) : activityAnalytics?.topContacts && activityAnalytics.topContacts.length > 0 ? (
+                  // Display top contacts
+                  activityAnalytics.topContacts.slice(0, 5).map((contact) => (
+                    <Link
+                      key={contact.id}
+                      to={`/contacts/${contact.id}`}
+                      className="block p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                            {contact.name}
+                          </div>
+                          <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                            {contact.activityCount} activities
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 text-xs font-syne font-semibold rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          Active
+                        </span>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  // Empty state
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="text-4xl mb-3">👥</div>
+                    <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50 mb-2">
+                      No Contact Data
                     </div>
-                  </Link>
-                ))}
+                    <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                      Top contacts will appear here
+                    </div>
+                  </div>
+                )}
               </div>
               <Link
                 to="/contacts"
@@ -384,32 +463,63 @@ export default function Dashboard() {
                 </h2>
               </div>
               <div className="space-y-3 flex-1 overflow-y-auto">
-                {pipelineStages.map((stage) => (
-                  <div
-                    key={stage.stage}
-                    className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
-                        {stage.stage}
-                      </span>
-                      <span className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
-                        {stage.count} deals
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 bg-alabaster-300 dark:bg-dark-hover rounded-full h-2 mr-3">
-                        <div
-                          className="bg-gradient-to-r from-charcoal-900 to-charcoal-700 dark:from-charcoal-50 dark:to-charcoal-300 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(stage.count / 3) * 100}%` }}
-                        ></div>
+                {dealsLoading ? (
+                  // Loading skeleton
+                  <>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary animate-pulse"
+                      >
+                        <div className="h-4 bg-alabaster-300 dark:bg-dark-hover rounded w-2/3 mb-2"></div>
+                        <div className="h-2 bg-alabaster-300 dark:bg-dark-hover rounded w-full"></div>
                       </div>
-                      <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
-                        ${(stage.value / 1000).toFixed(0)}K
-                      </span>
+                    ))}
+                  </>
+                ) : dealAnalytics?.byStage && dealAnalytics.byStage.length > 0 ? (
+                  // Display pipeline stages
+                  dealAnalytics.byStage.map((stage) => {
+                    const totalValue = dealAnalytics.byStage.reduce((sum, s) => sum + s.totalValue, 0)
+                    const percentage = totalValue > 0 ? (stage.totalValue / totalValue) * 100 : 0
+                    return (
+                      <div
+                        key={stage.stageId}
+                        className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                            {stage.stageName}
+                          </span>
+                          <span className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                            {stage.dealCount} deals
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 bg-alabaster-300 dark:bg-dark-hover rounded-full h-2 mr-3">
+                            <div
+                              className="bg-gradient-to-r from-charcoal-900 to-charcoal-700 dark:from-charcoal-50 dark:to-charcoal-300 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            ${(stage.totalValue / 1000).toFixed(0)}K
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  // Empty state
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="text-4xl mb-3">📈</div>
+                    <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50 mb-2">
+                      No Pipeline Data
+                    </div>
+                    <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                      Pipeline stages will appear here
                     </div>
                   </div>
-                ))}
+                )}
               </div>
               <Link
                 to="/deals"
@@ -431,41 +541,110 @@ export default function Dashboard() {
                 </h2>
               </div>
               <div className="space-y-3 flex-1 overflow-y-auto">
-                {initialTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
-                        {task.title}
-                      </span>
-                      <span className={`px-2 py-1 text-xs font-syne font-semibold rounded ${
-                        task.priority === 'high'
-                          ? 'bg-red-100 text-red-700'
-                          : task.priority === 'medium'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {task.priority}
-                      </span>
+                {tasksLoading ? (
+                  // Loading skeleton
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary animate-pulse"
+                      >
+                        <div className="h-4 bg-alabaster-300 dark:bg-dark-hover rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-alabaster-300 dark:bg-dark-hover rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </>
+                ) : taskAnalytics ? (
+                  // Display task summary stats
+                  <>
+                    <div className="p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                          Total Tasks
+                        </span>
+                        <span className="text-2xl font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                          {taskAnalytics.totalTasks}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
-                        Due: {task.dueDate}
-                      </span>
-                      <span className={`px-2 py-1 text-xs font-syne font-semibold rounded ${
-                        task.status === 'completed'
-                          ? 'bg-green-100 text-green-700'
-                          : task.status === 'in_progress'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {task.status.replace('_', ' ')}
-                      </span>
+
+                    <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-syne font-medium text-red-900 dark:text-red-300">
+                          Overdue
+                        </span>
+                        <span className="text-2xl font-syne-mono font-bold text-red-700 dark:text-red-400">
+                          {taskAnalytics.overdueTasks}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-syne font-medium text-yellow-900 dark:text-yellow-300">
+                          Due Today
+                        </span>
+                        <span className="text-2xl font-syne-mono font-bold text-yellow-700 dark:text-yellow-400">
+                          {taskAnalytics.dueTodayTasks}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-syne font-medium text-blue-900 dark:text-blue-300">
+                          Due This Week
+                        </span>
+                        <span className="text-2xl font-syne-mono font-bold text-blue-700 dark:text-blue-400">
+                          {taskAnalytics.dueThisWeekTasks}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary">
+                      <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400 mb-3">
+                        By Priority
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Urgent</span>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {taskAnalytics.byPriority.urgent}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">High</span>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {taskAnalytics.byPriority.high}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Medium</span>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {taskAnalytics.byPriority.medium}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Low</span>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {taskAnalytics.byPriority.low}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  // Empty state
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="text-4xl mb-3">📋</div>
+                    <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50 mb-2">
+                      No Tasks Data
+                    </div>
+                    <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                      Task analytics will appear here
                     </div>
                   </div>
-                ))}
+                )}
               </div>
               <Link
                 to="/tasks"
@@ -487,9 +666,22 @@ export default function Dashboard() {
                 </h2>
               </div>
               <div className="space-y-3 flex-1 overflow-y-auto">
-                {initialDeals
-                  .sort((a, b) => b.value - a.value)
-                  .map((deal) => (
+                {dealsLoading ? (
+                  // Loading skeleton
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary animate-pulse"
+                      >
+                        <div className="h-4 bg-alabaster-300 dark:bg-dark-hover rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-alabaster-300 dark:bg-dark-hover rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </>
+                ) : dealAnalytics?.topDeals && dealAnalytics.topDeals.length > 0 ? (
+                  // Display top deals
+                  dealAnalytics.topDeals.map((deal) => (
                     <Link
                       key={deal.id}
                       to={`/deals/${deal.id}`}
@@ -502,19 +694,33 @@ export default function Dashboard() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
-                          ${(deal.value / 1000).toFixed(0)}K
+                          ${(deal.amount / 1000).toFixed(0)}K
                         </span>
                         <div className="flex items-center space-x-2">
                           <span className="badge badge-info text-xs">
-                            {deal.stage}
+                            {deal.stageName}
                           </span>
-                          <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
-                            {deal.probability}%
-                          </span>
+                          {deal.probability !== undefined && (
+                            <span className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                              {deal.probability}%
+                            </span>
+                          )}
                         </div>
                       </div>
                     </Link>
-                  ))}
+                  ))
+                ) : (
+                  // Empty state
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="text-4xl mb-3">💼</div>
+                    <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50 mb-2">
+                      No Deals Data
+                    </div>
+                    <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                      Top deals will appear here
+                    </div>
+                  </div>
+                )}
               </div>
               <Link
                 to="/deals"
@@ -536,29 +742,149 @@ export default function Dashboard() {
                 </h2>
               </div>
               <div className="space-y-3 flex-1 overflow-y-auto">
-                {recentActivities.map((activity) => {
-                  const Icon = activity.icon
-                  return (
-                    <div
-                      key={activity.id}
-                      className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary hover:bg-alabaster-200 dark:hover:bg-dark-hover transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="p-2 rounded-lg bg-charcoal-900 dark:bg-charcoal-50">
-                          <Icon className="w-4 h-4 text-white dark:text-charcoal-900" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50 text-sm">
-                            {activity.title}
-                          </div>
-                          <div className="text-xs font-syne-mono text-charcoal-600 dark:text-charcoal-400 mt-1">
-                            {activity.time}
+                {activitiesLoading ? (
+                  // Loading skeleton
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary animate-pulse"
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="w-8 h-8 rounded-lg bg-alabaster-300 dark:bg-dark-hover"></div>
+                          <div className="flex-1">
+                            <div className="h-4 bg-alabaster-300 dark:bg-dark-hover rounded w-3/4 mb-2"></div>
+                            <div className="h-3 bg-alabaster-300 dark:bg-dark-hover rounded w-1/2"></div>
                           </div>
                         </div>
                       </div>
+                    ))}
+                  </>
+                ) : activityAnalytics ? (
+                  // Display activity analytics
+                  <>
+                    <div className="p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50">
+                          Total Activities
+                        </span>
+                        <span className="text-2xl font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                          {activityAnalytics.totalActivities}
+                        </span>
+                      </div>
                     </div>
-                  )
-                })}
+
+                    <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-syne font-medium text-blue-900 dark:text-blue-300">
+                          This Week
+                        </span>
+                        <span className="text-2xl font-syne-mono font-bold text-blue-700 dark:text-blue-400">
+                          {activityAnalytics.activitiesThisWeek}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-syne font-medium text-green-900 dark:text-green-300">
+                          This Month
+                        </span>
+                        <span className="text-2xl font-syne-mono font-bold text-green-700 dark:text-green-400">
+                          {activityAnalytics.activitiesThisMonth}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary">
+                      <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400 mb-3">
+                        By Type
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Phone className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                            <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Calls</span>
+                          </div>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {activityAnalytics.byType.call}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Mail className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                            <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Emails</span>
+                          </div>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {activityAnalytics.byType.email}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-charcoal-600 dark:text-charcoal-400" />
+                            <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Meetings</span>
+                          </div>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {activityAnalytics.byType.meeting}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-charcoal-600 dark:text-charcoal-400">📝</span>
+                            <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Notes</span>
+                          </div>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {activityAnalytics.byType.note}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-charcoal-600 dark:text-charcoal-400">✓</span>
+                            <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">Tasks</span>
+                          </div>
+                          <span className="text-sm font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                            {activityAnalytics.byType.task}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {activityAnalytics.topContacts && activityAnalytics.topContacts.length > 0 && (
+                      <div className="p-4 rounded-lg bg-alabaster-100 dark:bg-dark-tertiary">
+                        <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400 mb-3">
+                          Most Active Contacts
+                        </div>
+                        <div className="space-y-2">
+                          {activityAnalytics.topContacts.slice(0, 5).map((contact) => (
+                            <Link
+                              key={contact.id}
+                              to={`/contacts/${contact.id}`}
+                              className="flex items-center justify-between hover:bg-alabaster-200 dark:hover:bg-dark-hover p-2 rounded transition-colors"
+                            >
+                              <span className="text-xs font-syne text-charcoal-700 dark:text-charcoal-300">
+                                {contact.name}
+                              </span>
+                              <span className="text-xs font-syne-mono font-bold text-charcoal-900 dark:text-charcoal-50">
+                                {contact.activityCount}
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  // Empty state
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="text-4xl mb-3">🔔</div>
+                    <div className="font-syne font-medium text-charcoal-900 dark:text-charcoal-50 mb-2">
+                      No Activity Data
+                    </div>
+                    <div className="text-sm font-syne-mono text-charcoal-600 dark:text-charcoal-400">
+                      Activity analytics will appear here
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

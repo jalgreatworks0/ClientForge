@@ -10,6 +10,8 @@ dotenv.config()
 import { Server } from './api/server'
 import { logger } from './utils/logging/logger'
 import { appConfig } from '../config/app/app-config'
+import { initializeMongoCollections } from '../config/database/mongodb-config'
+import { initializeSearchIndexes } from '../config/database/elasticsearch-config'
 
 /**
  * Start the server
@@ -20,6 +22,22 @@ async function startServer(): Promise<void> {
       environment: appConfig.env,
       nodeVersion: process.version,
     })
+
+    // Initialize MongoDB collections with indexes and TTL
+    try {
+      await initializeMongoCollections()
+      logger.info('[OK] MongoDB collections initialized')
+    } catch (error) {
+      logger.warn('[WARNING] MongoDB initialization failed (non-critical):', error)
+    }
+
+    // Initialize Elasticsearch indexes
+    try {
+      await initializeSearchIndexes()
+      logger.info('[OK] Elasticsearch indexes initialized')
+    } catch (error) {
+      logger.warn('[WARNING] Elasticsearch initialization failed (non-critical):', error)
+    }
 
     const server = new Server()
     await server.start()

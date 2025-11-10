@@ -1,6 +1,5 @@
 import { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import Sidebar from './Sidebar'
 import Header from './Header'
 import AlbedoChat from '../AlbedoChat'
 

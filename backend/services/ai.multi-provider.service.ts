@@ -69,7 +69,7 @@ class AIMultiProviderService {
       simple: 'pattern',
     };
 
-    console.log('✅ Multi-Provider AI Service initialized');
+    console.log('[OK] Multi-Provider AI Service initialized');
   }
 
   /**
@@ -152,7 +152,7 @@ class AIMultiProviderService {
     const messages = [{ role: 'user', content: message }];
 
     return await claudeService.chat(messages, {
-      model: options.model || 'haiku',
+      model: (options.model as 'haiku' | 'sonnet' | 'opus') || 'haiku',
       systemPrompt: options.systemPrompt,
       userId: options.userId,
       maxTokens: options.maxTokens || 4096,

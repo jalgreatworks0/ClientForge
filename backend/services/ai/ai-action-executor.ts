@@ -84,13 +84,23 @@ export class AIActionExecutor {
         },
       ];
 
+      // Type guard for ToolUseBlock
+      const isToolUseBlock = (block: Anthropic.ContentBlock): block is Anthropic.ToolUseBlock => {
+        return block.type === 'tool_use';
+      };
+
+      // Type guard for TextBlock
+      const isTextBlock = (block: Anthropic.ContentBlock): block is Anthropic.TextBlock => {
+        return block.type === 'text';
+      };
+
       // Process tool uses
-      const toolUses = response.content.filter((block: any) => block.type === 'tool_use');
+      const toolUses = response.content.filter(isToolUseBlock);
 
       if (toolUses.length === 0) {
         // No tools to execute, just return the text response
-        const textBlocks = response.content.filter((block: any) => block.type === 'text');
-        const responseText = textBlocks.map((block: any) => block.text).join('\n');
+        const textBlocks = response.content.filter(isTextBlock);
+        const responseText = textBlocks.map((block) => block.text).join('\n');
 
         return {
           success: true,

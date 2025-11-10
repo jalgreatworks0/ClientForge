@@ -56,14 +56,16 @@ services:
 
   # Elasticsearch
   elasticsearch:
-    image: elasticsearch:8.9.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: clientforge-crm-elasticsearch-1
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
     volumes:
-      - es-data:/usr/share/elasticsearch/data
+      - elasticsearch-data:/usr/share/elasticsearch/data
 
   # RabbitMQ Message Queue
   rabbitmq:
@@ -113,5 +115,5 @@ volumes:
   postgres-data:
   mongo-data:
   redis-data:
-  es-data:
+  elasticsearch-data:
   minio-data:

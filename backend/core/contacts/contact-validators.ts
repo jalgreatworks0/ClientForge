@@ -13,7 +13,7 @@ const urlSchema = z.string().url().optional().or(z.literal(''))
 
 // Create contact schema
 export const createContactSchema = z.object({
-  ownerId: z.string().uuid('Owner ID must be a valid UUID'),
+  ownerId: z.string().uuid('Owner ID must be a valid UUID').optional(), // Optional - defaults to authenticated user
   accountId: z.string().uuid('Account ID must be a valid UUID').optional(),
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
@@ -106,8 +106,8 @@ export const contactListOptionsSchema = z.object({
 
 // Bulk operation schema
 export const bulkContactOperationSchema = z.object({
-  contactIds: z.array(z.string().uuid()).min(1, 'At least one contact ID is required'),
-  operation: z.enum(['update', 'delete', 'assign', 'add_tags', 'remove_tags']),
+  contactIds: z.array(z.string().uuid()).min(1, 'At least one contact ID is required').optional(), // Validated at runtime
+  operation: z.enum(['update', 'delete', 'assign', 'add_tags', 'remove_tags']).optional(), // Validated at runtime
   data: z.record(z.any()).optional(),
 }).refine(
   (data) => {

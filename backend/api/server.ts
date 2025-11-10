@@ -13,6 +13,7 @@ import { appConfig } from '../../config/app/app-config'
 import { logger } from '../utils/logging/logger'
 import { errorHandler, setupGlobalErrorHandlers } from '../utils/errors/error-handler'
 import { configureRoutes } from './routes'
+import { performanceMonitoring } from '../middleware/performance-monitoring'
 
 export class Server {
   private app: Application
@@ -68,24 +69,10 @@ export class Server {
     // Compression
     this.app.use(compression())
 
-    // Request logging middleware
-    this.app.use((req, res, next) => {
-      const start = Date.now()
+    // Performance monitoring middleware
+    this.app.use(performanceMonitoring)
 
-      res.on('finish', () => {
-        const duration = Date.now() - start
-        logger.http(`${req.method} ${req.path}`, {
-          statusCode: res.statusCode,
-          duration: `${duration}ms`,
-          ip: req.ip,
-          userAgent: req.get('user-agent'),
-        })
-      })
-
-      next()
-    })
-
-    logger.info('✅ Middleware configured')
+    logger.info('[OK] Middleware configured')
   }
 
   /**
@@ -93,7 +80,7 @@ export class Server {
    */
   private setupRoutes(): void {
     configureRoutes(this.app)
-    logger.info('✅ Routes configured')
+    logger.info('[OK] Routes configured')
   }
 
   /**
@@ -115,7 +102,7 @@ export class Server {
     // Global error handler - must be last
     this.app.use(errorHandler)
 
-    logger.info('✅ Error handling configured')
+    logger.info('[OK] Error handling configured')
   }
 
   /**
@@ -124,10 +111,10 @@ export class Server {
   public async start(): Promise<void> {
     return new Promise((resolve) => {
       this.httpServer.listen(appConfig.port, () => {
-        logger.info(`🚀 Server running on port ${appConfig.port}`)
-        logger.info(`📝 Environment: ${appConfig.env}`)
-        logger.info(`🔗 API Version: ${appConfig.apiVersion}`)
-        logger.info(`🌐 URL: ${appConfig.url}`)
+        logger.info(`[READY] Server running on port ${appConfig.port}`)
+        logger.info(`[ENV] Environment: ${appConfig.env}`)
+        logger.info(`[API] API Version: ${appConfig.apiVersion}`)
+        logger.info(`[URL] URL: ${appConfig.url}`)
         resolve()
       })
     })

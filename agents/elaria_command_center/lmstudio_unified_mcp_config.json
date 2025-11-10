@@ -1,0 +1,84 @@
+{
+  "comment": "UNIFIED MCP Configuration for LM Studio + Elaria",
+  "comment2": "This integrates with your existing MCP servers without redundancy",
+  "comment3": "Only adds what's needed for Ollama fleet control",
+
+  "mcpServers": {
+    "clientforge-filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\clientforge-crm"
+      ],
+      "description": "File system access to ClientForge CRM codebase",
+      "capabilities": ["read_file", "write_file", "list_directory", "search_files", "get_file_info"]
+    },
+
+    "clientforge-process": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "description": "Execute commands for Ollama fleet control, npm scripts, and git",
+      "capabilities": ["execute_command"],
+      "allowed_commands": {
+        "patterns": ["npm run *", "node *", "git *", "ollama *", "curl http://localhost:*"],
+        "working_directory": "D:\\clientforge-crm"
+      }
+    },
+
+    "clientforge-database": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://localhost:5432/clientforge"
+      ],
+      "description": "Direct PostgreSQL queries for data analysis (read-only recommended)",
+      "capabilities": ["query_database", "list_tables", "describe_table"],
+      "readonly": true
+    }
+  },
+
+  "integration_notes": {
+    "existing_mcps": "If you have other MCP servers already configured in LM Studio",
+    "keep_them": "Keep all your existing MCP server configurations",
+    "add_these": "Add only the 3 configs above that you don't already have",
+    "avoid_duplicates": "If you already have filesystem or process servers, skip those entries",
+
+    "non_redundant_approach": {
+      "clientforge-filesystem": "Only if you don't have a filesystem MCP already",
+      "clientforge-process": "Only if you don't have a command execution MCP already",
+      "clientforge-database": "Only if you want direct DB access (optional)"
+    },
+
+    "minimal_setup": "The ONLY MCP you absolutely need for Ollama fleet control is 'clientforge-process'"
+  },
+
+  "mcp_router_integration": {
+    "note": "The Ollama MCP Router (port 8765) is SEPARATE from LM Studio MCPs",
+    "explanation": "LM Studio MCPs give Elaria tools to START the fleet",
+    "ollama_fleet_mcps": "Once started, the fleet MCPs coordinate amongst themselves",
+    "no_conflict": "LM Studio MCPs and Ollama Fleet MCPs operate independently",
+
+    "architecture": {
+      "lm_studio_mcps": "Tools FOR Elaria (filesystem, process execution)",
+      "ollama_fleet_router": "Communication BETWEEN Ollama agents (port 8765)",
+      "they_work_together": "Elaria uses LM Studio MCPs to control the Ollama MCP Router"
+    }
+  },
+
+  "minimal_config_option": {
+    "if_you_only_want_fleet_control": {
+      "mcpServers": {
+        "process": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-everything"]
+        }
+      }
+    },
+    "explanation": "This single MCP gives Elaria execute_command, which is all she needs to start/stop the Ollama fleet"
+  }
+}

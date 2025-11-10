@@ -9,6 +9,9 @@ import { UnauthorizedError } from '../utils/errors/app-error'
 import { logger } from '../utils/logging/logger'
 import { AuthRequest } from './auth'
 
+// Re-export AuthRequest for use in controllers
+export { AuthRequest } from './auth'
+
 /**
  * Middleware to verify JWT access token
  */

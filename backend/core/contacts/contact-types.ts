@@ -65,7 +65,7 @@ export enum LeadSource {
 }
 
 export interface CreateContactInput {
-  ownerId: string
+  ownerId?: string // Optional - will default to authenticated user if not provided
   accountId?: string
   firstName: string
   lastName: string
@@ -150,7 +150,7 @@ export interface ContactListResponse {
 }
 
 export interface BulkContactOperation {
-  contactIds: string[]
+  contactIds?: string[] // Optional - will be validated at runtime
   operation: 'update' | 'delete' | 'assign' | 'add_tags' | 'remove_tags'
   data?: Record<string, any>
 }

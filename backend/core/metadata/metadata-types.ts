@@ -40,11 +40,11 @@ export interface NoteWithCreator extends Note {
 }
 
 export interface CreateNoteInput {
-  title?: string
-  content: string
+  title?: string | null
+  content?: string // Made optional to match Zod schema
   isPinned?: boolean
-  entityType: string
-  entityId: string
+  entityType?: string // Made optional to match Zod schema
+  entityId?: string // Made optional to match Zod schema
 }
 
 export interface UpdateNoteInput {
@@ -95,10 +95,10 @@ export interface CommentWithAuthor extends Comment {
 }
 
 export interface CreateCommentInput {
-  content: string
-  entityType: string
-  entityId: string
-  parentId?: string
+  content?: string // Made optional to match Zod schema
+  entityType?: string // Made optional to match Zod schema
+  entityId?: string // Made optional to match Zod schema
+  parentId?: string | null
 }
 
 export interface UpdateCommentInput {
@@ -146,14 +146,15 @@ export interface TagWithUsage extends Tag {
 }
 
 export interface CreateTagInput {
-  name: string
-  description?: string
+  name?: string // Made optional to match Zod schema
+  description?: string | null
   color?: string
-  category?: string
+  category?: string | null
 }
 
 export interface UpdateTagInput {
   name?: string
+  slug?: string // Generated when name changes
   description?: string | null
   color?: string
   category?: string | null
@@ -239,19 +240,19 @@ export interface CustomFieldWithValue extends CustomField {
 }
 
 export interface CreateCustomFieldInput {
-  entityType: string
-  fieldName: string
-  fieldLabel: string
-  fieldType: CustomFieldType
+  entityType?: string // Made optional to match Zod schema
+  fieldName?: string // Made optional to match Zod schema
+  fieldLabel?: string // Made optional to match Zod schema
+  fieldType?: CustomFieldType // Made optional to match Zod schema
   fieldOptions?: any
-  defaultValue?: string
+  defaultValue?: string | null
   isRequired?: boolean
   isSearchable?: boolean
   isVisible?: boolean
   validationRules?: any
   displayOrder?: number
-  helpText?: string
-  placeholderText?: string
+  helpText?: string | null
+  placeholderText?: string | null
 }
 
 export interface UpdateCustomFieldInput {
@@ -279,10 +280,10 @@ export interface SetCustomFieldValueInput {
 // =====================================================
 
 export interface NoteListOptions {
-  page: number
-  limit: number
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   filters?: {
     search?: string
     entityType?: string
@@ -293,6 +294,7 @@ export interface NoteListOptions {
 }
 
 export interface NoteListResult {
+  items: Note[] // Standardized list result property name
   notes: Note[]
   total: number
   page: number
@@ -301,10 +303,10 @@ export interface NoteListResult {
 }
 
 export interface CommentListOptions {
-  page: number
-  limit: number
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   filters?: {
     search?: string
     entityType?: string
@@ -315,6 +317,7 @@ export interface CommentListOptions {
 }
 
 export interface CommentListResult {
+  items: Comment[] // Standardized list result property name
   comments: Comment[]
   total: number
   page: number
@@ -323,10 +326,10 @@ export interface CommentListResult {
 }
 
 export interface TagListOptions {
-  page: number
-  limit: number
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   filters?: {
     search?: string
     category?: string
@@ -334,6 +337,7 @@ export interface TagListOptions {
 }
 
 export interface TagListResult {
+  items: Tag[] // Standardized list result property name
   tags: Tag[]
   total: number
   page: number
@@ -342,10 +346,10 @@ export interface TagListResult {
 }
 
 export interface CustomFieldListOptions {
-  page: number
-  limit: number
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   filters?: {
     entityType?: string
     isVisible?: boolean
@@ -353,6 +357,7 @@ export interface CustomFieldListOptions {
 }
 
 export interface CustomFieldListResult {
+  items: CustomField[] // Standardized list result property name
   customFields: CustomField[]
   total: number
   page: number
@@ -367,7 +372,7 @@ export interface CustomFieldListResult {
 export type NoteBulkOperation = 'delete' | 'pin' | 'unpin'
 
 export interface BulkNoteOperationInput {
-  noteIds: string[]
+  noteIds?: string[] // Optional - will be validated at runtime
   operation: NoteBulkOperation
 }
 

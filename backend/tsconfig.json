@@ -1,33 +1,12 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "lib": ["ES2020"],
-    "outDir": "../dist",
-    "rootDir": "..",
-    "baseUrl": "..",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": false,
-    "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "allowJs": true,
-    "noEmitOnError": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitReturns": false,
-    "noFallthroughCasesInSwitch": false,
-    "strict": false,
-    "sourceMap": false,
-    "declaration": false,
-    "paths": {
-      "@backend/*": ["backend/*"],
-      "@config/*": ["config/*"]
-    }
+    "ignoreDeprecations": "5.0",
+    "outDir": "../dist/backend"
   },
   "include": [
-    "../backend/**/*",
-    "../config/**/*"
+    "./**/*"
   ],
   "exclude": [
     "node_modules",

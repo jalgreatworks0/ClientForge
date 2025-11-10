@@ -8,6 +8,9 @@ import DealDetail from './pages/DealDetail'
 import Tasks from './pages/Tasks'
 import Accounts from './pages/Accounts'
 import AccountDetail from './pages/AccountDetail'
+import Notes from './pages/Notes'
+import Activities from './pages/Activities'
+import Settings from './pages/Settings'
 import Login from './pages/Login'
 import { useAuthStore } from './store/authStore'
 
@@ -34,6 +37,9 @@ function App() {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/accounts/:id" element={<AccountDetail />} />
+        <Route path="/notes" element={<Notes />} />
+        <Route path="/activities" element={<Activities />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

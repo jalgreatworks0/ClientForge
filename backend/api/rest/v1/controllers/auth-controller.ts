@@ -172,18 +172,14 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     const userAgent = req.headers['user-agent']
     const deviceType = getDeviceType(userAgent)
 
-    const result = await authService.login(
-      {
-        email: data.email,
-        password: data.password,
-        tenantId: data.tenantId,
-      },
-      {
-        ipAddress,
-        userAgent,
-        deviceType,
-      }
-    )
+    const result = await authService.login({
+      email: data.email,
+      password: data.password,
+      tenantId: data.tenantId,
+      ipAddress,
+      userAgent,
+      deviceType,
+    })
 
     logger.info('User logged in successfully', {
       userId: result.user.id,

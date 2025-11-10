@@ -36,6 +36,7 @@ export class SessionService {
    */
   async createSession(
     userId: string,
+    tenantId: string,
     refreshToken: string,
     metadata: SessionMetadata
   ): Promise<void> {
@@ -50,7 +51,7 @@ export class SessionService {
       const sessionKey = this.getSessionKey(userId, refreshTokenHash)
       const sessionData: SessionData = {
         userId,
-        tenantId: metadata.ipAddress || '', // You'll pass this from auth service
+        tenantId,
         refreshTokenHash,
         userAgent: metadata.userAgent,
         ipAddress: metadata.ipAddress,
@@ -63,18 +64,16 @@ export class SessionService {
       const expiresAt = new Date(Date.now() + this.sessionTTL * 1000)
 
       await pool.query(
-        `INSERT INTO user_sessions (
-          user_id, tenant_id, refresh_token_hash,
-          user_agent, ip_address, device_type,
-          expires_at, is_active
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, true)`,
+        `INSERT INTO sessions (
+          user_id, refresh_token,
+          user_agent, ip_address,
+          expires_at
+        ) VALUES ($1, $2, $3, $4, $5)`,
         [
           userId,
-          sessionData.tenantId,
-          refreshTokenHash,
+          refreshToken,
           metadata.userAgent,
           metadata.ipAddress,
-          metadata.deviceType,
           expiresAt,
         ]
       )
@@ -110,12 +109,11 @@ export class SessionService {
       // Check PostgreSQL as fallback
       const pool = getPostgresPool()
       const result = await pool.query(
-        `SELECT id FROM user_sessions
+        `SELECT id FROM sessions
         WHERE user_id = $1
-          AND refresh_token_hash = $2
-          AND is_active = true
+          AND refresh_token = $2
           AND expires_at > CURRENT_TIMESTAMP`,
-        [userId, refreshTokenHash]
+        [userId, refreshToken]
       )
 
       if (result.rows.length > 0) {
@@ -146,14 +144,12 @@ export class SessionService {
       // Delete from Redis
       await redis.del(sessionKey)
 
-      // Mark as inactive in PostgreSQL (soft delete)
+      // Delete from PostgreSQL
       await pool.query(
-        `UPDATE user_sessions
-        SET is_active = false,
-            last_activity_at = CURRENT_TIMESTAMP
+        `DELETE FROM sessions
         WHERE user_id = $1
-          AND refresh_token_hash = $2`,
-        [userId, refreshTokenHash]
+          AND refresh_token = $2`,
+        [userId, refreshToken]
       )
 
       logger.info('Session deleted', { userId })
@@ -173,23 +169,22 @@ export class SessionService {
 
       // Get all active sessions from PostgreSQL
       const result = await pool.query(
-        `SELECT refresh_token_hash FROM user_sessions
+        `SELECT refresh_token FROM sessions
         WHERE user_id = $1
-          AND is_active = true`,
+          AND expires_at > CURRENT_TIMESTAMP`,
         [userId]
       )
 
       // Delete from Redis
       for (const row of result.rows) {
-        const sessionKey = this.getSessionKey(userId, row.refresh_token_hash)
+        const refreshTokenHash = this.hashToken(row.refresh_token)
+        const sessionKey = this.getSessionKey(userId, refreshTokenHash)
         await redis.del(sessionKey)
       }
 
-      // Mark all as inactive in PostgreSQL
+      // Delete from PostgreSQL
       await pool.query(
-        `UPDATE user_sessions
-        SET is_active = false,
-            last_activity_at = CURRENT_TIMESTAMP
+        `DELETE FROM sessions
         WHERE user_id = $1`,
         [userId]
       )
@@ -203,23 +198,13 @@ export class SessionService {
 
   /**
    * Update last activity timestamp
+   * Note: sessions table doesn't have last_activity_at column, so this is a no-op
    */
   async updateLastActivity(userId: string, refreshTokenHash: string): Promise<void> {
-    try {
-      const pool = getPostgresPool()
-
-      await pool.query(
-        `UPDATE user_sessions
-        SET last_activity_at = CURRENT_TIMESTAMP
-        WHERE user_id = $1
-          AND refresh_token_hash = $2
-          AND is_active = true`,
-        [userId, refreshTokenHash]
-      )
-    } catch (error) {
-      logger.error('Failed to update last activity', { error, userId })
-      // Don't throw - this is not critical
-    }
+    // The sessions table doesn't track last activity, only creation time
+    // Activity is tracked in Redis via TTL updates
+    // This method is kept for compatibility but does nothing
+    return
   }
 
   /**
@@ -230,9 +215,8 @@ export class SessionService {
       const pool = getPostgresPool()
 
       const result = await pool.query(
-        `SELECT COUNT(*) as count FROM user_sessions
+        `SELECT COUNT(*) as count FROM sessions
         WHERE user_id = $1
-          AND is_active = true
           AND expires_at > CURRENT_TIMESTAMP`,
         [userId]
       )
@@ -252,10 +236,8 @@ export class SessionService {
       const pool = getPostgresPool()
 
       const result = await pool.query(
-        `UPDATE user_sessions
-        SET is_active = false
+        `DELETE FROM sessions
         WHERE expires_at < CURRENT_TIMESTAMP
-          AND is_active = true
         RETURNING id`
       )
 

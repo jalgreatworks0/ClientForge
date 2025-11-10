@@ -1,18 +1,43 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    "ignoreDeprecations": "5.0",
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
+    "rootDir": ".",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@backend/*": ["backend/*"],
+      "@config/*": ["config/*"],
+      "@agents/*": ["agents/*"]
+    },
+
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": false,
     "resolveJsonModule": true,
-    "moduleResolution": "node10",
-    "allowJs": true,
+    "skipLibCheck": true,
+
     "strict": false,
     "noEmitOnError": false,
-    "ignoreDeprecations": "6.0"
+    "allowJs": true,
+    "sourceMap": false,
+    "declaration": false,
+
+    "forceConsistentCasingInFileNames": true
   },
-  "files": []
+  "include": [
+    "backend/**/*",
+    "config/**/*",
+    "agents/**/*",
+    "scripts/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "test-ai-import.js"
+  ]
 }

@@ -51,8 +51,9 @@ class ClaudeSDKService {
   private defaultModel: string;
 
   constructor() {
+    // Use ClientForge-specific API key for SDK bot
     this.client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+      apiKey: process.env.ANTHROPIC_API_KEY_CLIENTFORGE || process.env.ANTHROPIC_API_KEY,
     });
 
     // Model configurations (Claude 3.5 family)
@@ -91,7 +92,7 @@ class ClaudeSDKService {
 
     this.defaultModel = 'haiku';
 
-    console.log('✅ Claude SDK Service initialized');
+    console.log('[OK] Claude SDK Service initialized');
   }
 
   /**

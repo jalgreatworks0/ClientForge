@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import api from '../lib/api'
 
 interface User {
   id: string
@@ -15,10 +16,13 @@ interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, tenantId?: string) => Promise<void>
   logout: () => void
   setTokens: (accessToken: string, refreshToken: string, user: User) => void
 }
+
+// Default tenant ID for development (will be replaced with proper tenant selection)
+const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -28,21 +32,20 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
 
-      login: async (email: string, password: string) => {
-        // This will be implemented with actual API call
-        const mockUser: User = {
-          id: 'user-123',
+      login: async (email: string, password: string, tenantId?: string) => {
+        const response = await api.post('/v1/auth/login', {
           email,
-          firstName: 'John',
-          lastName: 'Doe',
-          role: 'Admin',
-          tenantId: 'tenant-123',
-        }
+          password,
+          tenantId: tenantId || DEFAULT_TENANT_ID,
+        })
+
+        const { user, tokens } = response.data.data
+        const { accessToken, refreshToken } = tokens
 
         set({
-          user: mockUser,
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
+          user,
+          accessToken,
+          refreshToken,
           isAuthenticated: true,
         })
       },

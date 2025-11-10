@@ -70,7 +70,7 @@ function readJsonl(filepath: string): any[] {
 async function executeLocal(command: string, input: string): Promise<string> {
   const [cmd, ...args] = command.split(' ');
   return new Promise((resolve, reject) => {
-    const proc = spawn(cmd, args, { cwd: ROOT });
+    const proc = spawn(cmd, args, { cwd: ROOT, shell: true });
     let output = '';
     let errorOutput = '';
 

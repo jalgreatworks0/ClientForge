@@ -1,0 +1,95 @@
+{
+  "lm_studio": {
+    "installation_path": "D:\\scrollforge\\apps\\LMStudio",
+    "server": {
+      "host": "localhost",
+      "port": 1234,
+      "protocol": "http",
+      "endpoints": {
+        "completions": "/v1/completions",
+        "chat": "/v1/chat/completions",
+        "models": "/v1/models",
+        "health": "/health"
+      },
+      "openai_compatible": true,
+      "cors_enabled": true
+    },
+    "models": {
+      "primary": {
+        "coding": {
+          "name": "qwen-coder-30b-q4",
+          "path": "D:\\scrollforge\\apps\\LMStudio\\models\\qwen-coder-30b.Q4_K_M.gguf",
+          "context_length": 32768,
+          "gpu_layers": 35,
+          "priority": 1
+        },
+        "reasoning": {
+          "name": "llama-3.1-70b-instruct",
+          "path": "D:\\scrollforge\\apps\\LMStudio\\models\\llama-3.1-70b-instruct.Q3_K_S.gguf",
+          "context_length": 8192,
+          "gpu_layers": 40,
+          "priority": 2
+        },
+        "chat": {
+          "name": "mistral-7b-instruct",
+          "path": "D:\\scrollforge\\apps\\LMStudio\\models\\mistral-7b-instruct-v0.3.Q5_K_M.gguf",
+          "context_length": 32768,
+          "gpu_layers": 33,
+          "priority": 3
+        }
+      },
+      "specialized": {
+        "sql": "sqlcoder-7b-q5",
+        "documentation": "phi-3-medium-14b",
+        "analysis": "deepseek-coder-33b"
+      }
+    },
+    "memory_lanes": {
+      "gpu": {
+        "primary": "D:\\5090_Lane",
+        "device_id": 0,
+        "vram_allocation": "24GB"
+      },
+      "system": {
+        "model_cache": "E:\\scrollforge\\model_cache",
+        "context_store": "C:\\scrollforge\\context",
+        "embedding_cache": "E:\\scrollforge\\embeddings"
+      }
+    },
+    "performance": {
+      "batch_size": 512,
+      "threads": 16,
+      "context_cache_size": "4GB",
+      "use_mmap": true,
+      "use_mlock": false,
+      "flash_attention": true,
+      "rope_scaling": 1.0
+    },
+    "orchestration": {
+      "max_concurrent_models": 2,
+      "model_swap_strategy": "lru",
+      "preload_models": ["mistral-7b-instruct"],
+      "auto_unload_timeout": 300
+    }
+  },
+  "elaria_command_center": {
+    "control_port": 8888,
+    "monitoring_enabled": true,
+    "prometheus_metrics": "localhost:9090",
+    "log_level": "info",
+    "log_path": "D:\\scrollforge\\logs\\elaria"
+  },
+  "integration": {
+    "clientforge_bridge": {
+      "enabled": true,
+      "sync_interval": 1000,
+      "retry_attempts": 3,
+      "timeout": 30000
+    },
+    "scrollforge_kingdom": {
+      "namespace": "elaria",
+      "priority": "sovereign",
+      "access_level": "architect"
+    }
+  }
+}

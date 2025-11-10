@@ -274,11 +274,28 @@ describe('AuthService', () => {
         errors: [],
       });
       (passwordService.hash as jest.Mock).mockResolvedValue('$2b$12$hashedpassword');
-      (userRepository.create as jest.Mock).mockResolvedValue(mockCreatedUser)
+      (userRepository.create as jest.Mock).mockResolvedValue(mockCreatedUser);
+      (jwtService.generateTokenPair as jest.Mock).mockReturnValue({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresIn: 900,
+      })
 
       const result = await authService.register(validRegistration)
 
-      expect(result).toEqual(mockCreatedUser)
+      expect(result).toEqual({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresIn: 900,
+        user: {
+          id: mockCreatedUser.id,
+          email: mockCreatedUser.email,
+          firstName: mockCreatedUser.firstName,
+          lastName: mockCreatedUser.lastName,
+          role: 'user',
+          tenantId: mockCreatedUser.tenantId,
+        },
+      })
 
       expect(userRepository.findByEmailAndTenant).toHaveBeenCalledWith(
         'newuser@example.com',
@@ -397,6 +414,8 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'new-access-token',
         expiresIn: 900, // 15 minutes in seconds
+        userId: 'user-123',
+        tenantId: 'tenant-123',
       })
 
       expect(jwtService.verifyRefreshToken).toHaveBeenCalledWith(refreshToken)

@@ -30,7 +30,8 @@ import type {
   CustomFieldListOptions,
   CustomFieldListResult,
   EntityTag,
-  BulkNoteOperation,
+  NoteBulkOperation,
+  BulkNoteOperationInput,
 } from './metadata-types'
 import { CustomFieldType } from './metadata-types'
 import { slugify } from './metadata-validators'
@@ -375,11 +376,8 @@ export class TagService {
    * Create a new tag
    */
   async createTag(tenantId: string, data: CreateTagInput): Promise<Tag> {
-    // Generate slug from name
-    const slug = slugify(data.name)
-
-    // Check if tag with same name or slug already exists
-    const existingTag = await metadataRepository.findTagByName(data.name, tenantId)
+    // Check if tag with same name already exists
+    const existingTag = await metadataRepository.findTagByName(data.name!, tenantId)
     if (existingTag) {
       throw new ValidationError(`Tag with name "${data.name}" already exists`)
     }
@@ -389,10 +387,8 @@ export class TagService {
       throw new ValidationError('Invalid color format. Use hex format like #3B82F6')
     }
 
-    const tag = await metadataRepository.createTag(tenantId, {
-      ...data,
-      slug,
-    })
+    // Repository will generate slug from name
+    const tag = await metadataRepository.createTag(tenantId, data)
 
     return tag
   }

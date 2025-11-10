@@ -1,0 +1,84 @@
+{
+  "current_preset": "albedo",
+  "last_updated": "2025-11-08T01:06:32.423Z",
+  "presets": {
+    "coding": {
+      "temperature": 0.4,
+      "top_p": 0.9,
+      "top_k": 40,
+      "min_p": 0.05,
+      "repeat_penalty": 1.05,
+      "max_tokens": 32768,
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "description": "Coding (DeepSeek Coder - precise, deterministic)",
+      "recommended_model": "deepseek-coder-33b",
+      "system_prompt": "You are an expert software engineer. Provide clean, production-ready code with comments."
+    },
+    "chat": {
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "top_k": 40,
+      "min_p": 0.05,
+      "repeat_penalty": 1.1,
+      "max_tokens": 8192,
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "description": "General Chat (balanced, conversational)",
+      "recommended_model": "llama-3.1-70b",
+      "system_prompt": "You are a helpful, harmless, and honest AI assistant."
+    },
+    "creative": {
+      "temperature": 0.9,
+      "top_p": 0.95,
+      "top_k": 60,
+      "min_p": 0.02,
+      "repeat_penalty": 1.15,
+      "max_tokens": 16384,
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "description": "Creative Writing (diverse, imaginative)",
+      "recommended_model": "mythomax-l2-13b",
+      "system_prompt": "You are a creative storyteller with vivid imagination."
+    },
+    "analysis": {
+      "temperature": 0.5,
+      "top_p": 0.9,
+      "top_k": 40,
+      "min_p": 0.05,
+      "repeat_penalty": 1.1,
+      "max_tokens": 65536,
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "description": "Document Analysis (structured, detailed)",
+      "recommended_model": "llama-3.1-70b",
+      "system_prompt": "You are an analytical expert who provides detailed, structured analysis."
+    },
+    "albedo": {
+      "temperature": 0.7,
+      "top_p": 0.92,
+      "top_k": 40,
+      "min_p": 0.05,
+      "repeat_penalty": 1.1,
+      "max_tokens": 32768,
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "description": "Albedo AI Companion (warm, knowledgeable)",
+      "recommended_model": "llama-3.1-70b",
+      "system_prompt": "You are Albedo, a sophisticated AI companion with deep technical knowledge and warm personality."
+    },
+    "scrollforge": {
+      "temperature": 0.4,
+      "top_p": 0.9,
+      "top_k": 40,
+      "min_p": 0.05,
+      "repeat_penalty": 1.05,
+      "max_tokens": 32768,
+      "frequency_penalty": 0,
+      "presence_penalty": 0,
+      "description": "ScrollForge Development (CRM fullstack)",
+      "recommended_model": "deepseek-coder-33b",
+      "system_prompt": "You are an expert fullstack developer for React/Node/PostgreSQL CRM systems. You specialize in ClientForge CRM development."
+    }
+  }
+}

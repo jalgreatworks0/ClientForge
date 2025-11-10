@@ -3,7 +3,7 @@
  * Handles JWT token generation and verification
  */
 
-import jwt from 'jsonwebtoken'
+import jwt, { Algorithm } from 'jsonwebtoken'
 import { securityConfig } from '../../../config/security/security-config'
 import { UnauthorizedError } from '../../utils/errors/app-error'
 import { logger } from '../../utils/logging/logger'
@@ -40,6 +40,8 @@ export class JWTService {
    */
   generateAccessToken(payload: JWTPayload): string {
     try {
+      const algorithm: Algorithm = securityConfig.jwt.algorithm as Algorithm
+      // @ts-expect-error - jwt.sign overload resolution issue with Algorithm type
       const token = jwt.sign(
         {
           userId: payload.userId,
@@ -52,7 +54,7 @@ export class JWTService {
         this.accessTokenSecret,
         {
           expiresIn: this.accessTokenExpiresIn,
-          algorithm: securityConfig.jwt.algorithm,
+          algorithm,
           issuer: 'clientforge-crm',
           audience: 'clientforge-users',
         }
@@ -76,6 +78,8 @@ export class JWTService {
    */
   generateRefreshToken(payload: Omit<JWTPayload, 'roleId'>): string {
     try {
+      const algorithm: Algorithm = securityConfig.jwt.algorithm as Algorithm
+      // @ts-expect-error - jwt.sign overload resolution issue with Algorithm type
       const token = jwt.sign(
         {
           userId: payload.userId,
@@ -86,7 +90,7 @@ export class JWTService {
         this.refreshTokenSecret,
         {
           expiresIn: this.refreshTokenExpiresIn,
-          algorithm: securityConfig.jwt.algorithm,
+          algorithm,
           issuer: 'clientforge-crm',
           audience: 'clientforge-users',
         }
@@ -134,7 +138,7 @@ export class JWTService {
   verifyAccessToken(token: string): JWTPayload {
     try {
       const decoded = jwt.verify(token, this.accessTokenSecret, {
-        algorithms: [securityConfig.jwt.algorithm],
+        algorithms: [securityConfig.jwt.algorithm as Algorithm],
         issuer: 'clientforge-crm',
         audience: 'clientforge-users',
       }) as any
@@ -175,7 +179,7 @@ export class JWTService {
   verifyRefreshToken(token: string): Omit<JWTPayload, 'roleId'> {
     try {
       const decoded = jwt.verify(token, this.refreshTokenSecret, {
-        algorithms: [securityConfig.jwt.algorithm],
+        algorithms: [securityConfig.jwt.algorithm as Algorithm],
         issuer: 'clientforge-crm',
         audience: 'clientforge-users',
       }) as any

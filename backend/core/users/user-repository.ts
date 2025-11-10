@@ -79,16 +79,17 @@ export class UserRepository {
       const result = await this.pool.query<User>(
         `SELECT
           u.*,
+          ur.role_id,
           json_build_object(
             'id', r.id,
             'name', r.name,
-            'level', r.level
+            'level', 0
           ) as role
         FROM users u
-        LEFT JOIN roles r ON u.role_id = r.id
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
         WHERE u.email = $1
-          AND u.tenant_id = $2
-          AND u.deleted_at IS NULL`,
+          AND u.tenant_id = $2`,
         [email, tenantId]
       )
 
@@ -115,16 +116,17 @@ export class UserRepository {
       const result = await this.pool.query<User>(
         `SELECT
           u.*,
+          ur.role_id,
           json_build_object(
             'id', r.id,
             'name', r.name,
-            'level', r.level
+            'level', 0
           ) as role
         FROM users u
-        LEFT JOIN roles r ON u.role_id = r.id
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
         WHERE u.id = $1
-          AND u.tenant_id = $2
-          AND u.deleted_at IS NULL`,
+          AND u.tenant_id = $2`,
         [id, tenantId]
       )
 
@@ -143,16 +145,19 @@ export class UserRepository {
    * Create new user
    */
   async create(data: CreateUserData): Promise<User> {
+    const client = await this.pool.connect()
     try {
-      const result = await this.pool.query<User>(
+      await client.query('BEGIN')
+
+      // Insert user
+      const userResult = await client.query<User>(
         `INSERT INTO users (
-          tenant_id, role_id, email, password_hash,
-          first_name, last_name, phone, timezone, language
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          tenant_id, email, password_hash,
+          first_name, last_name, phone, timezone, locale
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *`,
         [
           data.tenantId,
-          data.roleId,
           data.email.toLowerCase(),
           data.passwordHash,
           data.firstName,
@@ -163,16 +168,30 @@ export class UserRepository {
         ]
       )
 
+      const user = userResult.rows[0]
+
+      // Insert user role
+      await client.query(
+        `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`,
+        [user.id, data.roleId]
+      )
+
+      await client.query('COMMIT')
+
       logger.info('User created', {
-        userId: result.rows[0].id,
+        userId: user.id,
         email: data.email,
         tenantId: data.tenantId,
       })
 
-      return this.mapRowToUser(result.rows[0])
+      // Fetch complete user with role
+      return this.findById(user.id, data.tenantId) as Promise<User>
     } catch (error) {
+      await client.query('ROLLBACK')
       logger.error('Failed to create user', { error, email: data.email })
       throw error
+    } finally {
+      client.release()
     }
   }
 
@@ -266,10 +285,9 @@ export class UserRepository {
       await this.pool.query(
         `UPDATE users
         SET last_login_at = CURRENT_TIMESTAMP,
-            last_login_ip = $2,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = $1`,
-        [id, ipAddress || null]
+        [id]
       )
 
       logger.debug('User last login updated', { userId: id })
@@ -332,8 +350,7 @@ export class UserRepository {
     try {
       await this.pool.query(
         `UPDATE users
-        SET is_locked = true,
-            locked_until = $2,
+        SET locked_until = $2,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = $1`,
         [id, lockUntil]
@@ -354,7 +371,6 @@ export class UserRepository {
       await this.pool.query(
         `UPDATE users
         SET password_hash = $2,
-            password_changed_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = $1`,
         [id, passwordHash]
@@ -402,19 +418,19 @@ export class UserRepository {
       lastName: row.last_name,
       phone: row.phone,
       avatarUrl: row.avatar_url,
-      timezone: row.timezone,
-      language: row.language,
-      isActive: row.is_active,
-      isVerified: row.is_verified,
-      isLocked: row.is_locked,
+      timezone: row.timezone || 'UTC',
+      language: row.locale || 'en',
+      isActive: row.is_active !== false,
+      isVerified: row.email_verified || false,
+      isLocked: row.locked_until ? new Date(row.locked_until) > new Date() : false,
       emailVerifiedAt: row.email_verified_at,
       lastLoginAt: row.last_login_at,
       lastLoginIp: row.last_login_ip,
-      failedLoginAttempts: row.failed_login_attempts,
+      failedLoginAttempts: row.failed_login_attempts || 0,
       lockedUntil: row.locked_until,
       passwordChangedAt: row.password_changed_at,
-      settings: row.settings || {},
-      metadata: row.metadata || {},
+      settings: {},
+      metadata: {},
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,

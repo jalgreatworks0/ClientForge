@@ -3,6 +3,7 @@
  * Handles transactional email sending (verification, password reset, etc.)
  */
 
+import nodemailer from 'nodemailer'
 import { logger } from '../../utils/logging/logger'
 import { appConfig } from '../../../config/app/app-config'
 
@@ -31,47 +32,96 @@ export interface PasswordResetData {
 export class EmailService {
   private readonly fromEmail: string
   private readonly fromName: string
+  private transporter: nodemailer.Transporter | null = null
 
   constructor() {
     this.fromEmail = process.env.EMAIL_FROM || 'noreply@clientforge.com'
     this.fromName = process.env.EMAIL_FROM_NAME || 'ClientForge CRM'
+    this.initializeTransporter()
   }
 
   /**
-   * Send email (implementation varies based on provider)
-   * TODO: Integrate with SendGrid, AWS SES, or SMTP provider
+   * Initialize email transporter based on environment
+   */
+  private initializeTransporter(): void {
+    const emailService = process.env.EMAIL_SERVICE || 'smtp'
+
+    if (appConfig.env === 'development') {
+      // In development, log emails to console
+      logger.info('[Email Service] Running in development mode - emails will be logged')
+      return
+    }
+
+    try {
+      if (emailService === 'sendgrid' && process.env.SENDGRID_API_KEY) {
+        // SendGrid via SMTP
+        this.transporter = nodemailer.createTransport({
+          host: 'smtp.sendgrid.net',
+          port: 587,
+          auth: {
+            user: 'apikey',
+            pass: process.env.SENDGRID_API_KEY,
+          },
+        })
+        logger.info('[Email Service] SendGrid SMTP configured')
+      } else if (process.env.SMTP_HOST) {
+        // Generic SMTP configuration
+        this.transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_SECURE === 'true',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD,
+          },
+        })
+        logger.info('[Email Service] SMTP configured')
+      } else {
+        logger.warn('[Email Service] No email provider configured - emails will be logged only')
+      }
+    } catch (error) {
+      logger.error('[Email Service] Failed to initialize transporter', { error })
+    }
+  }
+
+  /**
+   * Send email using configured provider
    */
   private async sendEmail(options: EmailOptions): Promise<void> {
     try {
-      logger.info('Sending email', {
+      const from = `${this.fromName} <${this.fromEmail}>`
+
+      logger.info('[Email] Sending email', {
         to: options.to,
         subject: options.subject,
-        from: options.from || this.fromEmail,
+        from,
       })
 
-      // TODO: Replace with actual email provider integration
-      // For now, just log the email content in development
-      if (appConfig.env === 'development') {
-        logger.debug('Email content (DEV MODE)', {
+      // Development mode - log only
+      if (appConfig.env === 'development' || !this.transporter) {
+        logger.info('[Email] DEV MODE - Email content logged (not sent)', {
           to: options.to,
           subject: options.subject,
-          html: options.html,
+          html: options.html.substring(0, 200) + '...',
         })
-
-        // In production, integrate with email provider:
-        // await sendGridClient.send(options)
-        // OR
-        // await sesClient.sendEmail(options)
-        // OR
-        // await nodemailerTransport.sendMail(options)
-
         return
       }
 
-      // Production email sending would go here
-      throw new Error('Email provider not configured. Set up SendGrid, SES, or SMTP.')
+      // Production mode - send via transporter
+      await this.transporter.sendMail({
+        from: options.from || from,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text || options.html.replace(/<[^>]*>/g, ''),
+      })
+
+      logger.info('[Email] Email sent successfully', {
+        to: options.to,
+        subject: options.subject,
+      })
     } catch (error) {
-      logger.error('Failed to send email', {
+      logger.error('[Email] Failed to send email', {
         error,
         to: options.to,
         subject: options.subject,
@@ -392,7 +442,7 @@ export class EmailService {
               <h2 style="color: #0066cc; margin: 0;">ClientForge CRM</h2>
             </div>
 
-            <h1>Welcome to ClientForge CRM! 🎉</h1>
+            <h1>Welcome to ClientForge CRM!</h1>
 
             <p>Hi ${firstName},</p>
 

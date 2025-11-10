@@ -17,6 +17,7 @@ import {
   ContactWithRelations,
   ContactStatistics,
 } from './contact-types'
+import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
 
 export class ContactService {
   /**
@@ -40,8 +41,38 @@ export class ContactService {
         }
       }
 
+      // Default ownerId to authenticated user if not provided
+      const contactData = {
+        ...data,
+        ownerId: data.ownerId || userId,
+      }
+
       // Create contact
-      const contact = await contactRepository.create(tenantId, data)
+      const contact = await contactRepository.create(tenantId, contactData)
+
+      // Sync to Elasticsearch for search
+      try {
+        await elasticsearchSyncService.syncContact(
+          {
+            id: contact.id,
+            tenant_id: tenantId,
+            first_name: contact.firstName,
+            last_name: contact.lastName,
+            email: contact.email || '',
+            phone: contact.phone,
+            company_name: undefined, // TODO: Fetch from account if accountId exists
+            created_at: contact.createdAt,
+            updated_at: contact.updatedAt,
+          },
+          'create'
+        )
+      } catch (error) {
+        logger.warn('[Elasticsearch] Failed to sync new contact', {
+          contactId: contact.id,
+          error,
+        })
+        // Don't fail the request if search sync fails
+      }
 
       logger.info('Contact created successfully', {
         contactId: contact.id,
@@ -117,6 +148,30 @@ export class ContactService {
       throw new NotFoundError('Contact')
     }
 
+    // Sync to Elasticsearch for search
+    try {
+      await elasticsearchSyncService.syncContact(
+        {
+          id: updatedContact.id,
+          tenant_id: tenantId,
+          first_name: updatedContact.firstName,
+          last_name: updatedContact.lastName,
+          email: updatedContact.email || '',
+          phone: updatedContact.phone,
+          company_name: undefined, // TODO: Fetch from account if accountId exists
+          created_at: updatedContact.createdAt,
+          updated_at: updatedContact.updatedAt,
+        },
+        'update'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to sync updated contact', {
+        contactId: id,
+        error,
+      })
+      // Don't fail the request if search sync fails
+    }
+
     logger.info('Contact updated successfully', {
       contactId: id,
       tenantId,
@@ -137,6 +192,23 @@ export class ContactService {
 
     if (!deleted) {
       throw new NotFoundError('Contact')
+    }
+
+    // Remove from Elasticsearch search index
+    try {
+      await elasticsearchSyncService.syncContact(
+        {
+          id,
+          tenant_id: tenantId,
+        },
+        'delete'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to delete contact from search index', {
+        contactId: id,
+        error,
+      })
+      // Don't fail the request if search sync fails
     }
 
     logger.info('Contact deleted successfully', {

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server Health Dashboard | Claude Desktop</title>
+    <meta http-equiv="refresh" content="15">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%);
+            color: #d4d4d4;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #252526;
+            padding: 25px 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 5px solid #58a6ff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #58a6ff;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .stat-label {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stat-value.green { color: #2ea043; }
+        .stat-value.red { color: #da3633; }
+        .stat-value.yellow { color: #f0c674; }
+        .stat-value.blue { color: #58a6ff; }
+
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .server-card {
+            background: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #555;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .server-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .server-card.healthy { border-left-color: #2ea043; }
+        .server-card.unhealthy { border-left-color: #da3633; }
+        .server-card.degraded { border-left-color: #f0c674; }
+        .server-card.loading { border-left-color: #58a6ff; }
+
+        .server-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .server-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e6edf3;
+        }
+
+        .server-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-healthy {
+            background: rgba(46, 160, 67, 0.15);
+            color: #2ea043;
+        }
+
+        .status-unhealthy {
+            background: rgba(218, 54, 51, 0.15);
+            color: #da3633;
+        }
+
+        .status-degraded {
+            background: rgba(240, 199, 116, 0.15);
+            color: #f0c674;
+        }
+
+        .server-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .metric {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .metric-label {
+            color: #8b949e;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            color: #e6edf3;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .error-details {
+            margin-top: 12px;
+            padding: 10px;
+            background: rgba(218, 54, 51, 0.1);
+            border-radius: 4px;
+            color: #da3633;
+            font-size: 12px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        .refresh-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #2ea043;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #555;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>MCP Server Health Dashboard</h1>
+        <p class="subtitle">Claude Desktop • Real-time Monitoring<span class="refresh-indicator"></span></p>
+    </header>
+
+    <div class="summary">
+        <div class="stat-card">
+            <div class="stat-label">Healthy Servers</div>
+            <div class="stat-value green" id="healthyCount">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Failed Servers</div>
+            <div class="stat-value red" id="failedCount">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Tool Calls</div>
+            <div class="stat-value blue" id="totalCalls">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Error Rate</div>
+            <div class="stat-value yellow" id="errorRate">-</div>
+        </div>
+    </div>
+
+    <div class="servers-grid" id="serversGrid">
+        <div class="server-card loading">
+            <div class="server-header">
+                <span class="server-name">Loading servers...</span>
+                <span class="loading-spinner"></span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <strong>MCP Server Health Dashboard</strong><br>
+        Auto-refresh every 15 seconds • Last updated: <span id="lastUpdate">-</span>
+    </footer>
+
+    <script>
+        const SERVERS = [
+            {name: 'LM Studio API', url: 'http://localhost:1234/v1/models', type: 'external'},
+            {name: 'clientforge-filesystem', port: 3001},
+            {name: 'clientforge-codebase', port: 3002},
+            {name: 'clientforge-testing', port: 3003},
+            {name: 'clientforge-git', port: 3004},
+            {name: 'clientforge-documentation', port: 3005},
+            {name: 'clientforge-build', port: 3006},
+            {name: 'clientforge-rag', port: 3007},
+            {name: 'clientforge-security', port: 3008},
+            {name: 'clientforge-context-pack', port: 3009},
+            {name: 'clientforge-orchestrator', port: 3010},
+            {name: 'clientforge-ai-router', port: 3011},
+            {name: 'clientforge-env-manager', port: 3012},
+            {name: 'clientforge-api-tester', port: 3013}
+        ];
+
+        async function checkServer(server) {
+            try {
+                let url = server.url || `http://localhost:${server.port}/health`;
+                const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+
+                if (server.type === 'external') {
+                    // LM Studio returns model list, just check 200 OK
+                    return {
+                        name: server.name,
+                        status: response.ok ? 'healthy' : 'unhealthy',
+                        uptime: '-',
+                        toolCallCount: '-',
+                        errorCount: '-',
+                        errorRate: '-'
+                    };
+                } else {
+                    const health = await response.json();
+                    return {
+                        name: server.name,
+                        status: health.status || 'unhealthy',
+                        uptime: health.uptime || 0,
+                        lastToolCall: health.lastToolCall,
+                        toolCallCount: health.toolCallCount || 0,
+                        errorCount: health.errorCount || 0,
+                        errorRate: (health.errorRate * 100).toFixed(1) + '%'
+                    };
+                }
+            } catch (error) {
+                return {
+                    name: server.name,
+                    status: 'unreachable',
+                    error: error.message,
+                    uptime: 0,
+                    toolCallCount: 0,
+                    errorCount: 0,
+                    errorRate: '-'
+                };
+            }
+        }
+
+        function formatUptime(seconds) {
+            if (seconds === '-') return '-';
+            if (seconds < 60) return `${seconds}s`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${mins}m`;
+        }
+
+        function renderServerCard(server) {
+            const statusClass = server.status === 'healthy' ? 'healthy' :
+                              server.status === 'starting' ? 'degraded' : 'unhealthy';
+            const statusLabel = server.status === 'healthy' ? 'status-healthy' :
+                               server.status === 'starting' ? 'status-degraded' : 'status-unhealthy';
+
+            return `
+                <div class="server-card ${statusClass}">
+                    <div class="server-header">
+                        <span class="server-name">${server.name}</span>
+                        <span class="server-status ${statusLabel}">${server.status}</span>
+                    </div>
+                    <div class="server-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Uptime</div>
+                            <div class="metric-value">${formatUptime(server.uptime)}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Tool Calls</div>
+                            <div class="metric-value">${server.toolCallCount}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Errors</div>
+                            <div class="metric-value">${server.errorCount}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Error Rate</div>
+                            <div class="metric-value">${server.errorRate}</div>
+                        </div>
+                    </div>
+                    ${server.error ? `<div class="error-details">Error: ${server.error}</div>` : ''}
+                </div>
+            `;
+        }
+
+        async function updateDashboard() {
+            const results = await Promise.all(SERVERS.map(checkServer));
+
+            const healthyCount = results.filter(r => r.status === 'healthy').length;
+            const failedCount = results.filter(r => r.status === 'unreachable' || r.status === 'unhealthy').length;
+            const totalCalls = results.reduce((sum, r) => sum + (r.toolCallCount || 0), 0);
+            const totalErrors = results.reduce((sum, r) => sum + (r.errorCount || 0), 0);
+            const errorRate = totalCalls > 0 ? ((totalErrors / totalCalls) * 100).toFixed(2) + '%' : '0%';
+
+            document.getElementById('healthyCount').textContent = healthyCount;
+            document.getElementById('failedCount').textContent = failedCount;
+            document.getElementById('totalCalls').textContent = totalCalls.toLocaleString();
+            document.getElementById('errorRate').textContent = errorRate;
+
+            const serversHTML = results.map(renderServerCard).join('');
+            document.getElementById('serversGrid').innerHTML = serversHTML;
+
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Initial load
+        updateDashboard();
+
+        // Auto-refresh every 15 seconds (matches meta refresh)
+        setInterval(updateDashboard, 15000);
+    </script>
+</body>
+</html>

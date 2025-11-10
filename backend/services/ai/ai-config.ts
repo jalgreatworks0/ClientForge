@@ -28,10 +28,11 @@ import {
  * Load AI service configuration from environment
  */
 export function loadAIConfig(): AIServiceConfig {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  // Use ClientForge-specific API key for Albedo AI assistant
+  const apiKey = process.env.ANTHROPIC_API_KEY_CLIENTFORGE || process.env.ANTHROPIC_API_KEY
 
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY environment variable is required')
+    throw new Error('ANTHROPIC_API_KEY_CLIENTFORGE or ANTHROPIC_API_KEY environment variable is required')
   }
 
   return {

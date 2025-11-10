@@ -14,6 +14,10 @@ import {
   bulkContactOperationSchema,
   searchQuerySchema,
 } from './contact-validators'
+import {
+  CreateContactInput,
+  BulkContactOperation,
+} from './contact-types'
 
 /**
  * Create a new contact
@@ -28,7 +32,7 @@ export const createContact = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    const validatedData = createContactSchema.parse(req.body)
+    const validatedData = createContactSchema.parse(req.body) as CreateContactInput
 
     const contact = await contactService.createContact(tenantId, userId, validatedData)
 
@@ -218,7 +222,7 @@ export const bulkOperation = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    const validatedData = bulkContactOperationSchema.parse(req.body)
+    const validatedData = bulkContactOperationSchema.parse(req.body) as BulkContactOperation
 
     const result = await contactService.bulkOperation(tenantId, userId, validatedData)
 

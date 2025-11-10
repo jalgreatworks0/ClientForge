@@ -43,7 +43,8 @@ class OpenAIService {
   private defaultModel: string;
 
   constructor() {
-    const apiKey = process.env.OPENAI_API_KEY || 'placeholder-key';
+    // Use ClientForge-specific API key for SDK bot
+    const apiKey = process.env.OPENAI_API_KEY_CLIENTFORGE || process.env.OPENAI_API_KEY || 'placeholder-key';
     this.client = new OpenAI({
       apiKey: apiKey,
     });
@@ -68,7 +69,7 @@ class OpenAIService {
 
     this.defaultModel = 'mini';
 
-    console.log('✅ OpenAI Service initialized');
+    console.log('[OK] OpenAI Service initialized');
   }
 
   /**

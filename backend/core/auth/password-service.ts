@@ -149,3 +149,8 @@ export class PasswordService {
 
 // Export singleton instance
 export const passwordService = new PasswordService()
+
+// Export convenience function for scripts
+export const hashPassword = (password: string): Promise<string> => {
+  return passwordService.hash(password)
+}

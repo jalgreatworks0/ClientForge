@@ -68,7 +68,7 @@ export enum AccountStatus {
 }
 
 export interface CreateAccountInput {
-  ownerId: string
+  ownerId?: string // Optional - will default to authenticated user if not provided
   name: string
   website?: string
   industry?: string
@@ -169,7 +169,7 @@ export interface AccountListResponse {
 }
 
 export interface BulkAccountOperation {
-  accountIds: string[]
+  accountIds?: string[] // Optional - will be validated at runtime
   operation: 'update' | 'delete' | 'assign' | 'add_tags' | 'remove_tags' | 'change_status'
   data?: Record<string, any>
 }

@@ -19,6 +19,9 @@ import {
   entityActivitiesQuerySchema,
   entityTasksQuerySchema,
 } from './task-validators'
+import {
+  CreateActivityInput,
+} from './task-types'
 
 // =====================================================
 // TASK CONTROLLERS
@@ -318,7 +321,7 @@ export const createActivity = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    const validatedData = createActivitySchema.parse(req.body)
+    const validatedData = createActivitySchema.parse(req.body) as CreateActivityInput
 
     const activity = await taskService.createActivity(tenantId, userId, validatedData)
 

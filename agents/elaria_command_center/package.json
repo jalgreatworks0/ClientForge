@@ -1,0 +1,49 @@
+{
+  "name": "elaria-command-center",
+  "version": "1.0.0",
+  "description": "Elaria Command Center - LM Studio integration for ClientForge CRM",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/elaria.js",
+    "test": "node src/test-connection.js",
+    "test:sdk": "node src/test-sdk.js",
+    "test:mcp": "node src/test-mcp.js",
+    "test:advanced": "node src/advanced-features.js",
+    "test:structured": "node test-structured-outputs.js",
+    "test:chroma": "node test-chroma-persistence.js",
+    "test:agent": "node src/agent-act.js sales",
+    "agent:sales": "node src/agent-act.js sales",
+    "agent:qbr": "node src/agent-act.js qbr",
+    "agent:search": "node src/agent-act.js search",
+    "init": "node src/init-elaria.js",
+    "sync": "node src/sync-clientforge.js",
+    "dev": "node --watch src/elaria.js",
+    "health": "node elaria-health-check.js"
+  },
+  "keywords": [
+    "lmstudio",
+    "clientforge",
+    "crm",
+    "command-center",
+    "ai",
+    "orchestration"
+  ],
+  "author": "ClientForge Team",
+  "license": "MIT",
+  "dependencies": {
+    "@lmstudio/sdk": "^1.5.0",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "chalk": "^5.3.0",
+    "chromadb": "^3.1.1",
+    "dotenv": "^16.4.7",
+    "ora": "^8.1.1",
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

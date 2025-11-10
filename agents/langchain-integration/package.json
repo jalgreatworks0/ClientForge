@@ -1,0 +1,38 @@
+{
+  "name": "clientforge-langchain-integration",
+  "version": "1.0.0",
+  "description": "LangChain integration with LM Studio for ClientForge CRM",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node test-langchain.js",
+    "start": "node index.js",
+    "chain:code-review": "node chains/code-review-chain.js",
+    "chain:db-query": "node chains/database-query-chain.js",
+    "chain:docs": "node chains/documentation-chain.js",
+    "chain:tests": "node chains/test-generation-chain.js"
+  },
+  "dependencies": {
+    "langchain": "^0.3.7",
+    "@langchain/openai": "^0.3.14",
+    "@langchain/community": "^0.3.15",
+    "@langchain/core": "^0.3.23",
+    "hnswlib-node": "^3.0.0",
+    "pg": "^8.13.1",
+    "mongodb": "^6.11.0",
+    "@elastic/elasticsearch": "^8.16.0",
+    "redis": "^4.7.0",
+    "dotenv": "^16.4.7",
+    "chalk": "^5.4.1",
+    "ora": "^8.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "langchain",
+    "lm-studio",
+    "crm",
+    "ai-agents"
+  ]
+}

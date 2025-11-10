@@ -35,28 +35,18 @@ if not exist "node_modules" (
     )
 )
 
-REM Build backend if needed
-if not exist "dist\backend" (
-    echo [INFO] Building backend...
-    echo.
-    call npm run build:backend
-    if errorlevel 1 (
-        echo.
-        echo [WARNING] Build had errors but continuing...
-    )
-)
-
 echo.
-echo [INFO] Starting backend server on port 3000...
+echo [INFO] Starting backend development server on port 3000...
 echo [INFO] API will be available at: http://localhost:3000/api
 echo [INFO] Health check: http://localhost:3000/api/v1/health
+echo [INFO] Auto-reload enabled with ts-node-dev
 echo.
 echo Press Ctrl+C to stop the server
 echo ========================================
 echo.
 
-REM Start the backend server
-node dist\backend\index.js
+REM Start the backend development server with auto-reload
+call npm run dev:backend
 
 if errorlevel 1 (
     echo.

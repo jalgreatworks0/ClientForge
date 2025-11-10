@@ -28,6 +28,11 @@ import {
   entityTagsQuerySchema,
   entityCustomFieldsQuerySchema,
 } from './metadata-validators'
+import {
+  UpdateCommentInput,
+  AssignTagInput,
+  SetCustomFieldValueInput,
+} from './metadata-types'
 import { ValidationError } from '../../utils/errors'
 
 // =====================================================
@@ -370,7 +375,7 @@ export class CommentController {
       const userId = req.user!.userId
       const { id } = req.params
 
-      const validated = updateCommentSchema.parse(req.body)
+      const validated = updateCommentSchema.parse(req.body) as UpdateCommentInput
       const comment = await commentService.updateComment(id, tenantId, userId, validated)
 
       res.json({
@@ -595,7 +600,7 @@ export class TagController {
     try {
       const tenantId = req.user!.tenantId
 
-      const validated = assignTagSchema.parse(req.body)
+      const validated = assignTagSchema.parse(req.body) as AssignTagInput
       const entityTag = await tagService.assignTag(tenantId, validated)
 
       res.status(201).json({
@@ -816,7 +821,7 @@ export class CustomFieldController {
     try {
       const tenantId = req.user!.tenantId
 
-      const validated = setCustomFieldValueSchema.parse(req.body)
+      const validated = setCustomFieldValueSchema.parse(req.body) as SetCustomFieldValueInput
       const value = await customFieldService.setCustomFieldValue(tenantId, validated)
 
       res.json({

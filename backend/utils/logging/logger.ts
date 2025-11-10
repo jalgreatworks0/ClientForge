@@ -5,6 +5,7 @@
 
 import winston from 'winston'
 import path from 'path'
+import 'winston-mongodb'
 
 // Define log levels
 const levels = {
@@ -83,6 +84,28 @@ transports.push(
     format,
     maxsize: 10 * 1024 * 1024, // 10MB
     maxFiles: 10,
+  })
+)
+
+// MongoDB transport for centralized logging
+const mongodbUri = process.env.MONGODB_URI || 'mongodb://crm:password@localhost:27017/clientforge?authSource=admin'
+transports.push(
+  new winston.transports.MongoDB({
+    db: mongodbUri,
+    collection: 'app_logs',
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      winston.format.errors({ stack: true }),
+      winston.format.splat(),
+      winston.format.json()
+    ),
+    metaData: {
+      timestamp: new Date(),
+      service: 'clientforge-crm',
+    },
+    tryReconnect: true,
+    decolorize: true,
   })
 )
 

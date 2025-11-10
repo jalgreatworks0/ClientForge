@@ -7,6 +7,7 @@ import { Pool } from 'pg'
 import { getPostgresPool } from '../../config/database/postgres-config'
 import { getRedisClient } from '../../config/database/redis-config'
 import { getMongoClient } from '../../config/database/mongodb-config'
+import { logger } from '../../backend/utils/logging/logger'
 
 export class TestDatabaseSetup {
   private pgPool: Pool
@@ -14,7 +15,7 @@ export class TestDatabaseSetup {
   private mongoClient: any
 
   async initialize(): Promise<void> {
-    console.log('🔧 Initializing test database connections...')
+    logger.info('[Test DB] Initializing test database connections...')
 
     // Initialize PostgreSQL
     this.pgPool = getPostgresPool()
@@ -25,11 +26,11 @@ export class TestDatabaseSetup {
     // Initialize MongoDB
     this.mongoClient = await getMongoClient()
 
-    console.log('✅ Test database connections initialized')
+    logger.info('[Test DB] Test database connections initialized')
   }
 
   async setupSchema(): Promise<void> {
-    console.log('📝 Setting up test database schema...')
+    logger.info('[Test DB] Setting up test database schema...')
 
     // Run migrations or create tables
     await this.createTenantsTables()
@@ -38,11 +39,11 @@ export class TestDatabaseSetup {
     await this.createPermissionsTables()
     await this.createSessionsTables()
 
-    console.log('✅ Test database schema created')
+    logger.info('[Test DB] Test database schema created')
   }
 
   async seedTestData(): Promise<void> {
-    console.log('🌱 Seeding test data...')
+    logger.info('[Test DB] Seeding test data...')
 
     // Create test tenant
     const tenantResult = await this.pgPool.query(
@@ -76,11 +77,11 @@ export class TestDatabaseSetup {
          ('contacts', 'delete', 'Delete contacts')`
     )
 
-    console.log('✅ Test data seeded')
+    logger.info('[Test DB] Test data seeded')
   }
 
   async cleanupTestData(): Promise<void> {
-    console.log('🧹 Cleaning up test data...')
+    logger.info('[Test DB] Cleaning up test data...')
 
     // Delete in reverse order of dependencies
     await this.pgPool.query('DELETE FROM role_permissions')
@@ -96,17 +97,17 @@ export class TestDatabaseSetup {
     const db = this.mongoClient.db('clientforge_test')
     await db.collection('audit_logs').deleteMany({})
 
-    console.log('✅ Test data cleaned up')
+    logger.info('[Test DB] Test data cleaned up')
   }
 
   async teardown(): Promise<void> {
-    console.log('🔌 Closing test database connections...')
+    logger.info('[Test DB] Closing test database connections...')
 
     await this.pgPool.end()
     await this.redisClient.quit()
     await this.mongoClient.close()
 
-    console.log('✅ Test database connections closed')
+    logger.info('[Test DB] Test database connections closed')
   }
 
   // Private helper methods

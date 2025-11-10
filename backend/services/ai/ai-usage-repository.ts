@@ -3,7 +3,7 @@
  * Track AI usage for billing, analytics, and quota management
  */
 
-import { pool } from '../../../config/database/database'
+import { getPool } from '../../database/postgresql/pool'
 import type {
   AIUsageRecord,
   SubscriptionQuota,
@@ -15,6 +15,9 @@ import {
   ClaudeModel,
   SubscriptionPlan,
 } from './ai-types'
+
+// Get database pool
+const pool = getPool()
 
 // =====================================================
 // AI USAGE REPOSITORY
@@ -110,7 +113,7 @@ export class AIUsageRepository {
     `
 
     const featureResult = await pool.query(featureQuery, [tenantId, startDate, endDate])
-    const queriesByFeature: Record<AIFeatureType, number> = {}
+    const queriesByFeature: Partial<Record<AIFeatureType, number>> = {}
     featureResult.rows.forEach((row) => {
       queriesByFeature[row.feature_type as AIFeatureType] = parseInt(row.count)
     })
@@ -126,7 +129,7 @@ export class AIUsageRepository {
     `
 
     const modelResult = await pool.query(modelQuery, [tenantId, startDate, endDate])
-    const queriesByModel: Record<ClaudeModel, number> = {}
+    const queriesByModel: Partial<Record<ClaudeModel, number>> = {}
     modelResult.rows.forEach((row) => {
       queriesByModel[row.model as ClaudeModel] = parseInt(row.count)
     })
@@ -142,7 +145,7 @@ export class AIUsageRepository {
     `
 
     const costFeatureResult = await pool.query(costFeatureQuery, [tenantId, startDate, endDate])
-    const costByFeature: Record<AIFeatureType, number> = {}
+    const costByFeature: Partial<Record<AIFeatureType, number>> = {}
     costFeatureResult.rows.forEach((row) => {
       costByFeature[row.feature_type as AIFeatureType] = parseFloat(row.cost)
     })
@@ -158,7 +161,7 @@ export class AIUsageRepository {
     `
 
     const costModelResult = await pool.query(costModelQuery, [tenantId, startDate, endDate])
-    const costByModel: Record<ClaudeModel, number> = {}
+    const costByModel: Partial<Record<ClaudeModel, number>> = {}
     costModelResult.rows.forEach((row) => {
       costByModel[row.model as ClaudeModel] = parseFloat(row.cost)
     })
@@ -173,15 +176,15 @@ export class AIUsageRepository {
         end: endDate,
       },
       totalQueries: parseInt(totals.total_queries) || 0,
-      queriesByFeature,
-      queriesByModel,
+      queriesByFeature: queriesByFeature as Record<AIFeatureType, number>,
+      queriesByModel: queriesByModel as Record<ClaudeModel, number>,
       totalTokens: parseInt(totals.total_tokens) || 0,
       inputTokens: parseInt(totals.input_tokens) || 0,
       outputTokens: parseInt(totals.output_tokens) || 0,
       cachedTokens: parseInt(totals.cached_tokens) || 0,
       totalCostUSD: parseFloat(totals.total_cost) || 0,
-      costByFeature,
-      costByModel,
+      costByFeature: costByFeature as Record<AIFeatureType, number>,
+      costByModel: costByModel as Record<ClaudeModel, number>,
       avgLatencyMs: parseFloat(totals.avg_latency) || 0,
       cacheHitRate: parseFloat(totals.cache_hit_rate) || 0,
       quotaUsed: quota.aiQuotaUsed,

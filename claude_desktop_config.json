@@ -1,0 +1,136 @@
+{
+  "mcpServers": {
+    "clientforge-filesystem": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-filesystem.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm",
+        "AUTO_STAGE": "true",
+        "STAGING_DIR": "D:\\clientforge-crm\\_staging"
+      }
+    },
+    "clientforge-database": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-database.js"
+      ],
+      "env": {
+        "DATABASE_URL": "postgresql://localhost:5432/clientforge_crm",
+        "MONGODB_URL": "mongodb://localhost:27017/clientforge_crm",
+        "ELASTICSEARCH_URL": "http://localhost:9200",
+        "REDIS_URL": "redis://localhost:6379"
+      }
+    },
+    "clientforge-codebase": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-codebase.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm"
+      }
+    },
+    "clientforge-testing": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-testing.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm",
+        "COVERAGE_THRESHOLD": "85"
+      }
+    },
+    "clientforge-build": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-build.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm"
+      }
+    },
+    "clientforge-context-pack": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-context-pack.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm",
+        "MAX_CONTEXT_SIZE": "122880",
+        "DOCS_DIR": "D:\\clientforge-crm\\docs"
+      }
+    },
+    "clientforge-security": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-security.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm",
+        "OWASP_CHECKS": "true"
+      }
+    },
+    "clientforge-git": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-git.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm"
+      }
+    },
+    "clientforge-documentation": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-documentation.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm",
+        "DOCS_OUTPUT": "D:\\clientforge-crm\\docs\\api"
+      }
+    },
+    "clientforge-logger": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-logger.js"
+      ],
+      "env": {
+        "MONGODB_URL": "mongodb://localhost:27017/clientforge_crm",
+        "LOG_LEVEL": "info"
+      }
+    },
+    "clientforge-rag": {
+      "command": "node",
+      "args": [
+        "D:\\clientforge-crm\\agents\\mcp\\servers\\clientforge-rag.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm",
+        "VECTOR_DB": "chroma",
+        "EMBEDDING_MODEL": "all-MiniLM-L6-v2"
+      }
+    },
+    "clientforge-orchestrator": {
+      "command": "node",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "D:\\clientforge-crm\\agents\\mcp\\router.ts"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:\\clientforge-crm",
+        "OLLAMA_ENDPOINTS": "http://localhost:11434,http://localhost:11435,http://localhost:11436,http://localhost:11437",
+        "ENABLE_COLLABORATIVE": "true",
+        "HIVE_MIND": "true"
+      }
+    }
+  },
+  "globalShortcut": "CommandOrControl+Shift+Space",
+  "mcpSettings": {
+    "timeout": 60000,
+    "retries": 3,
+    "healthCheckInterval": 30000
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "comment": "LM Studio MCP Configuration for Elaria Command Center",
+  "comment2": "Place this in LM Studio settings or use for reference",
+  "comment3": "Enable Remote MCP: Developer → Settings → Enable Remote MCP",
+
+  "mcp_servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\ClientForge"
+      ],
+      "description": "File system access to ClientForge repository",
+      "allowed_tools": [
+        "read_file",
+        "write_file",
+        "list_directory",
+        "search_files",
+        "get_file_info"
+      ]
+    },
+
+    "process": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-process"
+      ],
+      "description": "Execute PowerShell/Bash commands",
+      "allowed_tools": [
+        "execute_command"
+      ],
+      "allowed_commands": [
+        "*.ps1",
+        "*.sh",
+        "*.py",
+        "pnpm",
+        "npm",
+        "node",
+        "git"
+      ]
+    },
+
+    "http": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-http"
+      ],
+      "description": "HTTP client for API calls",
+      "allowed_tools": [
+        "get",
+        "post",
+        "put",
+        "delete"
+      ],
+      "allowed_hosts": [
+        "127.0.0.1",
+        "localhost",
+        "render.com",
+        "notion.so",
+        "discord.com"
+      ]
+    },
+
+    "orchestrator": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-http"
+      ],
+      "description": "ClientForge orchestrator service on port 8979",
+      "base_url": "http://127.0.0.1:8979",
+      "allowed_tools": [
+        "listBots",
+        "submitTask",
+        "getTask",
+        "getBotStatus"
+      ]
+    },
+
+    "rag_local": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-http"
+      ],
+      "description": "Local RAG service on port 8920",
+      "base_url": "http://127.0.0.1:8920",
+      "allowed_tools": [
+        "query",
+        "reindex",
+        "status"
+      ]
+    }
+  },
+
+  "model_settings": {
+    "model_name": "qwen2.5-30b-a3b",
+    "quantization": "Q4_K_M",
+    "context_length": 32768,
+    "gpu_layers": 40,
+    "temperature": 0.3,
+    "top_p": 0.9,
+    "top_k": 40,
+    "repeat_penalty": 1.1,
+    "max_tokens": 4096
+  },
+
+  "response_api_settings": {
+    "endpoint": "http://localhost:1234/v1/responses",
+    "default_reasoning_effort": "medium",
+    "enable_streaming": false,
+    "enable_tool_calling": true,
+    "max_tool_iterations": 5
+  },
+
+  "security": {
+    "never_write_to_paths": [
+      "D:\\ClientForge\\02_CODE\\backend\\config\\secrets*",
+      "D:\\ClientForge\\.env*",
+      "D:\\ClientForge\\**\\credentials*"
+    ],
+    "require_staging_for_code": true,
+    "staging_path": "D:\\ClientForge\\_staging",
+    "auto_backup_before_promote": true
+  }
+}

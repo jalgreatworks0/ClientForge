@@ -18,6 +18,7 @@ export interface LoginCredentials {
   tenantId: string
   ipAddress?: string
   userAgent?: string
+  deviceType?: string
 }
 
 export interface LoginResponse {
@@ -36,12 +37,14 @@ export interface LoginResponse {
 
 export interface RegisterData {
   tenantId: string
-  roleId: string
+  roleId?: string // Optional - will use default role if not provided
   email: string
   password: string
   firstName: string
   lastName: string
   phone?: string
+  timezone?: string
+  language?: string
 }
 
 export class AuthService {
@@ -49,7 +52,7 @@ export class AuthService {
    * Login user with email and password
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const { email, password, tenantId, ipAddress, userAgent } = credentials
+    const { email, password, tenantId, ipAddress, userAgent, deviceType } = credentials
 
     try {
       // 1. Find user by email and tenant
@@ -92,10 +95,10 @@ export class AuthService {
       })
 
       // 7. Create session in Redis + PostgreSQL
-      await sessionService.createSession(user.id, tokenPair.refreshToken, {
+      await sessionService.createSession(user.id, user.tenantId, tokenPair.refreshToken, {
         userAgent,
         ipAddress,
-        deviceType: this.detectDeviceType(userAgent),
+        deviceType: deviceType || 'unknown',
       })
 
       // 8. Update last login timestamp
@@ -144,7 +147,7 @@ export class AuthService {
   /**
    * Register new user
    */
-  async register(data: RegisterData): Promise<User> {
+  async register(data: RegisterData): Promise<LoginResponse> {
     try {
       // 1. Validate password strength
       const passwordValidation = passwordService.validatePasswordStrength(data.password)
@@ -167,10 +170,13 @@ export class AuthService {
       // 3. Hash password
       const passwordHash = await passwordService.hash(data.password)
 
-      // 4. Create user
+      // 4. Get default role ID if not provided (assumes 'user' role exists)
+      const roleId = data.roleId || 'default-user-role-id' // TODO: Fetch from database
+
+      // 5. Create user
       const user = await userRepository.create({
         tenantId: data.tenantId,
-        roleId: data.roleId,
+        roleId,
         email: data.email.toLowerCase(),
         passwordHash,
         firstName: data.firstName,
@@ -184,9 +190,35 @@ export class AuthService {
         tenantId: data.tenantId,
       })
 
+      // 6. Generate tokens for automatic login after registration
+      const tokenPair = jwtService.generateTokenPair({
+        userId: user.id,
+        tenantId: user.tenantId,
+        roleId: user.roleId,
+        email: user.email,
+      })
+
+      // 7. Create session
+      await sessionService.createSession(user.id, user.tenantId, tokenPair.refreshToken, {
+        userAgent: 'registration',
+        deviceType: 'web',
+      })
+
       // TODO: Send email verification email
 
-      return user
+      return {
+        accessToken: tokenPair.accessToken,
+        refreshToken: tokenPair.refreshToken,
+        expiresIn: tokenPair.expiresIn,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role?.name || 'user',
+          tenantId: user.tenantId,
+        },
+      }
     } catch (error) {
       if (error instanceof ValidationError) {
         throw error
@@ -218,7 +250,7 @@ export class AuthService {
   /**
    * Refresh access token using refresh token
    */
-  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; expiresIn: number }> {
+  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; expiresIn: number; userId: string; tenantId: string }> {
     try {
       // 1. Verify refresh token
       const payload = jwtService.verifyRefreshToken(refreshToken)
@@ -253,6 +285,8 @@ export class AuthService {
       return {
         accessToken,
         expiresIn,
+        userId: user.id,
+        tenantId: user.tenantId,
       }
     } catch (error) {
       if (error instanceof UnauthorizedError) {

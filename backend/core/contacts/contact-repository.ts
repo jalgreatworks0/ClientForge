@@ -6,6 +6,7 @@
 import { Pool, PoolClient } from 'pg'
 import { getPostgresPool } from '../../../config/database/postgres-config'
 import { logger } from '../../utils/logging/logger'
+import { trackedQuery } from '../../database/postgresql/query-tracker'
 import {
   Contact,
   ContactFilters,
@@ -27,7 +28,8 @@ export class ContactRepository {
    * Create a new contact
    */
   async create(tenantId: string, data: CreateContactInput): Promise<Contact> {
-    const result = await this.pool.query<Contact>(
+    const result = await trackedQuery<Contact>(
+      this.pool,
       `INSERT INTO contacts (
         tenant_id, owner_id, account_id, first_name, last_name, email, phone, mobile,
         title, department, lead_source, lead_status, lifecycle_stage, tags,
@@ -69,7 +71,8 @@ export class ContactRepository {
         data.socialTwitter || null,
         data.socialFacebook || null,
         data.notes || null,
-      ]
+      ],
+      { queryName: 'contacts.create', tenantId }
     )
 
     logger.info('Contact created', { contactId: result.rows[0].id, tenantId })
@@ -80,7 +83,8 @@ export class ContactRepository {
    * Find contact by ID
    */
   async findById(id: string, tenantId: string): Promise<Contact | null> {
-    const result = await this.pool.query<Contact>(
+    const result = await trackedQuery<Contact>(
+      this.pool,
       `SELECT
         id, tenant_id as "tenantId", owner_id as "ownerId", account_id as "accountId",
         first_name as "firstName", last_name as "lastName", email, phone, mobile,
@@ -94,7 +98,8 @@ export class ContactRepository {
         created_at as "createdAt", updated_at as "updatedAt", deleted_at as "deletedAt"
       FROM contacts
       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
-      [id, tenantId]
+      [id, tenantId],
+      { queryName: 'contacts.findById', tenantId }
     )
 
     return result.rows[0] || null

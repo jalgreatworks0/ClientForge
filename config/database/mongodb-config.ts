@@ -4,6 +4,7 @@
  */
 
 import { MongoClient, MongoClientOptions, Db } from 'mongodb'
+import { logger } from '../../backend/utils/logging/logger'
 
 export interface MongoDBConfig {
   uri: string
@@ -36,22 +37,22 @@ export async function getMongoClient(): Promise<MongoClient> {
 
     try {
       await client.connect()
-      console.log('✅ MongoDB connected')
+      logger.info('[MongoDB] Connected successfully')
 
       // Handle connection events
       client.on('error', (error) => {
-        console.error('❌ MongoDB connection error:', error)
+        logger.error('[MongoDB] Connection error', { error: error instanceof Error ? error.message : String(error) })
       })
 
       client.on('close', () => {
-        console.log('⚠️ MongoDB connection closed')
+        logger.warn('[MongoDB] Connection closed')
       })
 
       client.on('reconnect', () => {
-        console.log('✅ MongoDB reconnected')
+        logger.info('[MongoDB] Reconnected successfully')
       })
     } catch (error) {
-      console.error('❌ Failed to connect to MongoDB:', error)
+      logger.error('[MongoDB] Failed to connect', { error: error instanceof Error ? error.message : String(error) })
       throw error
     }
   }
@@ -79,7 +80,7 @@ export async function closeMongoClient(): Promise<void> {
     await client.close()
     client = null
     db = null
-    console.log('MongoDB connection closed')
+    logger.info('[MongoDB] Connection closed')
   }
 }
 
@@ -90,10 +91,10 @@ export async function testMongoConnection(): Promise<boolean> {
   try {
     const mongoClient = await getMongoClient()
     await mongoClient.db('admin').command({ ping: 1 })
-    console.log('✅ MongoDB connection test successful')
+    logger.info('[MongoDB] Connection test successful')
     return true
   } catch (error) {
-    console.error('❌ MongoDB connection test failed:', error)
+    logger.error('[MongoDB] Connection test failed', { error: error instanceof Error ? error.message : String(error) })
     return false
   }
 }
@@ -113,7 +114,7 @@ export async function initializeMongoCollections(): Promise<void> {
 
       if (!collectionExists) {
         await database.createCollection(collectionName)
-        console.log(`✅ Created MongoDB collection: ${collectionName}`)
+        logger.info(`[MongoDB] Created collection: ${collectionName}`)
       }
     }
 
@@ -137,9 +138,9 @@ export async function initializeMongoCollections(): Promise<void> {
       { key: { created_at: -1 }, expireAfterSeconds: 2592000 }, // 30 days TTL
     ])
 
-    console.log('✅ MongoDB collections and indexes initialized')
+    logger.info('[MongoDB] Collections and indexes initialized')
   } catch (error) {
-    console.error('❌ Failed to initialize MongoDB collections:', error)
+    logger.error('[MongoDB] Failed to initialize collections', { error: error instanceof Error ? error.message : String(error) })
     throw error
   }
 }

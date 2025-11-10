@@ -8,9 +8,12 @@ export default function Header() {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: '📊' },
     { name: 'Contacts', path: '/contacts', icon: '👥' },
-    { name: 'Deals', path: '/deals', icon: '💼' },
     { name: 'Accounts', path: '/accounts', icon: '🏢' },
+    { name: 'Deals', path: '/deals', icon: '💼' },
     { name: 'Tasks', path: '/tasks', icon: '✓' },
+    { name: 'Activities', path: '/activities', icon: '📅' },
+    { name: 'Notes', path: '/notes', icon: '📝' },
+    { name: 'Settings', path: '/settings', icon: '⚙️' },
   ]
 
   const isActive = (path: string) => {

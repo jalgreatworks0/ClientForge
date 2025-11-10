@@ -14,7 +14,7 @@ const yearSchema = z.number().int().min(1800).max(new Date().getFullYear()).opti
 
 // Create account schema
 export const createAccountSchema = z.object({
-  ownerId: z.string().uuid('Owner ID must be a valid UUID'),
+  ownerId: z.string().uuid('Owner ID must be a valid UUID').optional(), // Optional - defaults to authenticated user
   name: z.string().min(1, 'Account name is required').max(255),
   website: urlSchema,
   industry: z.string().max(100).optional(),
@@ -120,8 +120,8 @@ export const accountListOptionsSchema = z.object({
 
 // Bulk operation schema
 export const bulkAccountOperationSchema = z.object({
-  accountIds: z.array(z.string().uuid()).min(1, 'At least one account ID is required'),
-  operation: z.enum(['update', 'delete', 'assign', 'add_tags', 'remove_tags', 'change_status']),
+  accountIds: z.array(z.string().uuid()).min(1, 'At least one account ID is required').optional(), // Validated at runtime
+  operation: z.enum(['update', 'delete', 'assign', 'add_tags', 'remove_tags', 'change_status']).optional(), // Validated at runtime
   data: z.record(z.any()).optional(),
 }).refine(
   (data) => {

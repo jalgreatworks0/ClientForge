@@ -16,6 +16,7 @@ import {
 } from './account-types'
 import { ValidationError, NotFoundError, ConflictError } from '../../utils/errors/app-error'
 import { logger } from '../../utils/logging/logger'
+import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
 
 export class AccountService {
   /**
@@ -26,26 +27,55 @@ export class AccountService {
     userId: string,
     data: CreateAccountInput
   ): Promise<Account> {
+    // Default ownerId to authenticated user if not provided
+    const accountData = {
+      ...data,
+      ownerId: data.ownerId || userId,
+    }
+
     // Check for duplicate account name (case-insensitive)
-    const existingAccounts = await accountRepository.findByName(data.name, tenantId)
+    const existingAccounts = await accountRepository.findByName(accountData.name, tenantId)
     if (existingAccounts.length > 0) {
       throw new ConflictError('An account with this name already exists')
     }
 
     // Validate parent account if specified
-    if (data.parentAccountId) {
-      const parentAccount = await accountRepository.findById(data.parentAccountId, tenantId)
+    if (accountData.parentAccountId) {
+      const parentAccount = await accountRepository.findById(accountData.parentAccountId, tenantId)
       if (!parentAccount) {
         throw new ValidationError('Parent account does not exist')
       }
 
       // Prevent circular references
-      if (data.parentAccountId === data.ownerId) {
+      if (accountData.parentAccountId === accountData.ownerId) {
         throw new ValidationError('Account cannot be its own parent')
       }
     }
 
-    const account = await accountRepository.create(tenantId, data)
+    const account = await accountRepository.create(tenantId, accountData)
+
+    // Sync to Elasticsearch for search
+    try {
+      await elasticsearchSyncService.syncAccount(
+        {
+          id: account.id,
+          tenant_id: tenantId,
+          name: account.name,
+          website: account.website,
+          industry: account.industry,
+          description: account.description,
+          created_at: account.createdAt,
+          updated_at: account.updatedAt,
+        },
+        'create'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to sync new account', {
+        accountId: account.id,
+        error,
+      })
+      // Don't fail the request if search sync fails
+    }
 
     logger.info('Account created', {
       accountId: account.id,
@@ -135,6 +165,29 @@ export class AccountService {
 
     const updatedAccount = await accountRepository.update(id, tenantId, data)
 
+    // Sync to Elasticsearch for search
+    try {
+      await elasticsearchSyncService.syncAccount(
+        {
+          id: updatedAccount.id,
+          tenant_id: tenantId,
+          name: updatedAccount.name,
+          website: updatedAccount.website,
+          industry: updatedAccount.industry,
+          description: updatedAccount.description,
+          created_at: updatedAccount.createdAt,
+          updated_at: updatedAccount.updatedAt,
+        },
+        'update'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to sync updated account', {
+        accountId: id,
+        error,
+      })
+      // Don't fail the request if search sync fails
+    }
+
     logger.info('Account updated', {
       accountId: id,
       accountName: updatedAccount.name,
@@ -165,6 +218,23 @@ export class AccountService {
     }
 
     await accountRepository.delete(id, tenantId)
+
+    // Remove from Elasticsearch search index
+    try {
+      await elasticsearchSyncService.syncAccount(
+        {
+          id,
+          tenant_id: tenantId,
+        },
+        'delete'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to delete account from search index', {
+        accountId: id,
+        error,
+      })
+      // Don't fail the request if search sync fails
+    }
 
     logger.info('Account deleted', {
       accountId: id,

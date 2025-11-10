@@ -15,6 +15,11 @@ import {
   closeDealSchema,
   searchQuerySchema,
 } from './deal-validators'
+import {
+  CreateDealInput,
+  BulkDealOperation,
+  CloseDealInput,
+} from './deal-types'
 
 /**
  * GET /api/v1/deals
@@ -81,7 +86,7 @@ export const createDeal = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    const validatedData = createDealSchema.parse(req.body)
+    const validatedData = createDealSchema.parse(req.body) as CreateDealInput
 
     const deal = await dealService.createDeal(tenantId, userId, validatedData)
 
@@ -214,7 +219,7 @@ export const bulkOperation = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    const validatedData = bulkDealOperationSchema.parse(req.body)
+    const validatedData = bulkDealOperationSchema.parse(req.body) as BulkDealOperation
 
     const result = await dealService.bulkOperation(tenantId, userId, validatedData)
 
@@ -270,7 +275,7 @@ export const closeDeal = async (
     const userId = req.user!.userId
     const { id } = req.params
 
-    const validatedData = closeDealSchema.parse(req.body)
+    const validatedData = closeDealSchema.parse(req.body) as CloseDealInput
 
     const deal = await dealService.closeDeal(id, tenantId, userId, validatedData)
 

@@ -1,0 +1,219 @@
+{
+  "mcp_server": {
+    "host": "localhost",
+    "port": 8765,
+    "protocol": "websocket",
+    "max_connections": 10,
+    "shared_context_size_kb": 120
+  },
+
+  "agents": {
+    "claude_code": {
+      "id": "agent-0-claude-code",
+      "type": "orchestrator",
+      "priority": "critical",
+      "capabilities": [
+        "user_interface",
+        "task_routing",
+        "context_management",
+        "general_coding"
+      ],
+      "cost_per_million_tokens": 15.00
+    },
+
+    "fast_executor_phi3": {
+      "id": "agent-1-phi3mini",
+      "type": "local_gpu",
+      "model": "phi3:mini",
+      "host": "localhost:11434",
+      "vram_gb": 2.2,
+      "priority": "high",
+      "capabilities": [
+        "simple_tasks",
+        "quick_responses",
+        "basic_code_generation",
+        "simple_refactoring"
+      ],
+      "cost_per_million_tokens": 0.0,
+      "throughput_tokens_per_sec": 150
+    },
+
+    "code_generator_deepseek": {
+      "id": "agent-2-deepseek6.7b",
+      "type": "local_gpu",
+      "model": "deepseek-coder:6.7b-instruct",
+      "host": "localhost:11434",
+      "vram_gb": 3.8,
+      "priority": "high",
+      "capabilities": [
+        "code_generation",
+        "code_focused",
+        "implementation",
+        "debugging"
+      ],
+      "cost_per_million_tokens": 0.0,
+      "throughput_tokens_per_sec": 120
+    },
+
+    "general_purpose_mistral": {
+      "id": "agent-3-mistral7b",
+      "type": "local_gpu",
+      "model": "mistral:7b-instruct",
+      "host": "localhost:11434",
+      "vram_gb": 4.4,
+      "priority": "medium",
+      "capabilities": [
+        "general_purpose",
+        "documentation",
+        "explanation",
+        "refactoring"
+      ],
+      "cost_per_million_tokens": 0.0,
+      "throughput_tokens_per_sec": 110
+    },
+
+    "quality_coder_deepseek_q5": {
+      "id": "agent-4-deepseek6.7b-q5",
+      "type": "local_gpu",
+      "model": "deepseek-coder:6.7b-instruct-q5_K_M",
+      "host": "localhost:11434",
+      "vram_gb": 4.8,
+      "priority": "high",
+      "capabilities": [
+        "high_quality_code",
+        "test_generation",
+        "coverage_analysis",
+        "security_patterns"
+      ],
+      "cost_per_million_tokens": 0.0,
+      "throughput_tokens_per_sec": 115
+    },
+
+    "reasoning_expert_llama": {
+      "id": "agent-5-llama3.1-8b",
+      "type": "local_gpu",
+      "model": "llama3.1:8b-instruct-q5_K_M",
+      "host": "localhost:11434",
+      "vram_gb": 5.7,
+      "priority": "high",
+      "capabilities": [
+        "advanced_reasoning",
+        "complex_logic",
+        "planning",
+        "architecture"
+      ],
+      "cost_per_million_tokens": 0.0,
+      "throughput_tokens_per_sec": 100
+    },
+
+    "planner_architect_claude": {
+      "id": "agent-5-claude-planner",
+      "type": "api_cloud",
+      "model": "claude-sonnet-4-20250514",
+      "api_endpoint": "https://api.anthropic.com/v1/messages",
+      "priority": "high",
+      "capabilities": [
+        "planning",
+        "system_design",
+        "polyglot_architecture",
+        "complex_reasoning"
+      ],
+      "cost_per_million_tokens": 15.00,
+      "throughput_tokens_per_sec": 150
+    },
+
+    "reviewer_gpt": {
+      "id": "agent-6-gpt-reviewer",
+      "type": "api_cloud",
+      "model": "gpt-4-turbo-2024-04-09",
+      "api_endpoint": "https://api.openai.com/v1/chat/completions",
+      "priority": "medium",
+      "capabilities": [
+        "code_review",
+        "security_analysis",
+        "owasp_top_10",
+        "quality_assessment"
+      ],
+      "cost_per_million_tokens": 10.00,
+      "throughput_tokens_per_sec": 120
+    }
+  },
+
+  "routing_rules": {
+    "simple_tasks": {
+      "primary": "agent-1-phi3mini",
+      "fallback": "agent-0-claude-code",
+      "trigger": "objective contains 'simple' OR objective contains 'quick' OR objective contains 'basic' OR objective contains 'small'",
+      "priority": "high"
+    },
+
+    "code_generation": {
+      "primary": "agent-2-deepseek6.7b",
+      "fallback": "agent-4-deepseek6.7b-q5",
+      "trigger": "objective contains 'implement' OR objective contains 'create' OR objective contains 'add feature' OR objective contains 'build'",
+      "priority": "high"
+    },
+
+    "test_creation": {
+      "primary": "agent-4-deepseek6.7b-q5",
+      "fallback": "agent-2-deepseek6.7b",
+      "trigger": "objective contains 'test' OR objective contains 'coverage' OR objective contains 'edge case' OR objective contains 'unit test'",
+      "priority": "high"
+    },
+
+    "refactoring": {
+      "primary": "agent-3-mistral7b",
+      "fallback": "agent-2-deepseek6.7b",
+      "trigger": "objective contains 'refactor' OR objective contains 'optimize' OR objective contains 'clean up' OR objective contains 'improve'",
+      "priority": "medium"
+    },
+
+    "documentation": {
+      "primary": "agent-3-mistral7b",
+      "fallback": "agent-1-phi3mini",
+      "trigger": "objective contains 'document' OR objective contains 'jsdoc' OR objective contains 'readme' OR objective contains 'comment'",
+      "priority": "low"
+    },
+
+    "planning": {
+      "primary": "agent-5-llama3.1-8b",
+      "fallback": "agent-5-claude-planner",
+      "trigger": "objective contains 'plan' OR objective contains 'design' OR objective contains 'architect' OR objective contains 'strategy' OR objective contains 'reason'",
+      "priority": "high"
+    },
+
+    "review": {
+      "primary": "agent-6-gpt-reviewer",
+      "fallback": "agent-5-llama3.1-8b",
+      "trigger": "objective contains 'review' OR objective contains 'security' OR objective contains 'owasp' OR objective contains 'audit'",
+      "priority": "medium"
+    }
+  },
+
+  "shared_context": {
+    "workspace_root": "D:\\clientforge-crm",
+    "databases": {
+      "postgresql": "localhost:5432",
+      "mongodb": "localhost:27017",
+      "elasticsearch": "localhost:9200",
+      "redis": "localhost:6379"
+    },
+    "knowledge_base": "d:\\clientforge-crm\\agents\\ollama-knowledge\\clientforge-context.txt",
+    "pack_system": [
+      "auth_pack",
+      "crm_pack",
+      "ai_pack",
+      "ui_pack",
+      "security_pack",
+      "performance_pack",
+      "search_pack"
+    ]
+  },
+
+  "performance": {
+    "max_parallel_tasks": 4,
+    "task_timeout_seconds": 300,
+    "context_sync_interval_ms": 500,
+    "health_check_interval_ms": 5000
+  }
+}

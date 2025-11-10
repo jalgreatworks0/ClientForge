@@ -14,6 +14,10 @@ import {
   accountNoteSchema,
   searchQuerySchema,
 } from './account-validators'
+import {
+  CreateAccountInput,
+  BulkAccountOperation,
+} from './account-types'
 
 /**
  * GET /api/v1/accounts
@@ -78,7 +82,7 @@ export const createAccount = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    const validatedData = createAccountSchema.parse(req.body)
+    const validatedData = createAccountSchema.parse(req.body) as CreateAccountInput
 
     const account = await accountService.createAccount(tenantId, userId, validatedData)
 
@@ -211,7 +215,7 @@ export const bulkOperation = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    const validatedData = bulkAccountOperationSchema.parse(req.body)
+    const validatedData = bulkAccountOperationSchema.parse(req.body) as BulkAccountOperation
 
     const result = await accountService.bulkOperation(tenantId, userId, validatedData)
 

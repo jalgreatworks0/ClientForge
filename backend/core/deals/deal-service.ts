@@ -20,6 +20,7 @@ import {
 } from './deal-types'
 import { ValidationError, NotFoundError } from '../../utils/errors/app-error'
 import { logger } from '../../utils/logging/logger'
+import { elasticsearchSyncService } from '../../services/search/elasticsearch-sync.service'
 
 export class DealService {
   /**
@@ -30,44 +31,74 @@ export class DealService {
     userId: string,
     data: CreateDealInput
   ): Promise<Deal> {
+    // Default ownerId to authenticated user if not provided
+    const dealData = {
+      ...data,
+      ownerId: data.ownerId || userId,
+    }
+
     // Validate pipeline and stage exist
-    const pipeline = await dealRepository.findPipelineById(data.pipelineId, tenantId)
+    const pipeline = await dealRepository.findPipelineById(dealData.pipelineId, tenantId)
     if (!pipeline) {
       throw new ValidationError('Pipeline does not exist')
     }
 
-    const stage = await dealRepository.findStageById(data.stageId, tenantId)
+    const stage = await dealRepository.findStageById(dealData.stageId, tenantId)
     if (!stage) {
       throw new ValidationError('Deal stage does not exist')
     }
 
     // Verify stage belongs to pipeline
-    if (stage.pipelineId !== data.pipelineId) {
+    if (stage.pipelineId !== dealData.pipelineId) {
       throw new ValidationError('Stage does not belong to the specified pipeline')
     }
 
     // Validate account if provided
-    if (data.accountId) {
-      const account = await accountRepository.findById(data.accountId, tenantId)
+    if (dealData.accountId) {
+      const account = await accountRepository.findById(dealData.accountId, tenantId)
       if (!account) {
         throw new ValidationError('Account does not exist')
       }
     }
 
     // Validate contact if provided
-    if (data.contactId) {
-      const contact = await contactRepository.findById(data.contactId, tenantId)
+    if (dealData.contactId) {
+      const contact = await contactRepository.findById(dealData.contactId, tenantId)
       if (!contact) {
         throw new ValidationError('Contact does not exist')
       }
     }
 
     // Use stage probability if not provided
-    if (data.probability === undefined) {
-      data.probability = stage.probability
+    if (dealData.probability === undefined) {
+      dealData.probability = stage.probability
     }
 
-    const deal = await dealRepository.create(tenantId, data)
+    const deal = await dealRepository.create(tenantId, dealData)
+
+    // Sync to Elasticsearch for search
+    try {
+      await elasticsearchSyncService.syncDeal(
+        {
+          id: deal.id,
+          tenant_id: tenantId,
+          name: deal.name,
+          account_name: '', // TODO: Fetch from accounts table using accountId
+          contact_name: '', // TODO: Fetch from contacts table using contactId
+          stage: deal.stageId,
+          amount: deal.amount,
+          created_at: deal.createdAt,
+          updated_at: deal.updatedAt,
+        },
+        'create'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to sync new deal', {
+        dealId: deal.id,
+        error,
+      })
+      // Don't fail the request if search sync fails
+    }
 
     logger.info('Deal created', {
       dealId: deal.id,
@@ -168,6 +199,30 @@ export class DealService {
 
     const updatedDeal = await dealRepository.update(id, tenantId, data)
 
+    // Sync to Elasticsearch for search
+    try {
+      await elasticsearchSyncService.syncDeal(
+        {
+          id: updatedDeal.id,
+          tenant_id: tenantId,
+          name: updatedDeal.name,
+          account_name: '', // TODO: Fetch from accounts table using accountId
+          contact_name: '', // TODO: Fetch from contacts table using contactId
+          stage: updatedDeal.stageId,
+          amount: updatedDeal.amount,
+          created_at: updatedDeal.createdAt,
+          updated_at: updatedDeal.updatedAt,
+        },
+        'update'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to sync updated deal', {
+        dealId: id,
+        error,
+      })
+      // Don't fail the request if search sync fails
+    }
+
     logger.info('Deal updated', {
       dealId: id,
       dealName: updatedDeal.name,
@@ -190,6 +245,23 @@ export class DealService {
     }
 
     await dealRepository.delete(id, tenantId)
+
+    // Remove from Elasticsearch search index
+    try {
+      await elasticsearchSyncService.syncDeal(
+        {
+          id,
+          tenant_id: tenantId,
+        },
+        'delete'
+      )
+    } catch (error) {
+      logger.warn('[Elasticsearch] Failed to delete deal from search index', {
+        dealId: id,
+        error,
+      })
+      // Don't fail the request if search sync fails
+    }
 
     logger.info('Deal deleted', {
       dealId: id,

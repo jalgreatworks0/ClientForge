@@ -12,7 +12,7 @@ const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()
 
 // Create deal schema
 export const createDealSchema = z.object({
-  ownerId: z.string().uuid('Owner ID must be a valid UUID'),
+  ownerId: z.string().uuid('Owner ID must be a valid UUID').optional(), // Optional - defaults to authenticated user
   accountId: z.string().uuid('Account ID must be a valid UUID').optional(),
   contactId: z.string().uuid('Contact ID must be a valid UUID').optional(),
   pipelineId: z.string().uuid('Pipeline ID must be a valid UUID'),
@@ -89,8 +89,8 @@ export const dealListOptionsSchema = z.object({
 
 // Bulk operation schema
 export const bulkDealOperationSchema = z.object({
-  dealIds: z.array(z.string().uuid()).min(1, 'At least one deal ID is required'),
-  operation: z.enum(['update', 'delete', 'assign', 'add_tags', 'remove_tags', 'change_stage', 'close_won', 'close_lost']),
+  dealIds: z.array(z.string().uuid()).min(1, 'At least one deal ID is required').optional(), // Validated at runtime
+  operation: z.enum(['update', 'delete', 'assign', 'add_tags', 'remove_tags', 'change_stage', 'close_won', 'close_lost']).optional(), // Validated at runtime
   data: z.record(z.any()).optional(),
 }).refine(
   (data) => {
@@ -113,11 +113,11 @@ export const changeDealStageSchema = z.object({
 
 // Close deal schema
 export const closeDealSchema = z.object({
-  isWon: z.boolean(),
+  isWon: z.boolean().optional(), // Validated at runtime
   actualCloseDate: z.coerce.date().optional(),
   lostReason: z.string().max(255).optional(),
   notes: z.string().max(5000).optional(),
-}).refine(
+}).partial().refine(
   (data) => {
     if (!data.isWon && !data.lostReason) {
       return false

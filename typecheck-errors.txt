@@ -1,0 +1,96 @@
+
+> clientforge-crm@3.0.0 typecheck
+> tsc --noEmit
+
+agents/mcp/router.ts(749,36): error TS2339: Property 'submitAnswer' does not exist on type 'CollaborativeIntelligence'.
+agents/mcp/router.ts(793,36): error TS2339: Property 'submitDebatePosition' does not exist on type 'CollaborativeIntelligence'.
+agents/mcp/router.ts(820,35): error TS2339: Property 'proposals' does not exist on type 'CollaborativeSolution'.
+agents/mcp/router.ts(821,34): error TS2339: Property 'selected_proposal' does not exist on type 'CollaborativeSolution'.
+backend/api/rest/v1/routes/search-routes.ts(10,10): error TS2305: Module '"../../../../utils/errors/app-error"' has no exported member 'BadRequestError'.
+backend/api/rest/v1/routes/search-routes.ts(21,26): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+backend/api/rest/v1/routes/search-routes.ts(38,42): error TS2769: No overload matches this call.
+  Overload 3 of 3, '(this: That, params?: SearchRequest, options?: TransportRequestOptions): Promise<SearchResponse<unknown, Record<string, AggregationsAggregate>>>', gave the following error.
+    Type '{ bool: { must: ({ multi_match: { query: string; fields: string[]; fuzziness: string; operator: string; }; } | { term: { tenant_id: any; }; })[]; }; }' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params?: SearchRequest, options?: TransportRequestOptions): Promise<SearchResponse<unknown, Record<string, AggregationsAggregate>>>', gave the following error.
+    Type '{ fields: { '*': { pre_tags: string[]; post_tags: string[]; }; }; }' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params?: SearchRequest, options?: TransportRequestOptions): Promise<SearchResponse<unknown, Record<string, AggregationsAggregate>>>', gave the following error.
+    Type 'number' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params?: SearchRequest, options?: TransportRequestOptions): Promise<SearchResponse<unknown, Record<string, AggregationsAggregate>>>', gave the following error.
+    Type 'number' is not assignable to type 'never'.
+backend/api/rest/v1/routes/search-routes.ts(118,26): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+backend/api/rest/v1/routes/search-routes.ts(130,42): error TS2769: No overload matches this call.
+  Overload 3 of 3, '(this: That, params?: SearchRequest, options?: TransportRequestOptions): Promise<SearchResponse<unknown, Record<string, AggregationsAggregate>>>', gave the following error.
+    Type '{ bool: { must: ({ prefix: { 'full_text.keyword': { value: string; case_insensitive: true; }; }; } | { term: { tenant_id: any; }; })[]; }; }' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params?: SearchRequest, options?: TransportRequestOptions): Promise<SearchResponse<unknown, Record<string, AggregationsAggregate>>>', gave the following error.
+    Type 'number' is not assignable to type 'never'.
+backend/api/rest/v1/routes/search-routes.ts(177,26): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+backend/api/rest/v1/routes/search-routes.ts(189,11): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptionsWithOutMeta): Promise<CountResponse>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+  Overload 2 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptionsWithMeta): Promise<TransportResult<CountResponse, unknown>>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptions): Promise<CountResponse>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+backend/api/rest/v1/routes/search-routes.ts(197,11): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptionsWithOutMeta): Promise<CountResponse>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+  Overload 2 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptionsWithMeta): Promise<TransportResult<CountResponse, unknown>>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptions): Promise<CountResponse>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+backend/api/rest/v1/routes/search-routes.ts(205,11): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptionsWithOutMeta): Promise<CountResponse>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+  Overload 2 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptionsWithMeta): Promise<TransportResult<CountResponse, unknown>>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params?: CountRequest, options?: TransportRequestOptions): Promise<CountResponse>', gave the following error.
+    Type '{ term: { tenant_id: any; }; }' is not assignable to type 'never'.
+backend/api/rest/v1/routes/search-routes.ts(215,33): error TS2339: Property 'count' does not exist on type 'TransportResult<CountResponse, unknown>'.
+backend/api/rest/v1/routes/search-routes.ts(216,33): error TS2339: Property 'count' does not exist on type 'TransportResult<CountResponse, unknown>'.
+backend/api/rest/v1/routes/search-routes.ts(217,27): error TS2339: Property 'count' does not exist on type 'TransportResult<CountResponse, unknown>'.
+backend/api/rest/v1/routes/search-routes.ts(218,30): error TS2339: Property 'count' does not exist on type 'TransportResult<CountResponse, unknown>'.
+backend/api/rest/v1/routes/search-routes.ts(218,52): error TS2339: Property 'count' does not exist on type 'TransportResult<CountResponse, unknown>'.
+backend/api/rest/v1/routes/search-routes.ts(218,71): error TS2339: Property 'count' does not exist on type 'TransportResult<CountResponse, unknown>'.
+backend/api/routes/email-tracking-routes.ts(8,10): error TS2614: Module '"../../../config/database/postgres-config"' has no exported member 'pool'. Did you mean to use 'import pool from "../../../config/database/postgres-config"' instead?
+backend/api/routes/email-tracking-routes.ts(9,38): error TS2307: Cannot find module '../middleware/auth-middleware' or its corresponding type declarations.
+backend/middleware/auth/jwt-validator.ts(18,10): error TS2305: Module '"redis"' has no exported member 'RedisClient'.
+backend/services/ai/lmstudio-structured.service.ts(7,36): error TS2307: Cannot find module '@nestjs/common' or its corresponding type declarations.
+backend/services/ai/lmstudio.controller.ts(7,78): error TS2307: Cannot find module '@nestjs/common' or its corresponding type declarations.
+backend/services/ai/lmstudio.controller.ts(8,52): error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+backend/services/ai/lmstudio.controller.ts(48,18): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(64,14): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(73,14): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(95,19): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(112,23): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(129,16): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(164,24): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(181,21): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(199,5): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(225,26): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(242,25): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.controller.ts(259,29): error TS1206: Decorators are not valid here.
+backend/services/ai/lmstudio.health.ts(7,28): error TS2307: Cannot find module '@nestjs/common' or its corresponding type declarations.
+backend/services/ai/lmstudio.health.ts(8,74): error TS2307: Cannot find module '@nestjs/terminus' or its corresponding type declarations.
+backend/services/ai/lmstudio.health.ts(23,25): error TS2339: Property 'getStatus' does not exist on type 'LmStudioHealthIndicator'.
+backend/services/ai/lmstudio.module.ts(7,24): error TS2307: Cannot find module '@nestjs/common' or its corresponding type declarations.
+backend/services/ai/lmstudio.service.ts(7,36): error TS2307: Cannot find module '@nestjs/common' or its corresponding type declarations.
+backend/services/ai/lmstudio.service.ts(8,31): error TS2307: Cannot find module '@nestjs/config' or its corresponding type declarations.
+backend/utils/logging/logger.ts(93,26): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(options?: MongoDBConnectionOptions): MongoDBTransportInstance', gave the following error.
+    Object literal may only specify known properties, and 'metaData' does not exist in type 'MongoDBConnectionOptions'.
+  Overload 2 of 2, '(options?: StreamTransportOptions): StreamTransportInstance', gave the following error.
+    Object literal may only specify known properties, and 'db' does not exist in type 'StreamTransportOptions'.
+backend/utils/sanitization/input-sanitizer.ts(6,23): error TS2307: Cannot find module 'isomorphic-dompurify' or its corresponding type declarations.
+config/database/elasticsearch-config.ts(224,32): error TS2769: No overload matches this call.
+  Overload 3 of 3, '(this: That, params: IndicesCreateRequest, options?: TransportRequestOptions): Promise<IndicesCreateResponse>', gave the following error.
+    Type '{ properties: { id: { type: string; }; tenant_id: { type: string; }; first_name: { type: string; fields: { keyword: { type: string; }; }; }; last_name: { type: string; fields: { keyword: { type: string; }; }; }; email: { ...; }; ... 4 more ...; updated_at: { ...; }; }; } | { ...; } | { ...; }' is not assignable to type 'never'.
+      Type '{ properties: { id: { type: string; }; tenant_id: { type: string; }; first_name: { type: string; fields: { keyword: { type: string; }; }; }; last_name: { type: string; fields: { keyword: { type: string; }; }; }; email: { ...; }; ... 4 more ...; updated_at: { ...; }; }; }' is not assignable to type 'never'.
+  Overload 3 of 3, '(this: That, params: IndicesCreateRequest, options?: TransportRequestOptions): Promise<IndicesCreateResponse>', gave the following error.
+    Type '{ number_of_shards: number; number_of_replicas: number; analysis: { analyzer: { standard: { type: string; }; }; }; }' is not assignable to type 'never'.
+scripts/agents/orchestrator.ts(111,5): error TS2719: Type 'Task' is not assignable to type 'Task'. Two different types with this name exist, but they are unrelated.
+  Types of property 'inputs' are incompatible.
+    Type '{ files?: string[]; acceptance: string[]; }' is not assignable to type '{ files: string[]; acceptance: string[]; }'.
+      Property 'files' is optional in type '{ files?: string[]; acceptance: string[]; }' but required in type '{ files: string[]; acceptance: string[]; }'.
+scripts/agents/orchestrator.ts(114,5): error TS2322: Type 'PlannerResponse' is not assignable to type 'Task'.
+  Types of property 'role' are incompatible.
+    Type 'string' is not assignable to type '"builder" | "planner" | "reviewer"'.

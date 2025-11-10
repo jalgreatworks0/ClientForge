@@ -116,3 +116,22 @@ docs/_build/
 .stylelintcache
 .parcel-cache/
 .turbo/
+
+# ============================================================================
+# Byte Caps Enforced by docs/claude/10_CONTEXT_POLICY.md
+# ============================================================================
+# Initial session target: <120 KB total
+# Single file cap: <50 KB (use line/byte ranges)
+# If context > 150 KB, switch to pack-based context (docs/claude/11_CONTEXT_PACKS.md)
+
+# Image/Media files (not in existing list)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.ico
+
+# Maps (already excluded above, but explicit)
+**/*.map
