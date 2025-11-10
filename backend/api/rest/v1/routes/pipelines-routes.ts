@@ -7,7 +7,6 @@ import { Router } from 'express'
 import { Response } from 'express'
 import { AuthRequest } from '../../../../middleware/authenticate'
 import { authenticate } from '../../../../middleware/authenticate'
-import { requirePermission } from '../../../../middleware/authorize'
 import { validateRequest } from '../../../../middleware/validate-request'
 import { db } from '../../../../database/postgresql/pool'
 import { logger } from '../../../../utils/logging/logger'
@@ -22,11 +21,9 @@ router.use(authenticate)
  * List all pipelines for tenant
  *
  * @returns {200} Array of pipelines
- * @requires permission:deals:read
  */
 router.get(
   '/',
-  requirePermission('deals:read'),
   async (req: AuthRequest, res: Response) => {
     try {
       const { tenantId } = req.user!
@@ -62,11 +59,9 @@ router.get(
  * @param {string} include - Include related data (stages)
  *
  * @returns {200} Pipeline details
- * @requires permission:deals:read
  */
 router.get(
   '/:id',
-  requirePermission('deals:read'),
   async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params
@@ -129,11 +124,9 @@ router.get(
  * @body {boolean} isActive - Active status
  *
  * @returns {201} Created pipeline
- * @requires permission:deals:create
  */
 router.post(
   '/',
-  requirePermission('deals:create'),
   async (req: AuthRequest, res: Response) => {
     try {
       const { tenantId, userId } = req.user!
@@ -189,11 +182,9 @@ router.post(
  * @body {boolean} isActive - Active status
  *
  * @returns {200} Updated pipeline
- * @requires permission:deals:update
  */
 router.put(
   '/:id',
-  requirePermission('deals:update'),
   async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params
@@ -277,11 +268,9 @@ router.put(
  * Delete pipeline (soft delete)
  *
  * @returns {200} Success message
- * @requires permission:deals:delete
  */
 router.delete(
   '/:id',
-  requirePermission('deals:delete'),
   async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params
