@@ -9,6 +9,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added - 2025-11-10
 
+#### Email Integration Backend Complete - Database Schema + API Routes (85% Total)
+**Summary**: Completed database migration and all API endpoints for Gmail & Outlook email integration. Backend is fully functional and ready for frontend UI.
+
+**Database Schema** (scripts/database/setup-email-integration-schema.js - 286 lines):
+- Created `email_accounts` table:
+  - OAuth2 token storage (access_token, refresh_token, expires_at)
+  - Supports Gmail and Outlook providers
+  - Tracks sync status (is_active, sync_enabled, last_sync_at)
+  - Soft delete pattern with deleted_at
+  - Unique constraint on (user_id, provider, email)
+- Created `email_messages` table:
+  - Full email data (from, to, cc, bcc, subject, body_text, body_html)
+  - JSONB storage for address lists
+  - CRM linking fields (contact_id, deal_id)
+  - Labels array for categorization
+  - Thread tracking (thread_id)
+  - Unique constraint on (account_id, message_id)
+- Added **15 performance indexes**:
+  - 5 on email_accounts (user_id, tenant_id, email, active_sync, expires_at)
+  - 10 on email_messages (account_id, tenant_id, contact_id, deal_id, from_email, received_at, thread_id, is_read, labels GIN, full-text search)
+- Created automatic updated_at triggers for both tables
+- Full-text search support on subject and body using tsvector
+
+**API Routes** (backend/api/rest/v1/routes/email-routes.ts - 508 lines):
+- GET /api/v1/email/auth/:provider - Generate OAuth URL for Gmail/Outlook
+- POST /api/v1/email/callback - Handle OAuth callback, exchange code for tokens, save account
+- GET /api/v1/email/accounts - List all connected email accounts for user
+- POST /api/v1/email/accounts/:accountId/sync - Trigger manual sync for account
+- DELETE /api/v1/email/accounts/:accountId - Disconnect account (soft delete)
+- GET /api/v1/email/messages - Search/filter messages (by from, subject, isRead, dateFrom, dateTo, contactId, dealId)
+- GET /api/v1/email/messages/:messageId - Get single email message details
+- POST /api/v1/email/send - Send email via connected account
+- PATCH /api/v1/email/messages/:messageId/link - Link email to CRM contact or deal
+- All routes require authentication
+- Permission-based access control (emails:read, emails:create, emails:update, emails:delete)
+- Pagination support on search endpoint
+- Comprehensive error handling and audit logging
+
+**Routes Integration**:
+- Added emailRoutes import to backend/api/routes.ts
+- Wired /api/v1/email routes to Express app
+- Server automatically reloaded with new endpoints
+
+**Implementation Status**: 🟡 Email Integration 85% Complete
+- Core services (Gmail, Outlook, Integration): ✅ 100%
+- Database schema (2 tables, 15 indexes): ✅ 100%
+- API routes (9 endpoints): ✅ 100%
+- Frontend UI (settings, OAuth flow, viewer, composer): ⏳ 0%
+- Background sync job (BullMQ auto-sync every 5 min): ⏳ 0%
+
+**Remaining Work (15%)**:
+1. Frontend UI components (3-4 hours)
+2. Background sync job with BullMQ (1-2 hours)
+
+**Files Created**:
+- scripts/database/setup-email-integration-schema.js (286 lines)
+- backend/api/rest/v1/routes/email-routes.ts (508 lines)
+
+**Git Commit**: 2d63c99
+
+---
+
 #### Deal Pipeline 100% Complete - Pipeline & Stage Management + Enhanced Modal
 **Summary**: Completed the remaining 20% of Deal Pipeline by adding pipeline and deal stage management routes, plus a fully enhanced DealModal supporting 11+ fields.
 

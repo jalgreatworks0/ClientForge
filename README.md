@@ -151,9 +151,9 @@ interface QuickContextComprehension {
   },
 
   // STATE
-  current_state: "Core CRM complete (Contacts, Deals), Email Integration 70%, 95% organized folders",
-  completed_this_session: "Deal Pipeline 100%, Email core services, folder cleanup (65%→95%)",
-  remaining: "Email Integration UI (30%), Elasticsearch sync hooks, Campaign Management",
+  current_state: "Core CRM complete (Contacts, Deals), Email Integration 85%, 95% organized folders",
+  completed_this_session: "Deal Pipeline 100%, Email backend (DB+API), folder cleanup (65%→95%)",
+  remaining: "Email Integration UI (15%), Elasticsearch sync hooks, Campaign Management",
   status: "Production-ready foundation, all 4 databases running"
 }
 
@@ -310,10 +310,9 @@ interface DatabaseArchitecture {
 #### ✅ Fully Implemented (100%)
 - **Contact Management** - Advanced CRM with custom fields, tags, segmentation, full CRUD operations
 - **Deal Pipeline** - Drag-and-drop Kanban board (@dnd-kit), multi-pipeline support, 6-stage default pipeline (Lead → Qualification → Proposal → Negotiation → Won/Lost), probability tracking (0-100%), weighted revenue forecasting, stage history tracking, bulk operations
-- **Email Integration (Core Services)** - OAuth2 authentication for Gmail & Outlook, token management with auto-refresh, unified integration service, ready for database and UI implementation
 
 #### 🟡 In Progress (Partial Implementation)
-- **Email Integration (Full)** - 70% Complete: Core services implemented (gmail-service.ts, outlook-service.ts, email-integration-service.ts), needs database schema migration + API routes + frontend UI + background sync job
+- **Email Integration** - 85% Complete: Core services (gmail-service.ts, outlook-service.ts, email-integration-service.ts), database schema (email_accounts, email_messages tables with 15 indexes), API routes (9 REST endpoints for OAuth, sync, search, send), needs frontend UI + background sync job
 - **AI Companion (Albedo)** - Basic implementation, natural language interface in progress
 - **User Management** - Authentication, authorization, role-based access control implemented
 
@@ -335,7 +334,8 @@ D:/clientforge-crm/                    # PRIMARY WORKSPACE - All work happens he
 │   │   │   ├── contacts-routes.ts   # Contact management ✅
 │   │   │   ├── deals-routes.ts      # Deal management ✅
 │   │   │   ├── pipelines-routes.ts  # Pipeline CRUD ✅
-│   │   │   └── deal-stages-routes.ts # Deal stages ✅
+│   │   │   ├── deal-stages-routes.ts # Deal stages ✅
+│   │   │   └── email-routes.ts      # Email integration (OAuth, sync, send) ✅
 │   │   └── server.ts                # Express app configuration
 │   ├── core/                         # Business logic
 │   │   ├── auth/                    # Authentication, sessions
@@ -372,7 +372,8 @@ D:/clientforge-crm/                    # PRIMARY WORKSPACE - All work happens he
 │   └── public/                       # Static assets
 ├── scripts/                           # Organized maintenance scripts ✅
 │   ├── database/                    # Database migrations
-│   │   └── setup-deals-schema.js    # Deal pipeline schema
+│   │   ├── setup-deals-schema.js    # Deal pipeline schema
+│   │   └── setup-email-integration-schema.js # Email tables + indexes
 │   ├── verification/                # Verification scripts
 │   ├── testing/                     # Test utilities
 │   ├── maintenance/                 # Admin tasks
@@ -1540,7 +1541,7 @@ npm run lint:fix
 **Implementation Progress**:
 - ✅ Contact Management: 100% Complete
 - ✅ Deal Pipeline: 100% Complete (drag-and-drop, multi-pipeline, stage management)
-- 🟡 Email Integration: 70% Complete (core services ready, needs DB schema + API routes + UI)
+- 🟡 Email Integration: 85% Complete (core services + DB schema + API routes ready, needs UI + sync job)
 - 🟡 User Management: Authentication & authorization functional
 - 📋 Campaign Management: Planned
 - 📋 Workflow Automation: Planned
@@ -1724,13 +1725,15 @@ Verification: SESSION-END-v3.0-COMPLETE
 - ✅ Weighted revenue forecasting, probability tracking (0-100%), bulk operations
 - ✅ 4 Git commits with comprehensive documentation
 
-**Email Integration - Core Services (70% Complete)**:
+**Email Integration - Backend Complete (85%)**:
 - ✅ Gmail OAuth2 integration ([gmail-service.ts](backend/core/email/gmail-service.ts)) - 315 lines
 - ✅ Outlook Graph API integration ([outlook-service.ts](backend/core/email/outlook-service.ts)) - 289 lines
 - ✅ Unified integration service ([email-integration-service.ts](backend/core/email/email-integration-service.ts)) - 423 lines
 - ✅ Complete TypeScript interfaces ([email-types.ts](backend/core/email/email-types.ts))
+- ✅ Database schema ([setup-email-integration-schema.js](scripts/database/setup-email-integration-schema.js)) - 2 tables, 15 indexes
+- ✅ API routes ([email-routes.ts](backend/api/rest/v1/routes/email-routes.ts)) - 9 REST endpoints (OAuth, sync, search, send)
 - ✅ Token management with auto-refresh, error handling
-- 🟡 **Remaining (30%)**: Database schema migration + API routes + Frontend UI + Background sync job
+- 🟡 **Remaining (15%)**: Frontend UI (settings page, OAuth flow, email viewer) + Background sync job (BullMQ)
 
 **Folder Structure Cleanup - 95% Organization Score**:
 - ✅ Moved all session logs to [logs/session-logs/](logs/session-logs/)
