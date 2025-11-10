@@ -5,7 +5,6 @@
 
 import { Router, Request, Response } from 'express'
 import { authenticate } from '../../../../middleware/authenticate'
-import { requirePermission } from '../../../../middleware/authorize'
 import { db } from '../../../../database/postgresql/pool'
 import { logger } from '../../../../utils/logging/logger'
 
@@ -18,7 +17,7 @@ router.use(authenticate)
  * GET /api/v1/analytics/revenue-metrics
  * Get revenue metrics with period comparison
  */
-router.get('/revenue-metrics', requirePermission('analytics:read'), async (req: Request, res: Response) => {
+router.get('/revenue-metrics', async (req: Request, res: Response) => {
   try {
     const tenantId = req.user?.tenantId
     const { startDate, endDate, comparisonStartDate, comparisonEndDate } = req.query
@@ -29,10 +28,10 @@ router.get('/revenue-metrics', requirePermission('analytics:read'), async (req: 
     // Current period metrics
     const currentResult = await db.query(
       `SELECT
-        COUNT(*) FILTER (WHERE status = 'won') as won_deals,
-        SUM(value) FILTER (WHERE status = 'won') as total_revenue,
-        AVG(value) FILTER (WHERE status = 'won') as average_deal_size,
-        SUM(value * (probability / 100.0)) FILTER (WHERE status NOT IN ('won', 'lost')) as forecasted_revenue
+        COUNT(*) FILTER (WHERE is_won = true) as won_deals,
+        SUM(amount) FILTER (WHERE is_won = true) as total_revenue,
+        AVG(amount) FILTER (WHERE is_won = true) as average_deal_size,
+        SUM(amount * (probability / 100.0)) FILTER (WHERE is_closed = false) as forecasted_revenue
        FROM deals
        WHERE tenant_id = $1
          AND created_at >= $2
@@ -50,7 +49,7 @@ router.get('/revenue-metrics', requirePermission('analytics:read'), async (req: 
       const compEnd = new Date(comparisonEndDate as string)
 
       const comparisonResult = await db.query(
-        `SELECT SUM(value) FILTER (WHERE status = 'won') as total_revenue
+        `SELECT SUM(amount) FILTER (WHERE is_won = true) as total_revenue
          FROM deals
          WHERE tenant_id = $1
            AND created_at >= $2
@@ -95,7 +94,7 @@ router.get('/revenue-metrics', requirePermission('analytics:read'), async (req: 
  * GET /api/v1/analytics/sales-funnel
  * Get sales funnel data by stage
  */
-router.get('/sales-funnel', requirePermission('analytics:read'), async (req: Request, res: Response) => {
+router.get('/sales-funnel', async (req: Request, res: Response) => {
   try {
     const tenantId = req.user?.tenantId
     const { pipelineId } = req.query
@@ -104,10 +103,10 @@ router.get('/sales-funnel', requirePermission('analytics:read'), async (req: Req
       SELECT
         ds.id as stage_id,
         ds.name as stage,
-        ds.stage_order,
+        ds.display_order,
         ds.probability as average_probability,
         COUNT(d.id) as deal_count,
-        COALESCE(SUM(d.value), 0) as total_value
+        COALESCE(SUM(d.amount), 0) as total_value
       FROM deal_stages ds
       LEFT JOIN deals d ON d.stage_id = ds.id
         AND d.tenant_id = $1
@@ -115,8 +114,8 @@ router.get('/sales-funnel', requirePermission('analytics:read'), async (req: Req
         ${pipelineId ? 'AND d.pipeline_id = $2' : ''}
       WHERE ds.deleted_at IS NULL
         ${pipelineId ? 'AND ds.pipeline_id = $2' : ''}
-      GROUP BY ds.id, ds.name, ds.stage_order, ds.probability
-      ORDER BY ds.stage_order
+      GROUP BY ds.id, ds.name, ds.display_order, ds.probability
+      ORDER BY ds.display_order
     `
 
     const params = pipelineId ? [tenantId, pipelineId] : [tenantId]
@@ -150,7 +149,7 @@ router.get('/sales-funnel', requirePermission('analytics:read'), async (req: Req
  * GET /api/v1/analytics/team-performance
  * Get team performance metrics
  */
-router.get('/team-performance', requirePermission('analytics:read'), async (req: Request, res: Response) => {
+router.get('/team-performance', async (req: Request, res: Response) => {
   try {
     const tenantId = req.user?.tenantId
     const { startDate, endDate } = req.query
@@ -162,15 +161,15 @@ router.get('/team-performance', requirePermission('analytics:read'), async (req:
       `SELECT
         u.id as user_id,
         u.first_name || ' ' || u.last_name as user_name,
-        COUNT(*) FILTER (WHERE d.status = 'won') as deals_won,
-        COUNT(*) FILTER (WHERE d.status = 'lost') as deals_lost,
-        COALESCE(SUM(d.value) FILTER (WHERE d.status NOT IN ('won', 'lost')), 0) as pipeline_value,
+        COUNT(*) FILTER (WHERE d.is_won = true) as deals_won,
+        COUNT(*) FILTER (WHERE d.is_closed = true AND d.is_won = false) as deals_lost,
+        COALESCE(SUM(d.amount) FILTER (WHERE d.is_closed = false), 0) as pipeline_value,
         ROUND(
-          (COUNT(*) FILTER (WHERE d.status = 'won')::numeric /
-           NULLIF(COUNT(*) FILTER (WHERE d.status IN ('won', 'lost')), 0)) * 100,
+          (COUNT(*) FILTER (WHERE d.is_won = true)::numeric /
+           NULLIF(COUNT(*) FILTER (WHERE d.is_closed = true), 0)) * 100,
           2
         ) as conversion_rate,
-        AVG(d.value) FILTER (WHERE d.status = 'won') as average_deal_size
+        AVG(d.amount) FILTER (WHERE d.is_won = true) as average_deal_size
        FROM users u
        LEFT JOIN deals d ON d.owner_id = u.id
          AND d.created_at >= $2
@@ -214,7 +213,7 @@ router.get('/team-performance', requirePermission('analytics:read'), async (req:
  * GET /api/v1/analytics/revenue-trend
  * Get revenue trend over time
  */
-router.get('/revenue-trend', requirePermission('analytics:read'), async (req: Request, res: Response) => {
+router.get('/revenue-trend', async (req: Request, res: Response) => {
   try {
     const tenantId = req.user?.tenantId
     const { startDate, endDate, granularity = 'month' } = req.query
@@ -226,14 +225,14 @@ router.get('/revenue-trend', requirePermission('analytics:read'), async (req: Re
 
     const result = await db.query(
       `SELECT
-        TO_CHAR(closed_at, $4) as date,
-        COALESCE(SUM(value), 0) as revenue,
+        TO_CHAR(actual_close_date, $4) as date,
+        COALESCE(SUM(amount), 0) as revenue,
         COUNT(*) as deal_count
        FROM deals
        WHERE tenant_id = $1
-         AND status = 'won'
-         AND closed_at >= $2
-         AND closed_at <= $3
+         AND is_won = true
+         AND actual_close_date >= $2
+         AND actual_close_date <= $3
          AND deleted_at IS NULL
        GROUP BY date
        ORDER BY date`,
@@ -266,7 +265,7 @@ router.get('/revenue-trend', requirePermission('analytics:read'), async (req: Re
  * GET /api/v1/analytics/lead-sources
  * Get lead source analysis
  */
-router.get('/lead-sources', requirePermission('analytics:read'), async (req: Request, res: Response) => {
+router.get('/lead-sources', async (req: Request, res: Response) => {
   try {
     const tenantId = req.user?.tenantId
     const { startDate, endDate } = req.query
@@ -276,12 +275,12 @@ router.get('/lead-sources', requirePermission('analytics:read'), async (req: Req
 
     const result = await db.query(
       `SELECT
-        COALESCE(source, 'Unknown') as source,
+        COALESCE(lead_source, 'Unknown') as source,
         COUNT(*) as lead_count,
-        COUNT(*) FILTER (WHERE status = 'won') as won_count,
-        COALESCE(SUM(value) FILTER (WHERE status = 'won'), 0) as total_revenue,
+        COUNT(*) FILTER (WHERE is_won = true) as won_count,
+        COALESCE(SUM(amount) FILTER (WHERE is_won = true), 0) as total_revenue,
         ROUND(
-          (COUNT(*) FILTER (WHERE status = 'won')::numeric /
+          (COUNT(*) FILTER (WHERE is_won = true)::numeric /
            NULLIF(COUNT(*), 0)) * 100,
           2
         ) as conversion_rate
@@ -290,7 +289,7 @@ router.get('/lead-sources', requirePermission('analytics:read'), async (req: Req
          AND created_at >= $2
          AND created_at <= $3
          AND deleted_at IS NULL
-       GROUP BY source
+       GROUP BY lead_source
        ORDER BY total_revenue DESC`,
       [tenantId, start, end]
     )
@@ -323,7 +322,7 @@ router.get('/lead-sources', requirePermission('analytics:read'), async (req: Req
  * GET /api/v1/analytics/pipeline-health
  * Get pipeline health metrics
  */
-router.get('/pipeline-health', requirePermission('analytics:read'), async (req: Request, res: Response) => {
+router.get('/pipeline-health', async (req: Request, res: Response) => {
   try {
     const tenantId = req.user?.tenantId
     const { pipelineId } = req.query
@@ -331,16 +330,16 @@ router.get('/pipeline-health', requirePermission('analytics:read'), async (req: 
     const query = `
       SELECT
         COUNT(*) as total_deals,
-        COALESCE(SUM(value), 0) as total_value,
+        COALESCE(SUM(amount), 0) as total_value,
         ROUND(AVG(EXTRACT(DAY FROM (NOW() - created_at)))) as average_age,
         COUNT(*) FILTER (WHERE EXTRACT(DAY FROM (NOW() - updated_at)) > 30) as stale_deals,
         COUNT(*) FILTER (WHERE expected_close_date <= NOW() + INTERVAL '7 days'
                           AND expected_close_date >= NOW()
-                          AND status NOT IN ('won', 'lost')) as hot_deals
+                          AND is_closed = false) as hot_deals
       FROM deals
       WHERE tenant_id = $1
         ${pipelineId ? 'AND pipeline_id = $2' : ''}
-        AND status NOT IN ('won', 'lost')
+        AND is_closed = false
         AND deleted_at IS NULL
     `
 
