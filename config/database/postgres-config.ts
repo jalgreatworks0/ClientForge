@@ -18,20 +18,31 @@ export interface PostgresConfig extends PoolConfig {
   ssl: boolean | { rejectUnauthorized: boolean }
 }
 
-export const postgresConfig: PostgresConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  database: process.env.DB_NAME || 'clientforge_crm',
-  user: process.env.DB_USER || 'crm_admin',
-  password: process.env.DB_PASSWORD || 'dev_password_change_in_prod',
-  min: parseInt(process.env.DATABASE_POOL_MIN || '2', 10),
-  max: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
-  idleTimeoutMillis: 30000, // 30 seconds
-  connectionTimeoutMillis: 5000, // 5 seconds
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
+// Build config object conditionally to handle optional password
+const buildPostgresConfig = (): PostgresConfig => {
+  const config: any = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    database: process.env.DB_NAME || 'clientforge_crm',
+    user: process.env.DB_USER || 'crm_admin',
+    min: parseInt(process.env.DATABASE_POOL_MIN || '2', 10),
+    max: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
+    idleTimeoutMillis: 30000, // 30 seconds
+    connectionTimeoutMillis: 5000, // 5 seconds
+    ssl: process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
+  }
+
+  // Only set password if defined (allows trust authentication)
+  if (process.env.DB_PASSWORD !== undefined) {
+    config.password = process.env.DB_PASSWORD
+  }
+
+  return config as PostgresConfig
 }
+
+export const postgresConfig: PostgresConfig = buildPostgresConfig()
 
 /**
  * Create and export PostgreSQL connection pool
