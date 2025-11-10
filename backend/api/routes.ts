@@ -14,6 +14,8 @@ import healthRoutes from './rest/v1/routes/health-routes'
 import contactsRoutes from './rest/v1/routes/contacts-routes'
 import accountsRoutes from './rest/v1/routes/accounts-routes'
 import dealsRoutes from './rest/v1/routes/deals-routes'
+import pipelinesRoutes from './rest/v1/routes/pipelines-routes'
+import dealStagesRoutes from './rest/v1/routes/deal-stages-routes'
 import tasksRoutes from './rest/v1/routes/tasks-routes'
 import activitiesRoutes from './rest/v1/routes/activities-routes'
 import notesRoutes from './rest/v1/routes/notes-routes'
@@ -49,6 +51,8 @@ export function configureRoutes(app: Application): void {
   app.use(`${apiPrefix}/contacts`, contactsRoutes)
   app.use(`${apiPrefix}/accounts`, accountsRoutes)
   app.use(`${apiPrefix}/deals`, dealsRoutes)
+  app.use(`${apiPrefix}/pipelines`, pipelinesRoutes)
+  app.use(`${apiPrefix}/deal-stages`, dealStagesRoutes)
   app.use(`${apiPrefix}/tasks`, tasksRoutes)
   app.use(`${apiPrefix}/activities`, activitiesRoutes)
 
