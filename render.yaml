@@ -31,6 +31,12 @@ services:
           name: clientforge-redis
           type: redis
           property: connectionString
+      - key: MONGODB_URL
+        sync: false
+      - key: ELASTICSEARCH_URL
+        sync: false
+      - key: MASTER_PASSWORD
+        generateValue: true
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: OPENAI_API_KEY
