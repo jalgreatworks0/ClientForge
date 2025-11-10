@@ -57,11 +57,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       login: async (email: string, password: string, tenantId?: string) => {
-        const response = await api.post('/v1/auth/login', {
-          email,
-          password,
-          tenantId: tenantId || DEFAULT_TENANT_ID,
-        })
+        // Only send tenantId if explicitly provided (backend will auto-detect)
+        const loginData: any = { email, password }
+        if (tenantId) {
+          loginData.tenantId = tenantId
+        }
+
+        const response = await api.post('/v1/auth/login', loginData)
 
         const { user, tokens } = response.data.data
         const { accessToken, refreshToken } = tokens
