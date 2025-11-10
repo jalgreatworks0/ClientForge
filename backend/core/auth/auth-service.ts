@@ -16,7 +16,7 @@ import { jwtService, TokenPair } from './jwt-service'
 export interface LoginCredentials {
   email: string
   password: string
-  tenantId: string
+  tenantId?: string
   ipAddress?: string
   userAgent?: string
   deviceType?: string
@@ -56,17 +56,19 @@ export class AuthService {
     const { email, password, tenantId, ipAddress, userAgent, deviceType } = credentials
 
     try {
-      // 1. Find user by email and tenant
-      const user = await userRepository.findByEmailAndTenant(email.toLowerCase(), tenantId)
+      // 1. Find user by email (with or without tenant)
+      const user = tenantId
+        ? await userRepository.findByEmailAndTenant(email.toLowerCase(), tenantId)
+        : await userRepository.findByEmail(email.toLowerCase())
 
       if (!user) {
-        await auditLogger.logFailedLogin(email, tenantId, 'User not found', undefined, ipAddress, userAgent)
+        await auditLogger.logFailedLogin(email, tenantId || 'unknown', 'User not found', undefined, ipAddress, userAgent)
         throw new UnauthorizedError('Invalid credentials')
       }
 
       // 2. Check if account is locked
       if (user.isLocked && user.lockedUntil && new Date() < user.lockedUntil) {
-        await auditLogger.logFailedLogin(email, tenantId, 'Account locked', user.failedLoginAttempts, ipAddress, userAgent)
+        await auditLogger.logFailedLogin(email, user.tenantId, 'Account locked', user.failedLoginAttempts, ipAddress, userAgent)
         throw new ForbiddenError('Account is temporarily locked. Please try again later.')
       }
 
@@ -74,13 +76,13 @@ export class AuthService {
       const isPasswordValid = await passwordService.verify(password, user.passwordHash)
 
       if (!isPasswordValid) {
-        await this.handleFailedLogin(user.id, email, tenantId, ipAddress, userAgent)
+        await this.handleFailedLogin(user.id, email, user.tenantId, ipAddress, userAgent)
         throw new UnauthorizedError('Invalid credentials')
       }
 
       // 4. Check if user is active
       if (!user.isActive || user.deletedAt) {
-        await auditLogger.logFailedLogin(email, tenantId, 'Account inactive', undefined, ipAddress, userAgent)
+        await auditLogger.logFailedLogin(email, user.tenantId, 'Account inactive', undefined, ipAddress, userAgent)
         throw new ForbiddenError('Account is not active')
       }
 
@@ -106,12 +108,12 @@ export class AuthService {
       await userRepository.updateLastLogin(user.id, ipAddress)
 
       // 9. Audit log successful login
-      await auditLogger.logSuccessfulLogin(user.id, email, tenantId, ipAddress, userAgent)
+      await auditLogger.logSuccessfulLogin(user.id, email, user.tenantId, ipAddress, userAgent)
 
       logger.info('User logged in successfully', {
         userId: user.id,
         email: user.email,
-        tenantId,
+        tenantId: user.tenantId,
         ipAddress,
       })
 
@@ -139,7 +141,7 @@ export class AuthService {
       logger.error('Login failed with unexpected error', {
         error,
         email,
-        tenantId,
+        tenantId: tenantId || 'unknown',
       })
       throw new UnauthorizedError('Login failed')
     }

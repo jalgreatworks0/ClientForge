@@ -73,6 +73,42 @@ export class UserRepository {
   }
 
   /**
+   * Find user by email only (for login without tenant)
+   */
+  async findByEmail(email: string): Promise<User | null> {
+    try {
+      const result = await this.pool.query<User>(
+        `SELECT
+          u.*,
+          ur.role_id,
+          json_build_object(
+            'id', r.id,
+            'name', r.name,
+            'level', 0
+          ) as role
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        WHERE u.email = $1
+        LIMIT 1`,
+        [email]
+      )
+
+      if (result.rows.length === 0) {
+        return null
+      }
+
+      return this.mapRowToUser(result.rows[0])
+    } catch (error) {
+      logger.error('Failed to find user by email', {
+        error,
+        email,
+      })
+      throw error
+    }
+  }
+
+  /**
    * Find user by email and tenant
    */
   async findByEmailAndTenant(email: string, tenantId: string): Promise<User | null> {

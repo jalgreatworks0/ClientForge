@@ -30,7 +30,7 @@ export const authSchemas = {
   }),
 
   login: z.object({
-    tenantId: commonSchemas.tenantId,
+    tenantId: commonSchemas.tenantId.optional(),
     email: commonSchemas.email,
     password: z.string().min(1, 'Password is required'),
   }),
