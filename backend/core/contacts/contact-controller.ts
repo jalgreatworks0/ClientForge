@@ -366,7 +366,7 @@ export const addContactNote = async (
 
 /**
  * Export contacts
- * POST /api/v1/contacts/export
+ * GET /api/v1/contacts/export
  */
 export const exportContacts = async (
   req: AuthRequest,
@@ -375,12 +375,71 @@ export const exportContacts = async (
 ): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId
+    const format = (req.query.format as string) || 'csv'
 
-    // TODO: Implement export functionality
-    res.json({
-      success: true,
-      message: 'Export feature coming soon',
+    const { data: contacts } = await contactService.listContacts(tenantId, {
+      page: 1,
+      limit: 10000, // Export all contacts (consider pagination for very large datasets)
     })
+
+    if (format === 'csv') {
+      // Generate CSV
+      const Papa = require('papaparse')
+
+      const csvData = contacts.map((c) => ({
+        'First Name': c.firstName,
+        'Last Name': c.lastName,
+        Email: c.email || '',
+        Phone: c.phone || '',
+        Mobile: c.mobile || '',
+        Title: c.title || '',
+        Department: c.department || '',
+        'Lead Status': c.leadStatus || '',
+        'Lifecycle Stage': c.lifecycleStage || '',
+        'Lead Score': c.leadScore || '',
+        Tags: c.tags?.join(', ') || '',
+        'Created At': c.createdAt,
+      }))
+
+      const csv = Papa.unparse(csvData)
+
+      res.setHeader('Content-Type', 'text/csv')
+      res.setHeader('Content-Disposition', `attachment; filename="contacts-${Date.now()}.csv"`)
+      res.send(csv)
+    } else if (format === 'xlsx') {
+      // Generate Excel
+      const XLSX = require('xlsx')
+
+      const worksheetData = contacts.map((c) => ({
+        'First Name': c.firstName,
+        'Last Name': c.lastName,
+        Email: c.email || '',
+        Phone: c.phone || '',
+        Mobile: c.mobile || '',
+        Title: c.title || '',
+        Department: c.department || '',
+        'Lead Status': c.leadStatus || '',
+        'Lifecycle Stage': c.lifecycleStage || '',
+        'Lead Score': c.leadScore || '',
+        Tags: c.tags?.join(', ') || '',
+        'Created At': c.createdAt,
+      }))
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts')
+
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.setHeader('Content-Disposition', `attachment; filename="contacts-${Date.now()}.xlsx"`)
+      res.send(buffer)
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid format. Use csv or xlsx',
+      })
+    }
   } catch (error) {
     next(error)
   }
@@ -399,10 +458,84 @@ export const importContacts = async (
     const tenantId = req.user!.tenantId
     const userId = req.user!.userId
 
-    // TODO: Implement import functionality
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: 'No file uploaded',
+      })
+      return
+    }
+
+    const file = req.file
+    const fileExt = file.originalname.split('.').pop()?.toLowerCase()
+
+    let contacts: any[] = []
+
+    if (fileExt === 'csv') {
+      // Parse CSV
+      const Papa = require('papaparse')
+      const csvString = file.buffer.toString('utf-8')
+      const parsed = Papa.parse(csvString, { header: true, skipEmptyLines: true })
+      contacts = parsed.data
+    } else if (fileExt === 'xlsx' || fileExt === 'xls') {
+      // Parse Excel
+      const XLSX = require('xlsx')
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' })
+      const sheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[sheetName]
+      contacts = XLSX.utils.sheet_to_json(worksheet)
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid file format. Use CSV or XLSX',
+      })
+      return
+    }
+
+    // Import contacts
+    let successCount = 0
+    let failedCount = 0
+    const errors: any[] = []
+
+    for (const row of contacts) {
+      try {
+        // Map CSV/Excel columns to contact fields
+        const contactData = {
+          firstName: row['First Name'] || row['firstName'] || '',
+          lastName: row['Last Name'] || row['lastName'] || '',
+          email: row['Email'] || row['email'] || null,
+          phone: row['Phone'] || row['phone'] || null,
+          mobile: row['Mobile'] || row['mobile'] || null,
+          title: row['Title'] || row['title'] || null,
+          department: row['Department'] || row['department'] || null,
+          leadStatus: row['Lead Status'] || row['leadStatus'] || 'new',
+          lifecycleStage: row['Lifecycle Stage'] || row['lifecycleStage'] || 'lead',
+          tags: row['Tags'] ? row['Tags'].split(',').map((t: string) => t.trim()) : [],
+        }
+
+        if (!contactData.firstName || !contactData.lastName) {
+          failedCount++
+          errors.push({ row, error: 'First name and last name are required' })
+          continue
+        }
+
+        await contactService.createContact(tenantId, userId, contactData)
+        successCount++
+      } catch (error: any) {
+        failedCount++
+        errors.push({ row, error: error.message })
+      }
+    }
+
     res.json({
       success: true,
-      message: 'Import feature coming soon',
+      data: {
+        total: contacts.length,
+        successCount,
+        failedCount,
+        errors: errors.slice(0, 10), // Return first 10 errors
+      },
+      message: `Import completed: ${successCount} successful, ${failedCount} failed`,
     })
   } catch (error) {
     next(error)

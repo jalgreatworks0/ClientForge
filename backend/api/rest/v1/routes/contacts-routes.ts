@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express'
+import multer from 'multer'
 
 import { authenticate } from '../../../../middleware/authenticate'
 import { authorize, RoleLevel } from '../../../../middleware/authorize'
@@ -18,6 +19,26 @@ import {
 } from '../../../../core/contacts/contact-validators'
 
 const router = Router()
+
+// Configure multer for file uploads (in-memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ]
+    if (allowedMimes.includes(file.mimetype) || file.originalname.match(/\.(csv|xlsx|xls)$/)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Invalid file type. Only CSV and Excel files are allowed.'))
+    }
+  },
+})
 
 // All routes require authentication
 router.use(authenticate)
@@ -53,16 +74,16 @@ router.get(
 )
 
 /**
- * POST /api/v1/contacts/export
- * Export contacts to CSV/Excel/JSON
+ * GET /api/v1/contacts/export
+ * Export contacts to CSV/Excel
  *
- * @body {string} format - Export format (csv, xlsx, json)
- * @body {object} filters - Optional filters
+ * Query params:
+ * @param {string} format - Export format (csv, xlsx) default: csv
  *
  * @returns {200} Export file
  * @requires permission:contacts:export
  */
-router.post(
+router.get(
   '/export',
   requirePermission('contacts:export'),
   contactController.exportContacts
@@ -82,6 +103,7 @@ router.post(
   '/import',
   authorize(RoleLevel.MANAGER),
   requirePermission('contacts:create'),
+  upload.single('file'),
   contactController.importContacts
 )
 

@@ -1,53 +1,78 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { Contact } from '../../services/contacts.service'
 
-interface Contact {
+interface ContactFormData {
   id?: string
   firstName: string
   lastName: string
-  email: string
-  company: string
-  phone: string
-  status: 'active' | 'inactive'
+  email?: string
+  phone?: string
+  mobile?: string
+  title?: string
+  department?: string
+  leadStatus?: string
+  lifecycleStage?: string
+  notes?: string
 }
 
 interface ContactModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (contact: Contact) => void
+  onSave: (contact: ContactFormData) => void
   contact?: Contact | null
 }
 
 export default function ContactModal({ isOpen, onClose, onSave, contact }: ContactModalProps) {
-  const [formData, setFormData] = useState<Contact>({
+  const [formData, setFormData] = useState<ContactFormData>({
     firstName: '',
     lastName: '',
     email: '',
-    company: '',
     phone: '',
-    status: 'active',
+    mobile: '',
+    title: '',
+    department: '',
+    leadStatus: 'new',
+    lifecycleStage: 'lead',
+    notes: '',
   })
 
-  const [errors, setErrors] = useState<Partial<Record<keyof Contact, string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({})
 
   useEffect(() => {
     if (contact) {
-      setFormData(contact)
+      setFormData({
+        id: contact.id,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email || '',
+        phone: contact.phone || '',
+        mobile: contact.mobile || '',
+        title: contact.title || '',
+        department: contact.department || '',
+        leadStatus: contact.leadStatus || 'new',
+        lifecycleStage: contact.lifecycleStage || 'lead',
+        notes: contact.notes || '',
+      })
     } else {
       setFormData({
         firstName: '',
         lastName: '',
         email: '',
-        company: '',
         phone: '',
-        status: 'active',
+        mobile: '',
+        title: '',
+        department: '',
+        leadStatus: 'new',
+        lifecycleStage: 'lead',
+        notes: '',
       })
     }
     setErrors({})
   }, [contact, isOpen])
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof Contact, string>> = {}
+    const newErrors: Partial<Record<keyof ContactFormData, string>> = {}
 
     if (!formData.firstName.trim()) {
       newErrors.firstName = 'First name is required'
@@ -57,19 +82,11 @@ export default function ContactModal({ isOpen, onClose, onSave, contact }: Conta
       newErrors.lastName = 'Last name is required'
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Invalid email format'
     }
 
-    if (!formData.company.trim()) {
-      newErrors.company = 'Company is required'
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone is required'
-    } else if (!/^\+?[\d\s-()]+$/.test(formData.phone)) {
+    if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
       newErrors.phone = 'Invalid phone format'
     }
 
@@ -81,12 +98,21 @@ export default function ContactModal({ isOpen, onClose, onSave, contact }: Conta
     e.preventDefault()
 
     if (validate()) {
-      onSave(formData)
-      onClose()
+      // Convert empty strings to null for optional fields
+      const submitData = {
+        ...formData,
+        email: formData.email?.trim() || null,
+        phone: formData.phone?.trim() || null,
+        mobile: formData.mobile?.trim() || null,
+        title: formData.title?.trim() || null,
+        department: formData.department?.trim() || null,
+        notes: formData.notes?.trim() || null,
+      }
+      onSave(submitData)
     }
   }
 
-  const handleChange = (field: keyof Contact, value: string) => {
+  const handleChange = (field: keyof ContactFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
@@ -149,70 +175,131 @@ export default function ContactModal({ isOpen, onClose, onSave, contact }: Conta
             </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
-              Email <span className="text-danger-600">*</span>
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              className={`input ${errors.email ? 'border-danger-600 focus:ring-danger-600' : ''}`}
-              placeholder="john.doe@example.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-danger-600 font-syne-mono">{errors.email}</p>
-            )}
+          {/* Email & Title Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                className={`input ${errors.email ? 'border-danger-600 focus:ring-danger-600' : ''}`}
+                placeholder="john.doe@example.com"
+              />
+              {errors.email && (
+                <p className="mt-1 text-sm text-danger-600 font-syne-mono">{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
+                Title/Position
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => handleChange('title', e.target.value)}
+                className="input"
+                placeholder="Sales Manager"
+              />
+            </div>
           </div>
 
-          {/* Company */}
+          {/* Phone Numbers Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                className={`input ${errors.phone ? 'border-danger-600 focus:ring-danger-600' : ''}`}
+                placeholder="+1 555-0100"
+              />
+              {errors.phone && (
+                <p className="mt-1 text-sm text-danger-600 font-syne-mono">{errors.phone}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
+                Mobile
+              </label>
+              <input
+                type="tel"
+                value={formData.mobile}
+                onChange={(e) => handleChange('mobile', e.target.value)}
+                className="input"
+                placeholder="+1 555-0101"
+              />
+            </div>
+          </div>
+
+          {/* Department */}
           <div>
             <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
-              Company <span className="text-danger-600">*</span>
+              Department
             </label>
             <input
               type="text"
-              value={formData.company}
-              onChange={(e) => handleChange('company', e.target.value)}
-              className={`input ${errors.company ? 'border-danger-600 focus:ring-danger-600' : ''}`}
-              placeholder="Acme Corporation"
-            />
-            {errors.company && (
-              <p className="mt-1 text-sm text-danger-600 font-syne-mono">{errors.company}</p>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
-              Phone <span className="text-danger-600">*</span>
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              className={`input ${errors.phone ? 'border-danger-600 focus:ring-danger-600' : ''}`}
-              placeholder="+1 555-0100"
-            />
-            {errors.phone && (
-              <p className="mt-1 text-sm text-danger-600 font-syne-mono">{errors.phone}</p>
-            )}
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
-              Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => handleChange('status', e.target.value as 'active' | 'inactive')}
+              value={formData.department}
+              onChange={(e) => handleChange('department', e.target.value)}
               className="input"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              placeholder="Sales"
+            />
+          </div>
+
+          {/* Lead Status & Lifecycle Stage Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
+                Lead Status
+              </label>
+              <select
+                value={formData.leadStatus}
+                onChange={(e) => handleChange('leadStatus', e.target.value)}
+                className="input"
+              >
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="qualified">Qualified</option>
+                <option value="unqualified">Unqualified</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
+                Lifecycle Stage
+              </label>
+              <select
+                value={formData.lifecycleStage}
+                onChange={(e) => handleChange('lifecycleStage', e.target.value)}
+                className="input"
+              >
+                <option value="lead">Lead</option>
+                <option value="mql">Marketing Qualified Lead</option>
+                <option value="sql">Sales Qualified Lead</option>
+                <option value="opportunity">Opportunity</option>
+                <option value="customer">Customer</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-syne font-semibold text-charcoal-900 dark:text-charcoal-50 mb-2">
+              Notes
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => handleChange('notes', e.target.value)}
+              className="input min-h-[100px]"
+              placeholder="Additional notes about this contact..."
+            />
           </div>
 
           {/* Actions */}
