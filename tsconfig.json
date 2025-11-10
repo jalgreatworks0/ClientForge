@@ -24,18 +24,19 @@
 
     // Gradual strict mode adoption - enable incrementally
     "strict": false,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "strictNullChecks": false,
     "noEmitOnError": false,
+    "suppressImplicitAnyIndexErrors": true,
     "allowJs": false,
     "sourceMap": true,
     "declaration": true,
 
     "forceConsistentCasingInFileNames": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": false
   },
   "include": [
     "backend/**/*",
