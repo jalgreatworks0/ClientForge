@@ -53,13 +53,38 @@ export function getPostgresPool(): Pool {
   if (!pool) {
     pool = new Pool(postgresConfig)
 
+    // Error handling for idle clients
     pool.on('error', (err) => {
       console.error('Unexpected error on idle PostgreSQL client', err)
-      process.exit(-1)
+      // Don't exit process in production - let health checks handle it
+      if (process.env.NODE_ENV !== 'production') {
+        process.exit(-1)
+      }
     })
 
-    pool.on('connect', () => {
-      console.log('✅ PostgreSQL connected')
+    // Connection event
+    pool.on('connect', (client) => {
+      console.log('✅ PostgreSQL client connected')
+
+      // Set statement timeout to prevent long-running queries
+      client.query('SET statement_timeout = 30000') // 30 seconds
+    })
+
+    // Client removal event
+    pool.on('remove', () => {
+      console.log('🔌 PostgreSQL client removed from pool')
+    })
+
+    // Acquire event (for monitoring)
+    pool.on('acquire', () => {
+      const poolMetrics = {
+        totalCount: pool.totalCount,
+        idleCount: pool.idleCount,
+        waitingCount: pool.waitingCount,
+      }
+      if (poolMetrics.waitingCount > 0) {
+        console.warn('⚠️  PostgreSQL pool has waiting clients', poolMetrics)
+      }
     })
   }
 

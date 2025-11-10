@@ -7,6 +7,8 @@ import { Request, Response, NextFunction } from 'express'
 
 import { getPostgresPool } from '../../../../../config/database/postgres-config'
 import { getRedisClient } from '../../../../../config/database/redis-config'
+import { getMongoClient } from '../../../../../config/database/mongodb-config'
+import { getElasticsearchClient } from '../../../../../config/database/elasticsearch-config'
 import { logger } from '../../../../utils/logging/logger'
 import { appConfig } from '../../../../../config/app/app-config'
 
@@ -19,13 +21,16 @@ interface HealthStatus {
   services: {
     postgres: ServiceStatus
     redis: ServiceStatus
+    mongodb: ServiceStatus
+    elasticsearch: ServiceStatus
   }
 }
 
 interface ServiceStatus {
-  status: 'up' | 'down'
+  status: 'up' | 'down' | 'degraded'
   responseTime?: number
   error?: string
+  metadata?: Record<string, any>
 }
 
 /**
@@ -77,6 +82,61 @@ async function checkRedis(): Promise<ServiceStatus> {
 }
 
 /**
+ * Check MongoDB connection
+ */
+async function checkMongoDB(): Promise<ServiceStatus> {
+  const start = Date.now()
+
+  try {
+    const client = await getMongoClient()
+    await client.db().admin().ping()
+
+    return {
+      status: 'up',
+      responseTime: Date.now() - start,
+    }
+  } catch (error) {
+    logger.warn('MongoDB health check failed (non-critical)', { error })
+
+    return {
+      status: 'degraded',
+      responseTime: Date.now() - start,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+/**
+ * Check Elasticsearch connection
+ */
+async function checkElasticsearch(): Promise<ServiceStatus> {
+  const start = Date.now()
+
+  try {
+    const client = await getElasticsearchClient()
+    const health = await client.cluster.health()
+
+    return {
+      status: health.status === 'red' ? 'degraded' : 'up',
+      responseTime: Date.now() - start,
+      metadata: {
+        clusterStatus: health.status,
+        numberOfNodes: health.number_of_nodes,
+        activeShards: health.active_shards,
+      },
+    }
+  } catch (error) {
+    logger.warn('Elasticsearch health check failed (non-critical)', { error })
+
+    return {
+      status: 'degraded',
+      responseTime: Date.now() - start,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+/**
  * Basic health check
  * GET /api/v1/health
  *
@@ -116,22 +176,31 @@ export async function readinessCheck(
 ): Promise<void> {
   try {
     // Check all services in parallel
-    const [postgresStatus, redisStatus] = await Promise.all([
+    const [postgresStatus, redisStatus, mongoStatus, elasticsearchStatus] = await Promise.all([
       checkPostgres(),
       checkRedis(),
+      checkMongoDB(),
+      checkElasticsearch(),
     ])
 
     // Determine overall health
-    const allServicesUp = postgresStatus.status === 'up' && redisStatus.status === 'up'
+    // Critical services: PostgreSQL, Redis
+    // Non-critical: MongoDB, Elasticsearch (can be degraded)
+    const criticalServicesUp = postgresStatus.status === 'up' && redisStatus.status === 'up'
+    const allServicesUp =
+      criticalServicesUp &&
+      mongoStatus.status === 'up' &&
+      elasticsearchStatus.status === 'up'
 
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy'
 
     if (allServicesUp) {
       overallStatus = 'healthy'
-    } else if (postgresStatus.status === 'up') {
-      // PostgreSQL is critical, Redis can be down temporarily
+    } else if (criticalServicesUp) {
+      // Critical services up, but some non-critical services degraded
       overallStatus = 'degraded'
     } else {
+      // Critical services down
       overallStatus = 'unhealthy'
     }
 
@@ -144,6 +213,8 @@ export async function readinessCheck(
       services: {
         postgres: postgresStatus,
         redis: redisStatus,
+        mongodb: mongoStatus,
+        elasticsearch: elasticsearchStatus,
       },
     }
 

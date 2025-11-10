@@ -65,9 +65,10 @@ export class Server {
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
             imgSrc: ["'self'", 'data:', 'https:'],
+            connectSrc: ["'self'", 'http://localhost:3000', 'ws://localhost:3000'],
           },
         },
         hsts: {
