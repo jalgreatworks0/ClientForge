@@ -38,6 +38,14 @@ if not exist "node_modules" (
     )
 )
 
+REM Kill any existing process on port 3000
+echo [INFO] Checking for processes on port 3000...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING"') do (
+    echo [INFO] Found existing process on port 3000 (PID: %%a), terminating...
+    taskkill /F /PID %%a >nul 2>&1
+)
+timeout /t 1 /nobreak >nul
+
 echo.
 echo [INFO] Starting backend development server on port 3000...
 echo [INFO] API will be available at: http://localhost:3000/api
