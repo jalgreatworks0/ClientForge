@@ -23,6 +23,7 @@ import commentsRoutes from './rest/v1/routes/comments-routes'
 import tagsRoutes from './rest/v1/routes/tags-routes'
 import customFieldsRoutes from './rest/v1/routes/custom-fields-routes'
 import aiRoutes from './rest/v1/routes/ai-routes'
+import aiFeaturesRoutes from './rest/v1/routes/ai-features-routes'
 import searchRoutes from './rest/v1/routes/search-routes'
 import emailRoutes from './rest/v1/routes/email-routes'
 import analyticsSimpleRoutes from './rest/v1/routes/analytics-simple-routes'
@@ -45,6 +46,7 @@ export function configureRoutes(app: Application): void {
 
   // AI routes (authentication required) - Albedo AI assistant
   app.use(`${apiPrefix}/ai`, aiRoutes)
+  app.use(`${apiPrefix}/ai`, aiFeaturesRoutes)
 
   // Search routes (authentication required) - Elasticsearch unified search
   app.use(`${apiPrefix}/search`, searchRoutes)
@@ -73,5 +75,5 @@ export function configureRoutes(app: Application): void {
   const pool = getPool()
   app.use(`${apiPrefix}/analytics`, createAnalyticsRoutes(pool))
 
-  console.log('[OK] All routes configured including AI, Analytics, and Email Integration endpoints')
+  console.log('[OK] All routes configured including AI, AI-Powered Features, Analytics, and Email Integration endpoints')
 }
