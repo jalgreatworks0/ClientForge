@@ -4,7 +4,7 @@
 **FOR**: Claude Code, All AI Coding Assistants
 **PROJECT**: ClientForge CRM v3.0 - Abstract Creatives LLC
 **VERSION**: 3.0.1 (Production-Ready Edition)
-**LAST UPDATED**: 2025-11-09
+**LAST UPDATED**: 2025-11-10
 
 ---
 
@@ -305,7 +305,8 @@ interface DatabaseArchitecture {
 
 ### Core Features
 
-- **Contact & Deal Management** - Advanced CRM with custom fields, tags, segmentation
+- **Contact Management** ✅ - Advanced CRM with custom fields, tags, segmentation
+- **Deal Pipeline** ✅ - Visual Kanban board with drag-and-drop, 6-stage pipeline (Lead → Won/Lost), probability tracking, weighted forecasting
 - **Campaign Management** - Multi-channel (email, SMS, social), A/B testing
 - **AI Companion (Albedo)** - Natural language interface, lead scoring, forecasting
 - **Workflow Automation** - Visual builder, triggers, actions, AI-driven routing
