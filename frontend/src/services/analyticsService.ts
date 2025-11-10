@@ -179,3 +179,147 @@ export async function getTeamPerformance(
   )
   return response.data.data
 }
+
+// =====================================================
+// REVENUE METRICS (Simplified Analytics)
+// =====================================================
+
+export interface RevenueMetrics {
+  totalRevenue: number
+  wonDeals: number
+  averageDealSize: number
+  forecastedRevenue: number
+  periodComparison: {
+    revenue: number
+    percentChange: number
+  }
+}
+
+/**
+ * Get revenue metrics with period comparison
+ * @param startDate Start date for current period
+ * @param endDate End date for current period
+ * @param comparisonStartDate Optional comparison period start
+ * @param comparisonEndDate Optional comparison period end
+ * @returns Revenue metrics
+ */
+export async function getRevenueMetrics(params: {
+  startDate?: string
+  endDate?: string
+  comparisonStartDate?: string
+  comparisonEndDate?: string
+}): Promise<RevenueMetrics> {
+  const response = await api.get<{ success: boolean; data: RevenueMetrics }>(
+    `${ANALYTICS_BASE}/revenue-metrics`,
+    { params }
+  )
+  return response.data.data
+}
+
+// =====================================================
+// SALES FUNNEL
+// =====================================================
+
+export interface SalesFunnelStage {
+  stage: string
+  stageId: string
+  dealCount: number
+  totalValue: number
+  averageProbability: number
+}
+
+/**
+ * Get sales funnel data by stage
+ * @param pipelineId Optional pipeline filter
+ * @returns Funnel stages with deal counts and values
+ */
+export async function getSalesFunnel(pipelineId?: string): Promise<SalesFunnelStage[]> {
+  const response = await api.get<{ success: boolean; data: SalesFunnelStage[] }>(
+    `${ANALYTICS_BASE}/sales-funnel`,
+    { params: pipelineId ? { pipelineId } : {} }
+  )
+  return response.data.data
+}
+
+// =====================================================
+// REVENUE TREND
+// =====================================================
+
+export interface RevenueTrendPoint {
+  date: string
+  revenue: number
+  dealCount: number
+}
+
+/**
+ * Get revenue trend over time
+ * @param startDate Start date for trend
+ * @param endDate End date for trend
+ * @param granularity 'day', 'week', or 'month'
+ * @returns Time series revenue data
+ */
+export async function getRevenueTrend(params: {
+  startDate?: string
+  endDate?: string
+  granularity?: 'day' | 'week' | 'month'
+}): Promise<RevenueTrendPoint[]> {
+  const response = await api.get<{ success: boolean; data: RevenueTrendPoint[] }>(
+    `${ANALYTICS_BASE}/revenue-trend`,
+    { params }
+  )
+  return response.data.data
+}
+
+// =====================================================
+// LEAD SOURCES
+// =====================================================
+
+export interface LeadSource {
+  source: string
+  leadCount: number
+  wonCount: number
+  totalRevenue: number
+  conversionRate: number
+}
+
+/**
+ * Get lead source analysis
+ * @param startDate Start date for analysis
+ * @param endDate End date for analysis
+ * @returns Lead source metrics with conversion rates
+ */
+export async function getLeadSources(params: {
+  startDate?: string
+  endDate?: string
+}): Promise<LeadSource[]> {
+  const response = await api.get<{ success: boolean; data: LeadSource[] }>(
+    `${ANALYTICS_BASE}/lead-sources`,
+    { params }
+  )
+  return response.data.data
+}
+
+// =====================================================
+// PIPELINE HEALTH
+// =====================================================
+
+export interface PipelineHealth {
+  totalDeals: number
+  totalValue: number
+  averageAge: number
+  staleDeals: number
+  hotDeals: number
+}
+
+/**
+ * Get pipeline health metrics
+ * @param pipelineId Optional pipeline filter
+ * @returns Pipeline health indicators
+ */
+export async function getPipelineHealth(pipelineId?: string): Promise<PipelineHealth> {
+  const response = await api.get<{ success: boolean; data: PipelineHealth }>(
+    `${ANALYTICS_BASE}/pipeline-health`,
+    { params: pipelineId ? { pipelineId } : {} }
+  )
+  return response.data.data
+}

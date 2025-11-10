@@ -25,6 +25,7 @@ import customFieldsRoutes from './rest/v1/routes/custom-fields-routes'
 import aiRoutes from './rest/v1/routes/ai-routes'
 import searchRoutes from './rest/v1/routes/search-routes'
 import emailRoutes from './rest/v1/routes/email-routes'
+import analyticsSimpleRoutes from './rest/v1/routes/analytics-simple-routes'
 import { createAnalyticsRoutes } from './rest/v1/routes/analytics-routes'
 
 /**
@@ -67,8 +68,9 @@ export function configureRoutes(app: Application): void {
   app.use(`${apiPrefix}/custom-fields`, customFieldsRoutes)
 
   // Analytics routes (authentication required)
-  const pool = getPool()
-  app.use(`${apiPrefix}/analytics`, createAnalyticsRoutes(pool))
+  app.use(`${apiPrefix}/analytics`, analyticsSimpleRoutes)
+  // const pool = getPool()
+  // app.use(`${apiPrefix}/analytics`, createAnalyticsRoutes(pool))
 
   console.log('[OK] All routes configured including AI, Analytics, and Email Integration endpoints')
 }

@@ -11,6 +11,7 @@ import Accounts from './pages/Accounts'
 import AccountDetail from './pages/AccountDetail'
 import Notes from './pages/Notes'
 import Activities from './pages/Activities'
+import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import Emails from './pages/Emails'
 import Login from './pages/Login'
@@ -58,6 +59,7 @@ function App() {
         <Route path="/notes" element={<Notes />} />
         <Route path="/activities" element={<Activities />} />
         <Route path="/emails" element={<Emails />} />
+        <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/email/callback" element={<EmailOAuthCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />
