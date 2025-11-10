@@ -167,4 +167,19 @@ router.post(
   authController.validateResetToken
 )
 
+/**
+ * GET /api/v1/auth/verify
+ * Verify current JWT token validity (requires authentication)
+ *
+ * @header {string} Authorization - Bearer token
+ *
+ * @returns {200} Token is valid
+ * @returns {401} Token is invalid or expired
+ */
+router.get(
+  '/verify',
+  authenticate,
+  authController.verifyToken
+)
+
 export default router

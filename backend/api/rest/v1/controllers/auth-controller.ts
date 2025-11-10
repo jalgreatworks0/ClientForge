@@ -407,3 +407,32 @@ export async function validateResetToken(
     next(error)
   }
 }
+
+/**
+ * Verify current JWT token
+ * GET /api/v1/auth/verify
+ */
+export async function verifyToken(
+  req: BaseAuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    // If we reach here, the authenticate middleware has already validated the token
+    // Just return the user info from the token
+    res.status(200).json({
+      success: true,
+      data: {
+        valid: true,
+        user: {
+          userId: req.user?.userId,
+          tenantId: req.user?.tenantId,
+          email: req.user?.email,
+          roleId: req.user?.roleId,
+        },
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
