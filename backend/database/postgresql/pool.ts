@@ -126,3 +126,9 @@ export function monitorPoolHealth(): void {
 setInterval(() => {
   monitorPoolHealth()
 }, 30000)
+
+/**
+ * Export singleton db instance for direct queries
+ * This is a convenience export for routes that need direct database access
+ */
+export const db = getPool()
