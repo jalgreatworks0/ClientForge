@@ -56,8 +56,8 @@ async function createMasterAdmin() {
 
     // 2. Create or get Admin role
     const roleResult = await client.query(
-      `INSERT INTO roles (id, tenant_id, name, description, permissions, is_system_role, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      `INSERT INTO roles (id, tenant_id, name, description, permissions, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
        ON CONFLICT (tenant_id, name) DO UPDATE SET permissions = $5
        RETURNING id`,
       [
@@ -66,7 +66,6 @@ async function createMasterAdmin() {
         'Super Admin',
         'Master administrator with full system access',
         JSON.stringify(['*']), // All permissions
-        true,
       ]
     )
 
@@ -82,21 +81,20 @@ async function createMasterAdmin() {
 
     const userResult = await client.query(
       `INSERT INTO users (
-        id, tenant_id, role_id, email, password_hash,
-        first_name, last_name, is_active, is_email_verified,
+        id, tenant_id, email, password_hash,
+        first_name, last_name, is_active, email_verified,
         created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       ON CONFLICT (tenant_id, email)
       DO UPDATE SET
-        password_hash = $5,
-        is_active = $8,
+        password_hash = $4,
+        is_active = $7,
         updated_at = NOW()
       RETURNING id, email`,
       [
         userId,
         finalTenantId,
-        roleId,
         email.toLowerCase(),
         passwordHash,
         'Master',
@@ -107,6 +105,14 @@ async function createMasterAdmin() {
     )
 
     const finalUser = userResult.rows[0]
+
+    // 5. Assign role to user via user_roles junction table
+    await client.query(
+      `INSERT INTO user_roles (user_id, role_id, assigned_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id, role_id) DO NOTHING`,
+      [finalUser.id, roleId]
+    )
 
     // Commit transaction
     await client.query('COMMIT')
