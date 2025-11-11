@@ -65,3 +65,15 @@ temp/
 # Agents
 agents/config.json
 agents/*.lock
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Storage directories (runtime data)
+storage/uploads/*
+storage/exports/*
+storage/gdpr-exports/*
+storage/invoices/*
+!storage/*/.gitkeep

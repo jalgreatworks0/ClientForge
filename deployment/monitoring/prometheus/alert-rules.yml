@@ -1,0 +1,271 @@
+# Prometheus Alert Rules for ClientForge CRM
+# Location: deployment/monitoring/prometheus/alert-rules.yml
+# 
+# Usage: Include this in prometheus.yml under 'rule_files'
+
+groups:
+  - name: clientforge_alerts
+    interval: 30s
+    rules:
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Queue/Job System Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: BullMQDeadLetterQueueHigh
+        expr: bull_queue_dlq_count > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "BullMQ Dead Letter Queue has jobs"
+          description: "Queue {{ $labels.queue }} has {{ $value }} jobs in DLQ. These jobs have failed 5+ times."
+          runbook: "https://docs.clientforge.com/ops/queue-dlq-runbook"
+
+      - alert: BullMQQueueBacklog
+        expr: bull_queue_waiting_count > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "Queue backlog building up"
+          description: "Queue {{ $labels.queue }} has {{ $value }} waiting jobs. Processing may be slow."
+
+      - alert: BullMQWorkerCrashed
+        expr: increase(bull_worker_error_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "BullMQ worker crashed"
+          description: "Worker for queue {{ $labels.queue }} has crashed. Check logs immediately."
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # API Performance Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: APILatencyHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "API p95 latency > 500ms"
+          description: "API endpoint {{ $labels.route }} has p95 latency of {{ $value }}s. Investigate performance."
+
+      - alert: APILatencyCritical
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "API p95 latency > 2s - CRITICAL"
+          description: "API endpoint {{ $labels.route }} has p95 latency of {{ $value }}s. User experience severely impacted."
+
+      - alert: APIErrorRateHigh
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "API error rate > 1%"
+          description: "API has error rate of {{ $value | humanizePercentage }}. Check error logs."
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Database Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: PostgreSQLConnectivityLost
+        expr: pg_up != 1
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL connection lost"
+          description: "Cannot connect to PostgreSQL database. Service degraded."
+
+      - alert: PostgreSQLSlowQueries
+        expr: pg_slow_queries > 10
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High number of slow queries"
+          description: "PostgreSQL has {{ $value }} slow queries in last period. Check query performance."
+
+      - alert: MongoDBConnectivityLost
+        expr: mongodb_up != 1
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "MongoDB connection lost"
+          description: "Cannot connect to MongoDB. Logging system impaired."
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Redis/Cache Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: RedisConnectivityLost
+        expr: redis_up != 1
+        for: 2m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis connection lost"
+          description: "Cannot connect to Redis. Cache and queues may be affected."
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis memory usage > 90%"
+          description: "Redis is using {{ $value | humanizePercentage }} of available memory. Configure maxmemory or increase capacity."
+
+      - alert: RedisAOFWriteFailed
+        expr: redis_aof_last_write_status != 1
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis AOF write failed"
+          description: "Redis AOF persistence write failed. Data durability at risk."
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Elasticsearch Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: ElasticsearchConnectivityLost
+        expr: elasticsearch_up != 1
+        for: 2m
+        labels:
+          severity: critical
+          component: search
+        annotations:
+          summary: "Elasticsearch connection lost"
+          description: "Cannot connect to Elasticsearch. Search functionality impaired."
+
+      - alert: ElasticsearchHealthRed
+        expr: elasticsearch_cluster_health_status == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: search
+        annotations:
+          summary: "Elasticsearch cluster RED"
+          description: "Elasticsearch cluster is in RED state. Some indices cannot be accessed."
+
+      - alert: ElasticsearchDiskAlmostFull
+        expr: elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_total_bytes < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: search
+        annotations:
+          summary: "Elasticsearch disk < 10% free"
+          description: "Elasticsearch node has only {{ $value | humanizePercentage }} disk space free. Indices may go read-only."
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Application Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: ApplicationCrashed
+        expr: up{job="clientforge-crm"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "ClientForge application crashed"
+          description: "ClientForge CRM process is not responding. Immediate action required."
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / 1073741824 > 1  # > 1GB
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Application memory usage > 1GB"
+          description: "ClientForge process is using {{ $value }}GB of memory. Check for memory leaks."
+
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Application CPU usage > 80%"
+          description: "ClientForge process is using {{ $value | humanizePercentage }} CPU. Check for performance issues."
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Security Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: HighAuthenticationFailureRate
+        expr: rate(auth_login_failures_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failure rate is {{ $value | humanizePercentage }}. Possible attack or misconfiguration."
+
+      - alert: SuspiciousBulkActivity
+        expr: increase(http_requests_total{endpoint=~"/api/v1/.*/bulk.*"}[5m]) > 100
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High bulk operation activity"
+          description: "Bulk operations: {{ $value }} requests in 5 minutes. Possible abuse."
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Infrastructure Alerts
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - alert: DiskSpaceAlmostFull
+        expr: node_filesystem_avail_bytes / node_filesystem_size_bytes < 0.1
+        for: 10m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Disk space < 10% free"
+          description: "{{ $labels.device }} has only {{ $value | humanizePercentage }} space free."
+
+      - alert: HighCPUSystemWide
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "System CPU usage > 80%"
+          description: "{{ $labels.instance }} CPU usage is {{ $value | humanize }}%"
+
+      - alert: HighMemorySystemWide
+        expr: 1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "System memory usage > 90%"
+          description: "{{ $labels.instance }} has only {{ $value | humanizePercentage }} memory available."

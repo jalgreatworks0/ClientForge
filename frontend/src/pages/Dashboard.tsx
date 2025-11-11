@@ -11,13 +11,13 @@ import { useDashboardMetrics, useTaskAnalytics, useActivityAnalytics, useDealAna
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
 const defaultLayout: Layout[] = [
-  { i: 'metrics', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
-  { i: 'recent-contacts', x: 0, y: 2, w: 4, h: 4, minW: 3, minH: 3 },
-  { i: 'pipeline-overview', x: 4, y: 2, w: 4, h: 4, minW: 3, minH: 3 },
-  { i: 'upcoming-tasks', x: 8, y: 2, w: 4, h: 4, minW: 3, minH: 3 },
-  { i: 'top-deals', x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
-  { i: 'activity-feed', x: 6, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
-  { i: 'quick-actions', x: 0, y: 10, w: 12, h: 2, minW: 6, minH: 2 },
+  { i: 'metrics', x: 0, y: 0, w: 12, h: 2, minW: 2, minH: 2 },
+  { i: 'recent-contacts', x: 0, y: 2, w: 4, h: 4, minW: 2, minH: 3 },
+  { i: 'pipeline-overview', x: 4, y: 2, w: 4, h: 4, minW: 2, minH: 3 },
+  { i: 'upcoming-tasks', x: 8, y: 2, w: 4, h: 4, minW: 2, minH: 3 },
+  { i: 'top-deals', x: 0, y: 6, w: 6, h: 4, minW: 2, minH: 3 },
+  { i: 'activity-feed', x: 6, y: 6, w: 6, h: 4, minW: 2, minH: 3 },
+  { i: 'quick-actions', x: 0, y: 10, w: 12, h: 2, minW: 2, minH: 2 },
 ]
 
 // Sortable Metric Item Component

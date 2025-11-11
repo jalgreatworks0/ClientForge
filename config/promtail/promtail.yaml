@@ -1,0 +1,58 @@
+# Promtail Configuration for ClientForge CRM
+# Ships logs from files to Loki
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # System logs
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*.log
+
+  # Application logs
+  - job_name: crm-backend
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: crm-backend
+          environment: development
+          __path__: /app/logs/*.log
+    pipeline_stages:
+      # Parse JSON logs
+      - json:
+          expressions:
+            level: level
+            timestamp: timestamp
+            message: message
+            tenantId: tenantId
+            userId: userId
+      # Add labels from parsed fields
+      - labels:
+          level:
+          tenantId:
+      # Extract timestamp
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+
+  # Docker container logs (if needed)
+  # - job_name: docker
+  #   static_configs:
+  #     - targets:
+  #         - localhost
+  #       labels:
+  #         job: docker
+  #         __path__: /var/lib/docker/containers/*/*.log

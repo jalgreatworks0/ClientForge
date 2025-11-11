@@ -8,6 +8,7 @@ import { Application } from 'express'
 import { appConfig } from '../../config/app/app-config'
 import { getPool } from '../database/postgresql/pool'
 import { performanceStatsEndpoint } from '../middleware/performance-monitoring'
+import { register } from 'prom-client'
 
 import authRoutes from './rest/v1/routes/auth-routes'
 import healthRoutes from './rest/v1/routes/health-routes'
@@ -26,6 +27,7 @@ import aiRoutes from './rest/v1/routes/ai-routes'
 import aiFeaturesRoutes from './rest/v1/routes/ai-features-routes'
 import searchRoutes from './rest/v1/routes/search-routes'
 import emailRoutes from './rest/v1/routes/email-routes'
+import filesRoutes from './rest/v1/routes/files-routes'
 import analyticsSimpleRoutes from './rest/v1/routes/analytics-simple-routes'
 import { createAnalyticsRoutes } from './rest/v1/routes/analytics-routes'
 
@@ -41,6 +43,16 @@ export function configureRoutes(app: Application): void {
   // Performance stats endpoint (no auth required - for monitoring)
   app.get(`${apiPrefix}/performance`, performanceStatsEndpoint)
 
+  // Prometheus metrics endpoint (no auth required - for Prometheus scraping)
+  app.get('/metrics', async (req, res) => {
+    try {
+      res.set('Content-Type', register.contentType)
+      res.end(await register.metrics())
+    } catch (error) {
+      res.status(500).end(error)
+    }
+  })
+
   // Authentication routes (public)
   app.use(`${apiPrefix}/auth`, authRoutes)
 
@@ -53,6 +65,9 @@ export function configureRoutes(app: Application): void {
 
   // Email integration routes (authentication required) - Gmail & Outlook
   app.use(`${apiPrefix}/email`, emailRoutes)
+
+  // File storage routes (authentication required) - Secure signed URLs only
+  app.use(`${apiPrefix}/files`, filesRoutes)
 
   // CRM routes (authentication required)
   app.use(`${apiPrefix}/contacts`, contactsRoutes)
@@ -75,5 +90,5 @@ export function configureRoutes(app: Application): void {
   const pool = getPool()
   app.use(`${apiPrefix}/analytics`, createAnalyticsRoutes(pool))
 
-  console.log('[OK] All routes configured including AI, AI-Powered Features, Analytics, and Email Integration endpoints')
+  console.log('[OK] All routes configured including AI, AI-Powered Features, Analytics, Email Integration, and File Storage endpoints')
 }

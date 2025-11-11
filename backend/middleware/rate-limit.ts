@@ -204,4 +204,24 @@ export const rateLimiters = {
     windowSeconds: 60 * 60, // 1 hour
     message: 'Too many verification requests, please try again in 1 hour',
   }),
+
+  /**
+   * Rate limit for search endpoints
+   * 100 requests per minute
+   */
+  search: rateLimit({
+    max: 100,
+    windowSeconds: 60, // 1 minute
+    message: 'Too many search requests, please slow down',
+  }),
+
+  /**
+   * Rate limit for file upload endpoints
+   * 10 requests per minute
+   */
+  upload: rateLimit({
+    max: 10,
+    windowSeconds: 60, // 1 minute
+    message: 'Too many upload requests, please slow down',
+  }),
 }

@@ -1,0 +1,141 @@
+TASK: Create Stripe Service for ClientForge CRM Billing System
+
+PROJECT CONTEXT:
+- Language: TypeScript (strict mode)
+- Framework: Express.js + PostgreSQL
+- Pattern: Follow existing services in backend/services/auth/
+- Multi-tenant SaaS application
+
+FILE TO CREATE: backend/services/billing/stripe.service.ts
+
+REQUIREMENTS:
+1. Import necessary dependencies:
+   - Stripe SDK
+   - Database pool from backend/database/postgresql/pool
+   - Logger from backend/utils/logging/logger
+
+2. Implement StripeService class with these methods:
+
+METHOD 1: createCustomer
+- Input: tenantId (string), email (string), metadata (optional object)
+- Output: Stripe.Customer
+- Logic: Create Stripe customer, store customer ID in billing_customers table
+- Error handling: Wrap in try-catch, log errors
+
+METHOD 2: getCustomer
+- Input: stripeCustomerId (string)
+- Output: Stripe.Customer or null
+- Logic: Retrieve customer from Stripe API
+- Error handling: Return null if not found
+
+METHOD 3: attachPaymentMethod
+- Input: customerId (string), paymentMethodId (string)
+- Output: void
+- Logic: Attach payment method to customer
+- Store in payment_methods table
+
+METHOD 4: setDefaultPaymentMethod
+- Input: customerId (string), paymentMethodId (string)
+- Output: void
+- Logic: Update customer's default payment method
+- Update is_default flag in payment_methods table
+
+METHOD 5: createSetupIntent
+- Input: customerId (string)
+- Output: Stripe.SetupIntent
+- Logic: Create setup intent for adding payment method
+- Used for 3D Secure/SCA verification
+
+METHOD 6: verifyWebhookSignature
+- Input: payload (string), signature (string)
+- Output: Stripe.Event
+- Logic: Verify webhook signature using Stripe secret
+- Throw error if verification fails
+
+METHOD 7: handleWebhookEvent
+- Input: event (Stripe.Event)
+- Output: Promise<void>
+- Logic: Route webhook event to appropriate handler
+- Handle these events:
+  * customer.subscription.created
+  * customer.subscription.updated
+  * customer.subscription.deleted
+  * invoice.payment_succeeded
+  * invoice.payment_failed
+  * payment_method.attached
+  * payment_method.detached
+
+CODE STRUCTURE EXAMPLE:
+
+import Stripe from 'stripe';
+import { getPool } from '../../../database/postgresql/pool';
+import { logger } from '../../../utils/logging/logger';
+
+export class StripeService {
+  private pool = getPool();
+  private stripe: Stripe;
+
+  constructor() {
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2023-10-16',
+      typescript: true,
+    });
+  }
+
+  async createCustomer(
+    tenantId: string,
+    email: string,
+    metadata?: Record<string, string>
+  ): Promise<Stripe.Customer> {
+    try {
+      // Step 1: Create customer in Stripe
+      const customer = await this.stripe.customers.create({
+        email,
+        metadata: {
+          tenantId,
+          ...metadata,
+        },
+      });
+
+      // Step 2: Store in database
+      await this.pool.query(
+        `INSERT INTO billing_customers (tenant_id, stripe_customer_id, email)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (tenant_id) DO UPDATE SET
+         stripe_customer_id = EXCLUDED.stripe_customer_id,
+         email = EXCLUDED.email,
+         updated_at = NOW()`,
+        [tenantId, customer.id, email]
+      );
+
+      logger.info('[Stripe] Customer created', { tenantId, customerId: customer.id });
+
+      return customer;
+    } catch (error: any) {
+      logger.error('[Stripe] Customer creation failed', { tenantId, error: error.message });
+      throw new Error('Failed to create Stripe customer');
+    }
+  }
+
+  // Continue implementing other methods...
+}
+
+VALIDATION REQUIREMENTS:
+- Check all inputs are not null/undefined
+- Validate email format for createCustomer
+- Validate UUIDs for tenantId
+- Log all operations with context
+
+ERROR HANDLING:
+- Wrap all Stripe API calls in try-catch
+- Log errors with full context
+- Throw descriptive error messages
+- Never expose Stripe error details to client
+
+SECURITY:
+- Never log sensitive data (card numbers, secrets)
+- Use environment variables for API keys
+- Verify webhook signatures before processing
+- Use Stripe's idempotency keys for mutations
+
+PLEASE GENERATE THE COMPLETE stripe.service.ts FILE WITH ALL METHODS IMPLEMENTED.

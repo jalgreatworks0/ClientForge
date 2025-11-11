@@ -87,10 +87,16 @@ export const useEmailStore = create<EmailState>((set, get) => ({
       const response = await api.get('/v1/email/accounts')
       set({ accounts: response.data.data, isLoading: false })
     } catch (error: any) {
-      set({
-        error: error.response?.data?.message || 'Failed to fetch email accounts',
-        isLoading: false
-      })
+      // Only set error if it's not a 401 (expected when OAuth not configured)
+      if (error.response?.status !== 401) {
+        set({
+          error: error.response?.data?.message || 'Failed to fetch email accounts',
+          isLoading: false
+        })
+      } else {
+        // 401 is expected - just set loading to false without error
+        set({ isLoading: false, accounts: [] })
+      }
     }
   },
 

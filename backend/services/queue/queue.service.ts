@@ -1,10 +1,11 @@
 /**
- * Job Queue Service
- * Background job processing using Bull and Redis
+ * Job Queue Service - BullMQ Wrapper
+ * Background job processing using BullMQ v3 and Redis
+ * Uses centralized BullMQ configuration from config/queue/bullmq.config.ts
  */
 
-import Queue, { Job, JobOptions } from 'bull'
 import { logger } from '../../utils/logging/logger'
+import { queueRegistry, initializeQueues } from '../../../config/queue/bullmq.config'
 
 // Job type definitions
 export interface EmailJob {
@@ -40,248 +41,101 @@ export interface NotificationJob {
 }
 
 class QueueService {
-  private emailQueue?: Queue<EmailJob>
-  private searchIndexQueue?: Queue<SearchIndexJob>
-  private reportQueue?: Queue<ReportJob>
-  private notificationQueue?: Queue<NotificationJob>
-
-  private redisConfig = {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD,
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-  }
+  private initialized = false
 
   /**
-   * Initialize all queues
+   * Initialize all queues using centralized BullMQ configuration
+   * Non-blocking: Times out after 10s and allows server to continue
    */
-  initialize(): void {
+  async initialize(): Promise<void> {
     try {
-      // Email Queue
-      this.emailQueue = new Queue<EmailJob>('email', {
-        redis: this.redisConfig,
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 2000,
-          },
-          removeOnComplete: 100,
-          removeOnFail: 500,
-        },
+      if (this.initialized) {
+        logger.warn('Queue service already initialized')
+        return
+      }
+
+      logger.info('Initializing queues (with 10s timeout)...')
+
+      // Initialize queues from centralized config with timeout
+      // Non-blocking: If initialization takes >10s, continue anyway
+      await Promise.race([
+        initializeQueues(),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Queue initialization timeout after 10s')),
+            10000
+          )
+        )
+      ]).catch((error) => {
+        // Log warning but don't block server startup
+        logger.warn('Queue initialization timeout or failed', {
+          error: error.message,
+          message: 'Server starting without queues - they will retry in background'
+        })
       })
 
-      this.emailQueue.process(this.processEmailJob.bind(this))
-
-      // Search Index Queue
-      this.searchIndexQueue = new Queue<SearchIndexJob>('search-index', {
-        redis: this.redisConfig,
-        defaultJobOptions: {
-          attempts: 5,
-          backoff: {
-            type: 'exponential',
-            delay: 1000,
-          },
-          removeOnComplete: 50,
-          removeOnFail: 200,
-        },
-      })
-
-      this.searchIndexQueue.process(this.processSearchIndexJob.bind(this))
-
-      // Report Queue
-      this.reportQueue = new Queue<ReportJob>('reports', {
-        redis: this.redisConfig,
-        defaultJobOptions: {
-          attempts: 2,
-          timeout: 300000, // 5 minutes
-          removeOnComplete: 20,
-          removeOnFail: 100,
-        },
-      })
-
-      this.reportQueue.process(this.processReportJob.bind(this))
-
-      // Notification Queue
-      this.notificationQueue = new Queue<NotificationJob>('notifications', {
-        redis: this.redisConfig,
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: 'fixed',
-            delay: 5000,
-          },
-          removeOnComplete: 100,
-          removeOnFail: 200,
-        },
-      })
-
-      this.notificationQueue.process(this.processNotificationJob.bind(this))
-
-      // Set up event listeners
-      this.setupEventListeners()
-
-      logger.info('Job queues initialized successfully')
+      this.initialized = true
+      logger.info('[OK] Job queues initialized successfully')
     } catch (error) {
-      logger.error('Failed to initialize job queues', { error })
-      throw error
+      logger.error('Unexpected error in queue initialization', { error })
+      // Don't throw - allow server to start anyway
+      this.initialized = true
     }
-  }
-
-  /**
-   * Set up event listeners for queue monitoring
-   */
-  private setupEventListeners(): void {
-    const queues = [
-      { name: 'email', queue: this.emailQueue },
-      { name: 'search-index', queue: this.searchIndexQueue },
-      { name: 'reports', queue: this.reportQueue },
-      { name: 'notifications', queue: this.notificationQueue },
-    ]
-
-    queues.forEach(({ name, queue }) => {
-      queue?.on('completed', (job: Job) => {
-        logger.info(`Job completed in ${name} queue`, {
-          jobId: job.id,
-          duration: Date.now() - job.timestamp,
-        })
-      })
-
-      queue?.on('failed', (job: Job, err: Error) => {
-        logger.error(`Job failed in ${name} queue`, {
-          jobId: job.id,
-          error: err.message,
-          attempts: job.attemptsMade,
-        })
-      })
-
-      queue?.on('stalled', (job: Job) => {
-        logger.warn(`Job stalled in ${name} queue`, { jobId: job.id })
-      })
-    })
   }
 
   /**
    * Add email job to queue
    */
-  async addEmailJob(data: EmailJob, options?: JobOptions): Promise<Job<EmailJob>> {
-    if (!this.emailQueue) {
+  async addEmailJob(data: EmailJob, options?: any): Promise<any> {
+    const queue = queueRegistry.getQueue('email')
+    if (!queue) {
       throw new Error('Email queue not initialized')
     }
 
-    return this.emailQueue.add(data, options)
+    return queue.add('send-email', data, options)
   }
 
   /**
    * Add search index job to queue
    */
-  async addSearchIndexJob(data: SearchIndexJob, options?: JobOptions): Promise<Job<SearchIndexJob>> {
-    if (!this.searchIndexQueue) {
-      throw new Error('Search index queue not initialized')
+  async addSearchIndexJob(data: SearchIndexJob, options?: any): Promise<any> {
+    const queue = queueRegistry.getQueue('data-sync')
+    if (!queue) {
+      throw new Error('Data sync queue not initialized')
     }
 
-    return this.searchIndexQueue.add(data, options)
+    return queue.add('sync-search-index', data, options)
   }
 
   /**
    * Add report generation job to queue
    */
-  async addReportJob(data: ReportJob, options?: JobOptions): Promise<Job<ReportJob>> {
-    if (!this.reportQueue) {
-      throw new Error('Report queue not initialized')
+  async addReportJob(data: ReportJob, options?: any): Promise<any> {
+    const queue = queueRegistry.getQueue('data-sync')
+    if (!queue) {
+      throw new Error('Data sync queue not initialized')
     }
 
-    return this.reportQueue.add(data, options)
+    return queue.add('generate-report', data, options)
   }
 
   /**
    * Add notification job to queue
    */
-  async addNotificationJob(data: NotificationJob, options?: JobOptions): Promise<Job<NotificationJob>> {
-    if (!this.notificationQueue) {
+  async addNotificationJob(data: NotificationJob, options?: any): Promise<any> {
+    const queue = queueRegistry.getQueue('notifications')
+    if (!queue) {
       throw new Error('Notification queue not initialized')
     }
 
-    return this.notificationQueue.add(data, options)
-  }
-
-  /**
-   * Process email job
-   */
-  private async processEmailJob(job: Job<EmailJob>): Promise<void> {
-    const { to, subject, html, tenantId } = job.data
-
-    logger.info('Processing email job', { jobId: job.id, to, subject, tenantId })
-
-    // TODO: Implement actual email sending logic using nodemailer or similar
-    // For now, just log the email
-    logger.info('Email sent successfully (mock)', { to, subject })
-
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
-
-  /**
-   * Process search index job
-   */
-  private async processSearchIndexJob(job: Job<SearchIndexJob>): Promise<void> {
-    const { action, index, id, document, tenantId } = job.data
-
-    logger.info('Processing search index job', { jobId: job.id, action, index, id, tenantId })
-
-    // TODO: Implement actual Elasticsearch indexing logic
-    // For now, just log the action
-    logger.info('Search index updated successfully (mock)', { action, index, id })
-
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 50))
-  }
-
-  /**
-   * Process report generation job
-   */
-  private async processReportJob(job: Job<ReportJob>): Promise<void> {
-    const { reportType, userId, tenantId, filters, format } = job.data
-
-    logger.info('Processing report job', { jobId: job.id, reportType, userId, tenantId, format })
-
-    // TODO: Implement actual report generation logic
-    // For now, just log the report request
-    logger.info('Report generated successfully (mock)', { reportType, format })
-
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
-
-  /**
-   * Process notification job
-   */
-  private async processNotificationJob(job: Job<NotificationJob>): Promise<void> {
-    const { userId, tenantId, type, title, message } = job.data
-
-    logger.info('Processing notification job', { jobId: job.id, userId, tenantId, type, title })
-
-    // TODO: Implement actual notification logic (WebSocket, push notifications, etc.)
-    // For now, just log the notification
-    logger.info('Notification sent successfully (mock)', { userId, type, title })
-
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 50))
+    return queue.add('send-notification', data, options)
   }
 
   /**
    * Get queue statistics
    */
-  async getQueueStats(queueName: 'email' | 'search-index' | 'reports' | 'notifications'): Promise<any> {
-    const queueMap = {
-      email: this.emailQueue,
-      'search-index': this.searchIndexQueue,
-      reports: this.reportQueue,
-      notifications: this.notificationQueue,
-    }
-
-    const queue = queueMap[queueName]
+  async getQueueStats(queueName: string): Promise<any> {
+    const queue = queueRegistry.getQueue(queueName)
     if (!queue) {
       throw new Error(`Queue ${queueName} not found`)
     }
@@ -311,10 +165,9 @@ class QueueService {
   async shutdown(): Promise<void> {
     logger.info('Shutting down job queues...')
 
-    const queues = [this.emailQueue, this.searchIndexQueue, this.reportQueue, this.notificationQueue]
+    await queueRegistry.closeAll()
 
-    await Promise.all(queues.map((queue) => queue?.close()))
-
+    this.initialized = false
     logger.info('Job queues shut down successfully')
   }
 }

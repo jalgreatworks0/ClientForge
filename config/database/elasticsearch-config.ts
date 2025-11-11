@@ -52,6 +52,19 @@ export async function getElasticsearchClient(): Promise<Client> {
 }
 
 /**
+ * Lazy-loading Elasticsearch client singleton
+ * Initialize client on first access for module system compatibility
+ */
+export const esClient = new Proxy({} as Client, {
+  get(target, prop) {
+    if (!elasticClient) {
+      elasticClient = new Client(elasticsearchConfig.options);
+    }
+    return (elasticClient as any)[prop];
+  }
+});
+
+/**
  * Close Elasticsearch connection
  */
 export async function closeElasticsearchClient(): Promise<void> {

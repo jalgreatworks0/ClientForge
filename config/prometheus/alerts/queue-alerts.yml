@@ -1,0 +1,163 @@
+# Prometheus Alert Rules for BullMQ Queue Monitoring
+# ClientForge CRM - Queue Health Alerts
+#
+# Usage:
+#   1. Add this file to your Prometheus configuration:
+#      rule_files:
+#        - 'config/prometheus/alerts/queue-alerts.yml'
+#
+#   2. Reload Prometheus:
+#      curl -X POST http://localhost:9090/-/reload
+#
+#   3. Verify rules loaded:
+#      curl http://localhost:9090/api/v1/rules
+
+groups:
+  - name: queue_health
+    interval: 30s
+    rules:
+      # Alert when jobs are stuck in Dead Letter Queue
+      - alert: QueueDLQJobsPresent
+        expr: crm_queue_jobs_dlq_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: queue
+          team: backend
+        annotations:
+          summary: "Dead Letter Queue has jobs ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} has {{ $value }} jobs in DLQ that have failed 3+ times. These jobs need manual investigation."
+          runbook: "Check error logs for failure reasons. Run: npm run queue:clear-dlq {{ $labels.queue }}"
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+      # Alert when too many jobs are waiting (queue lag)
+      - alert: QueueHighWaitingCount
+        expr: crm_queue_waiting > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: queue
+          team: backend
+        annotations:
+          summary: "High number of waiting jobs ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} has {{ $value }} jobs waiting. This may indicate workers are overwhelmed or stuck."
+          runbook: "Check worker logs. Consider scaling workers. Run: npm run queue:health"
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+      # Alert when queue waiting count is critically high
+      - alert: QueueCriticalWaitingCount
+        expr: crm_queue_waiting > 5000
+        for: 5m
+        labels:
+          severity: critical
+          component: queue
+          team: backend
+        annotations:
+          summary: "CRITICAL: Extreme queue backlog ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} has {{ $value }} jobs waiting. System may be severely degraded."
+          runbook: "URGENT: Check workers are running. Check Redis connection. Check for worker crashes."
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+      # Alert when queue is paused unexpectedly
+      - alert: QueueUnexpectedPause
+        expr: crm_queue_paused == 1
+        for: 2m
+        labels:
+          severity: warning
+          component: queue
+          team: backend
+        annotations:
+          summary: "Queue is paused ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} has been paused. Jobs will not be processed."
+          runbook: "Check if pause was intentional. To resume: redis-cli SREM bull:{{ $labels.queue }}:paused 1"
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+      # Alert when queue lag is high (oldest job too old)
+      - alert: QueueHighLag
+        expr: crm_queue_lag_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: queue
+          team: backend
+        annotations:
+          summary: "Queue has high lag ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} has jobs waiting for {{ $value }}s. Oldest job is too old."
+          runbook: "Check worker capacity. Consider scaling workers or investigating slow job processing."
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+      # Alert when no active workers (no jobs being processed despite waiting jobs)
+      - alert: QueueNoActiveWorkers
+        expr: crm_queue_waiting > 10 and crm_queue_active == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: queue
+          team: backend
+        annotations:
+          summary: "No active workers detected ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} has {{ $value }} waiting jobs but no active workers processing them."
+          runbook: "URGENT: Check if workers are running. Restart workers: npm run dev:backend"
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+      # Alert when failed job rate is high
+      - alert: QueueHighFailureRate
+        expr: rate(crm_queue_failed[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: queue
+          team: backend
+        annotations:
+          summary: "High job failure rate ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} is experiencing {{ $value }} failures per second."
+          runbook: "Check error logs for common failure patterns. Investigate job handler code."
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+  - name: queue_performance
+    interval: 1m
+    rules:
+      # Alert when job completion rate drops significantly
+      - alert: QueueLowThroughput
+        expr: rate(crm_queue_completed[5m]) < 0.01
+        for: 10m
+        labels:
+          severity: info
+          component: queue
+          team: backend
+        annotations:
+          summary: "Low job throughput ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} is completing fewer than 0.01 jobs per second."
+          runbook: "Check if this is expected (low traffic). Verify workers are healthy."
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+      # Alert when too many jobs are active (potential worker overload)
+      - alert: QueueHighActiveCount
+        expr: crm_queue_active > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: queue
+          team: backend
+        annotations:
+          summary: "High number of active jobs ({{ $labels.queue }})"
+          description: "Queue {{ $labels.queue }} has {{ $value }} jobs being processed simultaneously. Workers may be overloaded."
+          runbook: "Check worker concurrency settings. Monitor worker memory/CPU usage."
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard?var-queue={{ $labels.queue }}"
+
+  - name: queue_redis
+    interval: 1m
+    rules:
+      # Alert when Redis connection issues may be affecting queues
+      - alert: QueueRedisConnectionIssues
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: queue
+          team: backend
+        annotations:
+          summary: "Redis is down - Queue system unavailable"
+          description: "Redis is unreachable. All queue operations will fail."
+          runbook: "URGENT: Check Redis service. Restart if needed: docker restart redis"
+          dashboard: "http://grafana:3000/d/queue-health/queue-health-dashboard"

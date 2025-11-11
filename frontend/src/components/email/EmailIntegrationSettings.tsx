@@ -17,7 +17,15 @@ export default function EmailIntegrationSettings() {
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchAccounts()
+    const loadAccounts = async () => {
+      try {
+        await fetchAccounts()
+      } catch (error) {
+        // Error is already handled in store and displayed in UI
+        // Silently catch to avoid console noise for expected errors
+      }
+    }
+    loadAccounts()
   }, [fetchAccounts])
 
   const handleConnectGmail = async () => {

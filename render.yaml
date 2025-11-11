@@ -79,13 +79,25 @@ services:
         destination: /index.html
     autoDeploy: true
 
-  # Redis Cache
+  # Redis Cache & Queue Backend
   - type: redis
     name: clientforge-redis
+    plan: standard
+    region: oregon
+    maxmemoryPolicy: noeviction  # CRITICAL: BullMQ requires noeviction
+    ipAllowList: []
+
+  # Background Workers (Queue Processing)
+  - type: worker
+    name: clientforge-workers
+    runtime: node
     plan: starter
     region: oregon
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
+    buildCommand: npm install --legacy-peer-deps && npm run build:backend
+    startCommand: node dist/backend/workers/index.js
+    envVars:
+      - fromGroup: clientforge-backend
+    autoDeploy: true
 
 # Database
 databases:

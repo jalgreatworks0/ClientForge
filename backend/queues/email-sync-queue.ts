@@ -1,34 +1,14 @@
 /**
- * Email Sync Queue
+ * Email Sync Queue - BullMQ v3
  * Background job processor for syncing emails from Gmail and Outlook accounts
+ * Uses centralized BullMQ configuration
  */
 
-import Queue from 'bull'
+import { Job } from 'bullmq'
+import { queueRegistry, createWorker } from '../../config/queue/bullmq.config'
 import { emailIntegrationService } from '../core/email/email-integration-service'
 import { db } from '../database/postgresql/pool'
 import { logger } from '../utils/logging/logger'
-
-// Redis connection for Bull
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
-  db: 0,
-}
-
-// Create email sync queue
-export const emailSyncQueue = new Queue('email-sync', {
-  redis: redisConfig,
-  defaultJobOptions: {
-    attempts: 3, // Retry failed jobs 3 times
-    backoff: {
-      type: 'exponential',
-      delay: 2000, // Start with 2 seconds, then 4, 8, etc.
-    },
-    removeOnComplete: 100, // Keep last 100 completed jobs
-    removeOnFail: 200, // Keep last 200 failed jobs
-  },
-})
 
 interface EmailSyncJob {
   accountId: string
@@ -37,55 +17,120 @@ interface EmailSyncJob {
   provider: 'gmail' | 'outlook'
 }
 
+interface RecurringEmailSyncJob {
+  // Empty data for recurring job
+}
+
+let emailSyncWorker: any = null
+
 /**
- * Process email sync jobs
+ * Initialize Email Sync Queue and Worker
  */
-emailSyncQueue.process(async (job) => {
-  const { accountId, userId, tenantId, provider }: EmailSyncJob = job.data
-
-  logger.info('[Email Sync Queue] Processing sync job', {
-    accountId,
-    userId,
-    tenantId,
-    provider,
-    jobId: job.id,
-  })
-
+export async function initializeEmailSyncQueue(): Promise<void> {
   try {
-    // Sync emails for this account
-    const messageCount = await emailIntegrationService.syncAccount(accountId)
+    logger.info('[Email Sync Queue] Initializing email sync queue and worker')
 
-    logger.info('[Email Sync Queue] Sync completed', {
-      accountId,
-      messageCount,
-      jobId: job.id,
-    })
-
-    return {
-      success: true,
-      accountId,
-      messageCount,
-      syncedAt: new Date().toISOString(),
+    // Queue is already created by initializeQueues() in bullmq.config.ts
+    const emailQueue = queueRegistry.getQueue('email')
+    if (!emailQueue) {
+      throw new Error('Email queue not found - ensure initializeQueues() was called first')
     }
+
+    // Create worker for processing email sync jobs
+    emailSyncWorker = createWorker<EmailSyncJob | RecurringEmailSyncJob>(
+      'email',
+      async (job: Job<EmailSyncJob | RecurringEmailSyncJob>) => {
+        // Handle recurring sync job differently
+        if (job.name === 'recurring-email-sync') {
+          logger.info('[Email Sync Queue] Running scheduled sync for all accounts', {
+            jobId: job.id,
+          })
+
+          try {
+            const count = await scheduleEmailSyncJobs()
+            return {
+              success: true,
+              accountsScheduled: count,
+              syncedAt: new Date().toISOString(),
+            }
+          } catch (error: any) {
+            logger.error('[Email Sync Queue] Recurring sync failed', {
+              error: error.message,
+              jobId: job.id,
+            })
+            throw error
+          }
+        }
+
+        // Handle individual account sync job
+        const { accountId, userId, tenantId, provider } = job.data as EmailSyncJob
+
+        logger.info('[Email Sync Queue] Processing sync job', {
+          accountId,
+          userId,
+          tenantId,
+          provider,
+          jobId: job.id,
+        })
+
+        try {
+          // Sync emails for this account
+          const messageCount = await emailIntegrationService.syncAccount(accountId)
+
+          logger.info('[Email Sync Queue] Sync completed', {
+            accountId,
+            messageCount,
+            jobId: job.id,
+          })
+
+          return {
+            success: true,
+            accountId,
+            messageCount,
+            syncedAt: new Date().toISOString(),
+          }
+        } catch (error: any) {
+          logger.error('[Email Sync Queue] Sync failed', {
+            accountId,
+            error: error.message,
+            stack: error.stack,
+            jobId: job.id,
+          })
+
+          // Throw error to trigger retry
+          throw new Error(`Email sync failed for account ${accountId}: ${error.message}`)
+        }
+      },
+      {
+        concurrency: 5, // Process up to 5 email syncs concurrently
+        limiter: {
+          max: 10, // Max 10 jobs
+          duration: 60000, // Per 60 seconds
+        },
+      }
+    )
+
+    logger.info('[Email Sync Queue] Email sync worker initialized')
   } catch (error: any) {
-    logger.error('[Email Sync Queue] Sync failed', {
-      accountId,
+    logger.error('[Email Sync Queue] Failed to initialize', {
       error: error.message,
       stack: error.stack,
-      jobId: job.id,
     })
-
-    // Don't throw - let job retry automatically
-    throw new Error(`Email sync failed for account ${accountId}: ${error.message}`)
+    throw error
   }
-})
+}
 
 /**
  * Schedule periodic sync for all active accounts
  */
-export async function scheduleEmailSyncJobs() {
+export async function scheduleEmailSyncJobs(): Promise<number> {
   try {
     logger.info('[Email Sync Queue] Scheduling sync jobs for all active accounts')
+
+    const emailQueue = queueRegistry.getQueue('email')
+    if (!emailQueue) {
+      throw new Error('Email queue not initialized')
+    }
 
     // Get all active email accounts
     const result = await db.query(
@@ -112,7 +157,7 @@ export async function scheduleEmailSyncJobs() {
       }
 
       // Add job with unique ID to prevent duplicates
-      await emailSyncQueue.add(jobData, {
+      await emailQueue.add('sync-account', jobData, {
         jobId: `sync-${account.id}`,
         removeOnComplete: true,
         removeOnFail: false,
@@ -137,24 +182,32 @@ export async function scheduleEmailSyncJobs() {
 
 /**
  * Start recurring email sync job (every 5 minutes)
+ * Uses BullMQ v3 cron pattern syntax
  */
-export async function startRecurringEmailSync() {
+export async function startRecurringEmailSync(): Promise<void> {
   try {
+    const emailQueue = queueRegistry.getQueue('email')
+    if (!emailQueue) {
+      throw new Error('Email queue not initialized')
+    }
+
     // Remove existing repeatable job if any
-    const repeatableJobs = await emailSyncQueue.getRepeatableJobs()
+    const repeatableJobs = await emailQueue.getRepeatableJobs()
     for (const job of repeatableJobs) {
       if (job.name === 'recurring-email-sync') {
-        await emailSyncQueue.removeRepeatableByKey(job.key)
+        await emailQueue.removeRepeatableByKey(job.key)
+        logger.info('[Email Sync Queue] Removed existing repeatable job')
       }
     }
 
-    // Add new repeatable job - sync all accounts every 5 minutes
-    await emailSyncQueue.add(
+    // Add new repeatable job using BullMQ v3 cron pattern
+    // Every 5 minutes: */5 * * * *
+    await emailQueue.add(
       'recurring-email-sync',
       {}, // Empty data - we'll fetch all accounts in the processor
       {
         repeat: {
-          every: 5 * 60 * 1000, // 5 minutes in milliseconds
+          pattern: '*/5 * * * *', // Cron pattern for every 5 minutes
         },
         jobId: 'recurring-email-sync',
       }
@@ -173,54 +226,19 @@ export async function startRecurringEmailSync() {
   }
 }
 
-// Process recurring sync jobs
-emailSyncQueue.process('recurring-email-sync', async (job) => {
-  logger.info('[Email Sync Queue] Running scheduled sync for all accounts', {
-    jobId: job.id,
-  })
-
+/**
+ * Shutdown email sync worker gracefully
+ */
+export async function shutdownEmailSyncQueue(): Promise<void> {
   try {
-    const count = await scheduleEmailSyncJobs()
-    return {
-      success: true,
-      accountsScheduled: count,
-      syncedAt: new Date().toISOString(),
+    if (emailSyncWorker) {
+      logger.info('[Email Sync Queue] Shutting down worker...')
+      await emailSyncWorker.close()
+      logger.info('[Email Sync Queue] Worker shut down successfully')
     }
   } catch (error: any) {
-    logger.error('[Email Sync Queue] Recurring sync failed', {
+    logger.error('[Email Sync Queue] Error shutting down worker', {
       error: error.message,
-      jobId: job.id,
     })
-    throw error
   }
-})
-
-// Event listeners for monitoring
-emailSyncQueue.on('completed', (job, result) => {
-  logger.info('[Email Sync Queue] Job completed', {
-    jobId: job.id,
-    result,
-  })
-})
-
-emailSyncQueue.on('failed', (job, error) => {
-  logger.error('[Email Sync Queue] Job failed', {
-    jobId: job?.id,
-    error: error.message,
-    attempts: job?.attemptsMade,
-  })
-})
-
-emailSyncQueue.on('error', (error) => {
-  logger.error('[Email Sync Queue] Queue error', {
-    error: error.message,
-  })
-})
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('[Email Sync Queue] Shutting down gracefully')
-  await emailSyncQueue.close()
-})
-
-export default emailSyncQueue
+}

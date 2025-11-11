@@ -11,12 +11,14 @@ export default function Emails() {
     messages,
     accounts,
     isLoading,
+    error,
     totalMessages,
     currentPage,
     fetchMessages,
     fetchAccounts,
     setSelectedMessage,
     selectedMessage,
+    clearError,
   } = useEmailStore()
 
   const [showFilters, setShowFilters] = useState(false)
@@ -26,8 +28,16 @@ export default function Emails() {
   const [filters, setFilters] = useState<EmailSearchFilters>({})
 
   useEffect(() => {
-    fetchAccounts()
-    fetchMessages()
+    const loadData = async () => {
+      try {
+        await fetchAccounts()
+        await fetchMessages()
+      } catch (error) {
+        // Error is already handled in store and displayed in UI
+        // Silently catch to avoid console noise for expected errors
+      }
+    }
+    loadData()
   }, [fetchAccounts, fetchMessages])
 
   const handleRefresh = () => {
@@ -53,6 +63,45 @@ export default function Emails() {
   }
 
   const totalPages = Math.ceil(totalMessages / 50)
+
+  // Show error state if there's an error
+  if (error && accounts.length === 0) {
+    return (
+      <div className="p-8">
+        <div className="text-center py-20">
+          <Mail className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Email Integration Not Available
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            {error}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
+            The email integration feature may not be configured yet, or there may be an authentication issue.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                clearError()
+                fetchAccounts()
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <RefreshCw className="w-5 h-5" />
+              Try Again
+            </button>
+            <a
+              href="/settings"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Mail className="w-5 h-5" />
+              Go to Settings
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (accounts.length === 0 && !isLoading) {
     return (

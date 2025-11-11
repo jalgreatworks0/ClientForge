@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Payment Failed</title></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;padding:20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;">
+        <tr><td style="background-color:#dc2626;padding:40px 20px;text-align:center;">
+          <h1 style="color:#ffffff;margin:0;font-size:24px;">Payment Failed</h1>
+        </td></tr>
+        <tr><td style="padding:40px 30px;">
+          <p style="color:#333;font-size:16px;line-height:1.6;margin:0 0 20px 0;">We were unable to process your payment for invoice <strong>{{invoiceNumber}}</strong>.</p>
+          <table width="100%" cellpadding="15" cellspacing="0" style="background-color:#fef2f2;border-radius:6px;margin:20px 0;">
+            <tr><td style="color:#6b7280;font-size:14px;">Amount:</td><td align="right" style="color:#dc2626;font-size:18px;font-weight:bold;">${{amount}}</td></tr>
+            <tr><td style="color:#6b7280;font-size:14px;">Next Retry:</td><td align="right" style="color:#111827;font-size:14px;font-weight:bold;">{{retryDate}}</td></tr>
+          </table>
+          <p style="color:#333;font-size:16px;line-height:1.6;margin:20px 0;">Please update your payment method to avoid service interruption:</p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center" style="padding:20px 0;">
+              <a href="{{updatePaymentUrl}}" style="background-color:#dc2626;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:6px;display:inline-block;font-size:16px;font-weight:600;">Update Payment Method</a>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="background-color:#f9fafb;padding:30px;text-align:center;border-top:1px solid #e5e7eb;">
+          <p style="color:#6b7280;font-size:14px;margin:0;">© 2025 ClientForge</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

@@ -1,12 +1,19 @@
 /**
  * Analytics Service
  * Business logic for analytics and metrics
+ * Includes Redis caching for expensive dashboard queries
  */
 
 import { Pool } from 'pg'
 
 import { logger } from '../../utils/logging/logger'
 import { AppError } from '../../utils/errors/app-error'
+import {
+  cachedQuery,
+  invalidateCachePattern,
+  CacheTTL,
+  CacheNamespace,
+} from '../../utils/caching/cache-service'
 
 import { AnalyticsRepository } from './analytics-repository'
 import {
@@ -39,6 +46,7 @@ export class AnalyticsService {
   /**
    * Get Dashboard Metrics
    * High-level overview for main dashboard
+   * CACHED: 5 minutes (300s) - frequently accessed, moderate freshness
    */
   async getDashboardMetrics(
     tenantId: string,
@@ -47,9 +55,19 @@ export class AnalyticsService {
     try {
       logger.info('Fetching dashboard metrics', { tenantId })
 
-      const metrics = await this.repository.getDashboardMetrics(
-        tenantId,
-        request.filters
+      // Generate cache key from tenant and filters
+      const filterKey = request.filters
+        ? `${request.filters.startDate || 'all'}_${request.filters.endDate || 'all'}`
+        : 'all'
+      const cacheKey = `tenant:${tenantId}:filters:${filterKey}`
+
+      const metrics = await cachedQuery(
+        cacheKey,
+        () => this.repository.getDashboardMetrics(tenantId, request.filters),
+        {
+          ttl: CacheTTL.MEDIUM, // 5 minutes
+          namespace: CacheNamespace.ANALYTICS,
+        }
       )
 
       logger.info('Dashboard metrics fetched successfully', {
@@ -96,6 +114,7 @@ export class AnalyticsService {
   /**
    * Get Deal Analytics
    * Detailed analytics about deals and revenue
+   * CACHED: 5 minutes (300s) - frequently accessed financial data
    */
   async getDealAnalytics(
     tenantId: string,
@@ -104,9 +123,19 @@ export class AnalyticsService {
     try {
       logger.info('Fetching deal analytics', { tenantId, pipelineId: request.pipelineId })
 
-      const analytics = await this.repository.getDealAnalytics(
-        tenantId,
-        request.filters
+      // Generate cache key with filters
+      const filterKey = request.filters
+        ? `${request.filters.startDate || 'all'}_${request.filters.endDate || 'all'}_${request.filters.status || 'all'}`
+        : 'all'
+      const cacheKey = `tenant:${tenantId}:deals:${filterKey}`
+
+      const analytics = await cachedQuery(
+        cacheKey,
+        () => this.repository.getDealAnalytics(tenantId, request.filters),
+        {
+          ttl: CacheTTL.MEDIUM, // 5 minutes
+          namespace: CacheNamespace.ANALYTICS,
+        }
       )
 
       logger.info('Deal analytics fetched successfully', {
@@ -365,5 +394,62 @@ export class AnalyticsService {
   private calculatePipelineCoverage(pipelineValue: number, target: number | null): number {
     if (!target || target === 0) return 0
     return (pipelineValue / target) * 100
+  }
+
+  // =====================================================
+  // CACHE INVALIDATION
+  // =====================================================
+
+  /**
+   * Invalidate analytics cache for a tenant
+   * Call this when:
+   * - Deals are created/updated/deleted
+   * - Contacts are created/updated/deleted
+   * - Tasks are created/updated/deleted
+   *
+   * @param tenantId - Tenant ID whose cache should be invalidated
+   * @returns Number of cache keys deleted
+   */
+  async invalidateTenantCache(tenantId: string): Promise<number> {
+    try {
+      logger.info('Invalidating analytics cache', { tenantId })
+
+      const keysDeleted = await invalidateCachePattern(
+        `tenant:${tenantId}:*`,
+        CacheNamespace.ANALYTICS
+      )
+
+      logger.info('Analytics cache invalidated', { tenantId, keysDeleted })
+      return keysDeleted
+    } catch (error) {
+      logger.error('Failed to invalidate analytics cache', { error, tenantId })
+      return 0
+    }
+  }
+
+  /**
+   * Invalidate specific analytics cache (e.g., only deals, only contacts)
+   *
+   * @param tenantId - Tenant ID
+   * @param type - Type of analytics to invalidate ('deals', 'contacts', 'dashboard')
+   */
+  async invalidateSpecificCache(
+    tenantId: string,
+    type: 'deals' | 'contacts' | 'dashboard'
+  ): Promise<number> {
+    try {
+      logger.info('Invalidating specific analytics cache', { tenantId, type })
+
+      const keysDeleted = await invalidateCachePattern(
+        `tenant:${tenantId}:${type}:*`,
+        CacheNamespace.ANALYTICS
+      )
+
+      logger.info('Specific analytics cache invalidated', { tenantId, type, keysDeleted })
+      return keysDeleted
+    } catch (error) {
+      logger.error('Failed to invalidate specific analytics cache', { error, tenantId, type })
+      return 0
+    }
   }
 }

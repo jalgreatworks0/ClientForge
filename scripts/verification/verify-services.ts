@@ -1,335 +1,333 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 /**
- * Service Verification Script
- * Verifies all new services are properly configured and operational
+ * ClientForge CRM - Phase 0 Health Check Script
+ * Comprehensive verification of all core services and configurations
+ *
+ * Usage: npm run verify:services
  */
 
-import { createClient } from 'redis'
-import { io } from 'socket.io-client'
+import * as fs from 'fs'
+import * as path from 'path'
 import axios from 'axios'
+import { Pool } from 'pg'
+import { MongoClient } from 'mongodb'
+import { createClient } from 'redis'
+import { Client } from '@elastic/elasticsearch'
+import * as dotenv from 'dotenv'
 
-interface VerificationResult {
+dotenv.config()
+
+interface HealthStatus {
   service: string
-  status: 'PASS' | 'FAIL' | 'WARN'
-  message: string
-  details?: any
+  status: 'healthy' | 'warning' | 'error'
+  details: string
+  timestamp: string
 }
 
-class ServiceVerifier {
-  private results: VerificationResult[] = []
-  private apiUrl = process.env.API_URL || 'http://localhost:3000'
-  private wsUrl = process.env.WS_URL || 'http://localhost:3000'
+const results: HealthStatus[] = []
 
-  /**
-   * Run all verification checks
-   */
-  async verify(): Promise<void> {
-    console.log('= ClientForge CRM - Service Verification\n')
-    console.log('=' .repeat(60))
+function logStatus(service: string, status: 'healthy' | 'warning' | 'error', details: string) {
+  const result: HealthStatus = {
+    service,
+    status,
+    details,
+    timestamp: new Date().toISOString(),
+  }
+  results.push(result)
+  const icon = status === 'healthy' ? '✅' : status === 'warning' ? '⚠️' : '❌'
+  console.log(`${icon} ${service}: ${details}`)
+}
 
-    await this.verifyRedis()
-    await this.verifyWebSocket()
-    await this.verifyQueueService()
-    await this.verifyElasticsearchSync()
-    await this.verifyApiEndpoints()
+async function runHealthChecks() {
+  console.log('\n════════════════════════════════════════════════')
+  console.log('  ClientForge CRM - System Health Check')
+  console.log('════════════════════════════════════════════════\n')
 
-    this.printResults()
+  // 1. Environment Check
+  console.log('📋 Environment Configuration:')
+  const requiredEnvVars = [
+    'NODE_ENV',
+    'PORT',
+    'DATABASE_URL',
+    'MONGODB_URI',
+    'REDIS_URL',
+    'ELASTICSEARCH_URL',
+    'JWT_SECRET',
+  ]
+  let envStatus = 'healthy'
+  const missingVars: string[] = []
+  requiredEnvVars.forEach((varName) => {
+    if (!process.env[varName]) {
+      missingVars.push(varName)
+      envStatus = 'error'
+    }
+  })
+
+  if (envStatus === 'healthy') {
+    logStatus('Environment', 'healthy', 'All required environment variables present')
+  } else {
+    logStatus(
+      'Environment',
+      'error',
+      `Missing: ${missingVars.join(', ')}`
+    )
   }
 
-  /**
-   * Verify Redis connection
-   */
-  private async verifyRedis(): Promise<void> {
-    const testName = 'Redis Connection'
-    console.log(`\n[1/5] Testing ${testName}...`)
+  // 2. File Structure Check
+  console.log('\n📁 File Structure:')
+  const requiredPaths = [
+    'backend/index.ts',
+    'backend/api/server.ts',
+    'backend/modules/core/module.ts',
+    'frontend/vite.config.ts',
+    'frontend/src/lib/api.ts',
+    'scripts/seed/seed-admin.ts',
+    'package.json',
+  ]
+  let fileStatus = 'healthy'
+  const missingPaths: string[] = []
+  requiredPaths.forEach((filePath) => {
+    if (!fs.existsSync(path.join(process.cwd(), filePath))) {
+      missingPaths.push(filePath)
+      fileStatus = 'error'
+    }
+  })
 
-    try {
-      const client = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-        socket: {
-          connectTimeout: 5000,
-        },
-      })
+  if (fileStatus === 'healthy') {
+    logStatus('File Structure', 'healthy', 'All critical files present')
+  } else {
+    logStatus('File Structure', 'error', `Missing: ${missingPaths.join(', ')}`)
+  }
 
-      await client.connect()
+  // 3. Package Dependencies Check
+  console.log('\n📦 Dependencies:')
+  try {
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+    const deps = packageJson.dependencies || {}
 
-      // Test set/get
-      await client.set('verify:test', 'ok')
-      const value = await client.get('verify:test')
-      await client.del('verify:test')
-      await client.disconnect()
+    const criticalDeps = {
+      bullmq: 'BullMQ queue system',
+      express: 'Web framework',
+      typescript: 'Type safety',
+      postgres: 'Database driver (pg)',
+      mongodb: 'MongoDB driver',
+      ioredis: 'Redis client',
+    }
 
-      if (value === 'ok') {
-        this.addResult({
-          service: testName,
-          status: 'PASS',
-          message: 'Redis is operational and responding correctly',
-        })
+    let depsOk = true
+    for (const [depName, description] of Object.entries(criticalDeps)) {
+      const actualName = depName === 'postgres' ? 'pg' : depName
+      if (deps[actualName]) {
+        logStatus(`Dep: ${description}`, 'healthy', `${actualName}@${deps[actualName]}`)
       } else {
-        this.addResult({
-          service: testName,
-          status: 'FAIL',
-          message: 'Redis returned unexpected value',
-          details: { expected: 'ok', received: value },
-        })
+        logStatus(`Dep: ${description}`, 'error', `${actualName} not found`)
+        depsOk = false
       }
-    } catch (error: any) {
-      this.addResult({
-        service: testName,
-        status: 'FAIL',
-        message: 'Failed to connect to Redis',
-        details: error.message,
-      })
     }
-  }
 
-  /**
-   * Verify WebSocket service
-   */
-  private async verifyWebSocket(): Promise<void> {
-    const testName = 'WebSocket Service'
-    console.log(`\n[2/5] Testing ${testName}...`)
-
-    return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        this.addResult({
-          service: testName,
-          status: 'FAIL',
-          message: 'WebSocket connection timeout',
-        })
-        socket.close()
-        resolve()
-      }, 10000)
-
-      // Note: This requires a valid JWT token for authentication
-      // In production, you'd generate a test token or use a test endpoint
-      const socket = io(this.wsUrl, {
-        transports: ['websocket', 'polling'],
-        reconnection: false,
-        auth: {
-          token: process.env.TEST_JWT_TOKEN || '',
-        },
-      })
-
-      socket.on('connect', () => {
-        clearTimeout(timeout)
-        this.addResult({
-          service: testName,
-          status: 'PASS',
-          message: 'WebSocket service is operational',
-          details: { socketId: socket.id },
-        })
-        socket.close()
-        resolve()
-      })
-
-      socket.on('connect_error', (error: Error) => {
-        clearTimeout(timeout)
-        // If no auth token, it's expected to fail authentication but the service is running
-        if (error.message.includes('Authentication error')) {
-          this.addResult({
-            service: testName,
-            status: 'WARN',
-            message: 'WebSocket server is running but requires authentication',
-            details: 'Set TEST_JWT_TOKEN env var for full verification',
-          })
-        } else {
-          this.addResult({
-            service: testName,
-            status: 'FAIL',
-            message: 'WebSocket connection failed',
-            details: error.message,
-          })
-        }
-        socket.close()
-        resolve()
-      })
-
-      socket.on('error', (error: any) => {
-        clearTimeout(timeout)
-        this.addResult({
-          service: testName,
-          status: 'FAIL',
-          message: 'WebSocket error occurred',
-          details: error,
-        })
-        socket.close()
-        resolve()
-      })
-    })
-  }
-
-  /**
-   * Verify Job Queue service
-   */
-  private async verifyQueueService(): Promise<void> {
-    const testName = 'Job Queue Service'
-    console.log(`\n[3/5] Testing ${testName}...`)
-
-    // The queue service runs in-process, so we'll verify Redis connection
-    // which is required for Bull queues
-    try {
-      const client = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-      })
-
-      await client.connect()
-
-      // Check for Bull keys
-      const keys = await client.keys('bull:*')
-      await client.disconnect()
-
-      this.addResult({
-        service: testName,
-        status: 'PASS',
-        message: 'Queue service prerequisites are met',
-        details: {
-          redisConnected: true,
-          existingQueues: keys.length > 0 ? keys.length : 'none (will be created on first use)',
-        },
-      })
-    } catch (error: any) {
-      this.addResult({
-        service: testName,
-        status: 'FAIL',
-        message: 'Queue service cannot connect to Redis',
-        details: error.message,
-      })
-    }
-  }
-
-  /**
-   * Verify Elasticsearch sync service
-   */
-  private async verifyElasticsearchSync(): Promise<void> {
-    const testName = 'Elasticsearch Sync Service'
-    console.log(`\n[4/5] Testing ${testName}...`)
-
-    try {
-      const elasticsearchUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200'
-
-      const response = await axios.get(`${elasticsearchUrl}/_cluster/health`, {
-        timeout: 5000,
-      })
-
-      if (response.data.status === 'green' || response.data.status === 'yellow') {
-        this.addResult({
-          service: testName,
-          status: 'PASS',
-          message: 'Elasticsearch is operational',
-          details: {
-            status: response.data.status,
-            nodes: response.data.number_of_nodes,
-          },
-        })
-      } else {
-        this.addResult({
-          service: testName,
-          status: 'WARN',
-          message: 'Elasticsearch cluster is unhealthy',
-          details: { status: response.data.status },
-        })
-      }
-    } catch (error: any) {
-      this.addResult({
-        service: testName,
-        status: 'WARN',
-        message: 'Elasticsearch is not accessible (optional service)',
-        details: error.message,
-      })
-    }
-  }
-
-  /**
-   * Verify API endpoints
-   */
-  private async verifyApiEndpoints(): Promise<void> {
-    const testName = 'API Endpoints'
-    console.log(`\n[5/5] Testing ${testName}...`)
-
-    try {
-      // Test health endpoint
-      const healthResponse = await axios.get(`${this.apiUrl}/health`, {
-        timeout: 5000,
-      })
-
-      if (healthResponse.status === 200) {
-        this.addResult({
-          service: testName,
-          status: 'PASS',
-          message: 'API server is responding correctly',
-          details: {
-            statusCode: healthResponse.status,
-            data: healthResponse.data,
-          },
-        })
-      } else {
-        this.addResult({
-          service: testName,
-          status: 'FAIL',
-          message: 'API returned unexpected status',
-          details: { statusCode: healthResponse.status },
-        })
-      }
-    } catch (error: any) {
-      this.addResult({
-        service: testName,
-        status: 'FAIL',
-        message: 'Failed to connect to API server',
-        details: error.message,
-      })
-    }
-  }
-
-  /**
-   * Add verification result
-   */
-  private addResult(result: VerificationResult): void {
-    this.results.push(result)
-
-    const icon = result.status === 'PASS' ? '' : result.status === 'WARN' ? '�' : 'L'
-    console.log(`   ${icon} ${result.status}: ${result.message}`)
-
-    if (result.details) {
-      console.log(`      Details:`, result.details)
-    }
-  }
-
-  /**
-   * Print summary results
-   */
-  private printResults(): void {
-    console.log('\n' + '='.repeat(60))
-    console.log('\n=� VERIFICATION SUMMARY\n')
-
-    const passed = this.results.filter((r) => r.status === 'PASS').length
-    const warnings = this.results.filter((r) => r.status === 'WARN').length
-    const failed = this.results.filter((r) => r.status === 'FAIL').length
-    const total = this.results.length
-
-    console.log(`Total Tests:  ${total}`)
-    console.log(` Passed:    ${passed}`)
-    console.log(`�  Warnings:  ${warnings}`)
-    console.log(`L Failed:    ${failed}`)
-
-    console.log('\n' + '='.repeat(60))
-
-    if (failed === 0 && warnings === 0) {
-      console.log('\n<� All services verified successfully!')
-      process.exit(0)
-    } else if (failed === 0) {
-      console.log('\n All critical services operational (some warnings)')
-      process.exit(0)
+    // Check for conflicts
+    if (deps['bull'] && deps['bullmq']) {
+      logStatus('Dependencies', 'error', 'Both bull and bullmq installed - remove bull!')
+    } else if (!deps['bullmq']) {
+      logStatus('Dependencies', 'error', 'bullmq not installed')
     } else {
-      console.log('\nL Some services failed verification')
-      process.exit(1)
+      logStatus('Dependencies', 'healthy', 'No Bull/BullMQ conflicts')
+    }
+  } catch (error: any) {
+    logStatus('Dependencies', 'error', `Failed to read package.json: ${error.message}`)
+  }
+
+  // 4. PostgreSQL Check
+  console.log('\n🐘 PostgreSQL:')
+  try {
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+    const result = await pool.query('SELECT NOW()')
+    logStatus('PostgreSQL Connection', 'healthy', 'Connected successfully')
+
+    // Check required tables
+    const tableCheck = await pool.query(`
+      SELECT table_name FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      LIMIT 1
+    `)
+    if (tableCheck.rows.length > 0) {
+      logStatus('PostgreSQL Schema', 'healthy', `Found ${tableCheck.rows.length}+ tables`)
+    } else {
+      logStatus('PostgreSQL Schema', 'warning', 'No tables found - run migrations')
+    }
+
+    // Check UUID extension
+    const uuidCheck = await pool.query(`
+      SELECT EXISTS(
+        SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp'
+      )
+    `)
+    if (uuidCheck.rows[0].exists) {
+      logStatus('PostgreSQL uuid-ossp', 'healthy', 'Extension installed')
+    } else {
+      logStatus('PostgreSQL uuid-ossp', 'warning', 'Extension not installed - may be needed')
+    }
+
+    await pool.end()
+  } catch (error: any) {
+    logStatus('PostgreSQL', 'error', error.message)
+  }
+
+  // 5. MongoDB Check
+  console.log('\n🍃 MongoDB:')
+  try {
+    const mongoClient = new MongoClient(process.env.MONGODB_URI || '')
+    await mongoClient.connect()
+    const pingResult = await mongoClient.db('admin').command({ ping: 1 })
+    if (pingResult.ok) {
+      logStatus('MongoDB Connection', 'healthy', 'Connected successfully')
+    }
+
+    const db = mongoClient.db('clientforge')
+    const collections = await db.listCollections().toArray()
+    const collectionNames = collections.map((c) => c.name)
+
+    const requiredCollections = ['app_logs', 'audit_logs', 'error_logs']
+    const missing = requiredCollections.filter((c) => !collectionNames.includes(c))
+
+    if (missing.length === 0) {
+      logStatus('MongoDB Collections', 'healthy', `All required collections present (${collections.length})`)
+    } else {
+      logStatus('MongoDB Collections', 'warning', `Missing: ${missing.join(', ')}`)
+    }
+
+    await mongoClient.close()
+  } catch (error: any) {
+    logStatus('MongoDB', 'error', error.message)
+  }
+
+  // 6. Redis Check
+  console.log('\n📍 Redis:')
+  try {
+    const redis = createClient({
+      url: process.env.REDIS_URL,
+    })
+    await redis.connect()
+    const pong = await redis.ping()
+    logStatus('Redis Connection', 'healthy', `PING: ${pong}`)
+
+    // Check maxmemory policy
+    const config = await redis.configGet('maxmemory-policy')
+    const policy = config[1]
+    if (policy === 'noeviction') {
+      logStatus('Redis Eviction Policy', 'healthy', 'maxmemory-policy=noeviction (correct for BullMQ)')
+    } else {
+      logStatus('Redis Eviction Policy', 'warning', `maxmemory-policy=${policy} (should be noeviction for BullMQ)`)
+    }
+
+    await redis.quit()
+  } catch (error: any) {
+    logStatus('Redis', 'error', error.message)
+  }
+
+  // 7. Elasticsearch Check
+  console.log('\n🔍 Elasticsearch:')
+  try {
+    const esClient = new Client({
+      node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200',
+    })
+    const info = await esClient.info()
+    logStatus('Elasticsearch Connection', 'healthy', `Version ${info.version.number}`)
+
+    // Check indices
+    const indices = await esClient.cat.indices({ format: 'json' })
+    if (indices && indices.length > 0) {
+      logStatus('Elasticsearch Indices', 'healthy', `${indices.length} indices present`)
+    } else {
+      logStatus('Elasticsearch Indices', 'warning', 'No indices - run initialization')
+    }
+  } catch (error: any) {
+    logStatus('Elasticsearch', 'error', error.message)
+  }
+
+  // 8. API Server Check
+  console.log('\n🌐 API Server:')
+  try {
+    const response = await axios.get('http://localhost:3000/api/v1/health', {
+      timeout: 5000,
+    })
+    if (response.status === 200) {
+      logStatus('API Health Endpoint', 'healthy', `Status: ${response.data.status}`)
+    }
+  } catch (error: any) {
+    if (error.code === 'ECONNREFUSED') {
+      logStatus('API Server', 'error', 'Connection refused - server not running on port 3000')
+    } else {
+      logStatus('API Server', 'error', error.message)
     }
   }
+
+  // 9. Frontend Check
+  console.log('\n⚛️ Frontend:')
+  try {
+    const viteConfig = fs.readFileSync('frontend/vite.config.ts', 'utf8')
+    if (viteConfig.includes("proxy: {") && viteConfig.includes("/api")) {
+      logStatus('Vite Proxy', 'healthy', 'Proxy configuration present')
+    } else {
+      logStatus('Vite Proxy', 'warning', 'Proxy configuration not found')
+    }
+
+    const apiConfig = fs.readFileSync('frontend/src/lib/api.ts', 'utf8')
+    if (apiConfig.includes("baseURL: API_BASE_URL") || apiConfig.includes("baseURL =")) {
+      logStatus('Axios Configuration', 'healthy', 'Proper baseURL setup')
+    } else {
+      logStatus('Axios Configuration', 'error', 'baseURL not properly configured')
+    }
+  } catch (error: any) {
+    logStatus('Frontend Check', 'error', error.message)
+  }
+
+  // 10. Auth Script Check
+  console.log('\n🔐 Authentication:')
+  try {
+    const seedScript = fs.readFileSync('scripts/seed/seed-admin.ts', 'utf8')
+    if (seedScript.includes('seedMasterAdmin')) {
+      logStatus('Seed Admin Script', 'healthy', 'Seed admin script present and valid')
+    }
+  } catch (error: any) {
+    logStatus('Authentication', 'error', `Seed script check failed: ${error.message}`)
+  }
+
+  // Summary
+  console.log('\n════════════════════════════════════════════════')
+  console.log('  Health Check Summary')
+  console.log('════════════════════════════════════════════════\n')
+
+  const healthy = results.filter((r) => r.status === 'healthy').length
+  const warning = results.filter((r) => r.status === 'warning').length
+  const error = results.filter((r) => r.status === 'error').length
+
+  console.log(`✅ Healthy: ${healthy}`)
+  console.log(`⚠️  Warnings: ${warning}`)
+  console.log(`❌ Errors: ${error}`)
+  console.log(`📊 Total Checks: ${results.length}\n`)
+
+  if (error > 0) {
+    console.log('🚨 CRITICAL ISSUES FOUND:')
+    results
+      .filter((r) => r.status === 'error')
+      .forEach((r) => console.log(`   - ${r.service}: ${r.details}`))
+    console.log()
+    process.exit(1)
+  } else if (warning > 0) {
+    console.log('⚠️  WARNINGS:')
+    results
+      .filter((r) => r.status === 'warning')
+      .forEach((r) => console.log(`   - ${r.service}: ${r.details}`))
+    console.log()
+  }
+
+  console.log('✅ Health check complete!\n')
+  process.exit(0)
 }
 
-// Run verification
-const verifier = new ServiceVerifier()
-verifier.verify().catch((error) => {
-  console.error('Verification script failed:', error)
+// Run health checks
+runHealthChecks().catch((error) => {
+  console.error('Fatal error:', error.message)
   process.exit(1)
 })

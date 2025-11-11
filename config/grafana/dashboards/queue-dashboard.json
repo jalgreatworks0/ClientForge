@@ -1,0 +1,386 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "queue-health",
+    "title": "Queue Health Dashboard - ClientForge CRM",
+    "tags": ["queue", "bullmq", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "type": "graph",
+        "title": "Queue Waiting Jobs",
+        "targets": [
+          {
+            "expr": "crm_queue_waiting",
+            "legendFormat": "{{queue}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Jobs"},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "thresholds": [
+          {"value": 1000, "colorMode": "critical", "op": "gt", "fill": true, "line": true}
+        ],
+        "alert": {
+          "name": "High Waiting Count",
+          "conditions": [
+            {
+              "evaluator": {"params": [1000], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "5m",
+          "frequency": "1m",
+          "handler": 1,
+          "message": "Queue has more than 1000 waiting jobs",
+          "noDataState": "no_data"
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "type": "graph",
+        "title": "Queue Active Jobs",
+        "targets": [
+          {
+            "expr": "crm_queue_active",
+            "legendFormat": "{{queue}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Jobs"},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 3,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "type": "graph",
+        "title": "Queue Failed Jobs (Rate)",
+        "targets": [
+          {
+            "expr": "rate(crm_queue_failed[5m])",
+            "legendFormat": "{{queue}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Failures/sec"},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "thresholds": [
+          {"value": 0.1, "colorMode": "critical", "op": "gt", "fill": true, "line": true}
+        ]
+      },
+      {
+        "id": 4,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "type": "graph",
+        "title": "Queue Dead Letter Queue (DLQ)",
+        "targets": [
+          {
+            "expr": "crm_queue_jobs_dlq_total",
+            "legendFormat": "{{queue}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "DLQ Jobs"},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "thresholds": [
+          {"value": 1, "colorMode": "critical", "op": "gt", "fill": true, "line": true}
+        ],
+        "alert": {
+          "name": "DLQ Jobs Present",
+          "conditions": [
+            {
+              "evaluator": {"params": [0], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "5m",
+          "frequency": "1m",
+          "handler": 1,
+          "message": "Dead Letter Queue has jobs that need investigation",
+          "noDataState": "no_data"
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "type": "graph",
+        "title": "Queue Lag (Oldest Job Age)",
+        "targets": [
+          {
+            "expr": "crm_queue_lag_seconds",
+            "legendFormat": "{{queue}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Seconds"},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "thresholds": [
+          {"value": 300, "colorMode": "critical", "op": "gt", "fill": true, "line": true}
+        ]
+      },
+      {
+        "id": 6,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "type": "graph",
+        "title": "Queue Completion Rate",
+        "targets": [
+          {
+            "expr": "rate(crm_queue_completed[5m])",
+            "legendFormat": "{{queue}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Jobs/sec"},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 7,
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24},
+        "type": "stat",
+        "title": "Total Waiting",
+        "targets": [
+          {
+            "expr": "sum(crm_queue_waiting)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 500, "color": "yellow"},
+              {"value": 1000, "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 24},
+        "type": "stat",
+        "title": "Total Active",
+        "targets": [
+          {
+            "expr": "sum(crm_queue_active)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 50, "color": "yellow"},
+              {"value": 100, "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 9,
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 24},
+        "type": "stat",
+        "title": "Total DLQ",
+        "targets": [
+          {
+            "expr": "sum(crm_queue_jobs_dlq_total)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 10,
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 24},
+        "type": "stat",
+        "title": "Queues Paused",
+        "targets": [
+          {
+            "expr": "sum(crm_queue_paused)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "value",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "green"},
+              {"value": 1, "color": "red"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 11,
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28},
+        "type": "table",
+        "title": "Queue Status Summary",
+        "targets": [
+          {
+            "expr": "crm_queue_waiting",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          },
+          {
+            "expr": "crm_queue_active",
+            "format": "table",
+            "instant": true,
+            "refId": "B"
+          },
+          {
+            "expr": "crm_queue_jobs_dlq_total",
+            "format": "table",
+            "instant": true,
+            "refId": "C"
+          },
+          {
+            "expr": "crm_queue_paused",
+            "format": "table",
+            "instant": true,
+            "refId": "D"
+          },
+          {
+            "expr": "crm_queue_lag_seconds",
+            "format": "table",
+            "instant": true,
+            "refId": "E"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true,
+                "instance": true,
+                "job": true
+              },
+              "indexByName": {
+                "queue": 0,
+                "Value #A": 1,
+                "Value #B": 2,
+                "Value #C": 3,
+                "Value #D": 4,
+                "Value #E": 5
+              },
+              "renameByName": {
+                "queue": "Queue",
+                "Value #A": "Waiting",
+                "Value #B": "Active",
+                "Value #C": "DLQ",
+                "Value #D": "Paused",
+                "Value #E": "Lag (s)"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "displayName": "Waiting",
+              "desc": true
+            }
+          ]
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "queue",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(crm_queue_waiting, queue)",
+          "refresh": 1,
+          "multi": true,
+          "includeAll": true,
+          "allValue": ".*"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"]
+    }
+  },
+  "overwrite": true
+}
