@@ -10,23 +10,20 @@ Quick guide to running the ClientForge CRM application on Windows.
 
 ## Quick Start (Recommended)
 
-### Option 1: Interactive Start
-Double-click `start-all.bat` or run:
-```bash
-.\start-all.bat
-```
-This will:
-- Check if Docker is running
-- Start all database services (PostgreSQL, MongoDB, Redis, Elasticsearch)
-- Ask if you want to start backend and frontend
-- Open new terminal windows for each service
+### 🚀 Elite Launcher (ONE-CLICK START)
 
-### Option 2: Automatic Start
-Double-click `quick-start.bat` or run:
+**Double-click `start-clientforge.bat` or run:**
 ```bash
-.\quick-start.bat
+.\start-clientforge.bat
 ```
-This automatically starts everything without prompts.
+
+This elite launcher will:
+- ✅ Start all Docker services (PostgreSQL, MongoDB, Redis, Elasticsearch)
+- ✅ Launch backend API on http://localhost:3000
+- ✅ Launch frontend UI on http://localhost:3001
+- ✅ Automatically open your browser to the login page
+
+**That's it! One command starts everything.**
 
 ## Access the Application
 
@@ -215,8 +212,7 @@ For production deployment, see:
 
 | Script | Purpose |
 |--------|---------|
-| `start-all.bat` | Interactive startup with prompts |
-| `quick-start.bat` | Automatic startup, no prompts |
+| `start-clientforge.bat` | Elite one-click launcher - starts everything |
 | `stop-all.bat` | Stop all services |
 
 | URL | Service |

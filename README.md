@@ -207,6 +207,25 @@ interface QuickContextComprehension {
 
 ---
 
+## 🚀 QUICK START FOR DEVELOPERS
+
+**Want to run the app immediately?**
+
+```bash
+# One-command startup (starts everything)
+.\start-clientforge.bat
+```
+
+This will:
+- ✅ Start all Docker services (PostgreSQL, MongoDB, Redis, Elasticsearch)
+- ✅ Launch backend API on http://localhost:3000
+- ✅ Launch frontend UI on http://localhost:3001
+- ✅ Automatically open your browser to the login page
+
+**For detailed setup instructions, troubleshooting, and database management, see [STARTUP-GUIDE.md](STARTUP-GUIDE.md).**
+
+---
+
 ## 🌟 PROJECT OVERVIEW
 
 ### Identity
