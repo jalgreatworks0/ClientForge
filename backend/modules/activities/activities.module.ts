@@ -3,11 +3,13 @@
  * Handles activity timeline system initialization and event handlers
  */
 
+import { EventEmitter } from 'events';
+
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { activityService } from '../../services/activity/activity.service';
 import { logger } from '../../utils/logging/logger';
-import { EventEmitter } from 'events';
 
 export interface IModule {
   name: string;

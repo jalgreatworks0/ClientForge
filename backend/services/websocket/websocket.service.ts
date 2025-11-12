@@ -3,9 +3,11 @@
  * Real-time bidirectional communication using Socket.io
  */
 
-import { Server as SocketIOServer, Socket } from 'socket.io'
 import { Server as HTTPServer } from 'http'
+
+import { Server as SocketIOServer, Socket } from 'socket.io'
 import { verify } from 'jsonwebtoken'
+
 import { logger } from '../../utils/logging/logger'
 
 interface JWTPayload {

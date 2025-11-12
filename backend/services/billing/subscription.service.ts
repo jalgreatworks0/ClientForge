@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Subscription Service
  * Manages subscription lifecycle including creation, upgrades, downgrades, and cancellations
  * Handles proration, billing cycles, and subscription status management
@@ -6,8 +6,10 @@
 
 import Stripe from 'stripe';
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
+
 import { StripeService } from './stripe.service';
 
 export interface SubscriptionPlan {
@@ -171,12 +173,12 @@ export class SubscriptionService {
 
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, stripe_subscription_id, stripe_customer_id,
+          id, tenantId, stripe_subscription_id, stripe_customer_id,
           plan_id, status, current_period_start, current_period_end,
           cancel_at_period_end, canceled_at, trial_start, trial_end,
           created_at, updated_at
          FROM subscriptions
-         WHERE tenant_id = $1 AND status IN ('active', 'trialing', 'past_due')
+         WHERE tenantId = $1 AND status IN ('active', 'trialing', 'past_due')
          ORDER BY created_at DESC
          LIMIT 1`,
         [tenantId]
@@ -190,7 +192,7 @@ export class SubscriptionService {
       const row = result.rows[0];
       return {
         id: row.id,
-        tenantId: row.tenant_id,
+        tenantId: row.tenantId,
         stripeSubscriptionId: row.stripe_subscription_id,
         stripeCustomerId: row.stripe_customer_id,
         planId: row.plan_id,
@@ -249,7 +251,7 @@ export class SubscriptionService {
       }
 
       // Get or create Stripe customer
-      let customerId = await this.stripeService.getCustomerIdForTenant(tenantId);
+      const customerId = await this.stripeService.getCustomerIdForTenant(tenantId);
       if (!customerId) {
         // Need to create customer first
         throw new Error(
@@ -286,7 +288,7 @@ export class SubscriptionService {
       // Store in database
       await this.pool.query(
         `INSERT INTO subscriptions (
-          tenant_id, stripe_subscription_id, stripe_customer_id, plan_id,
+          tenantId, stripe_subscription_id, stripe_customer_id, plan_id,
           status, current_period_start, current_period_end,
           cancel_at_period_end, trial_start, trial_end
         )
@@ -512,12 +514,12 @@ export class SubscriptionService {
         // If immediate cancellation, subscription might be inactive now
         const canceledResult = await this.pool.query(
           `SELECT
-            id, tenant_id, stripe_subscription_id, stripe_customer_id,
+            id, tenantId, stripe_subscription_id, stripe_customer_id,
             plan_id, status, current_period_start, current_period_end,
             cancel_at_period_end, canceled_at, trial_start, trial_end,
             created_at, updated_at
            FROM subscriptions
-           WHERE tenant_id = $1
+           WHERE tenantId = $1
            ORDER BY updated_at DESC
            LIMIT 1`,
           [tenantId]
@@ -527,7 +529,7 @@ export class SubscriptionService {
           const row = canceledResult.rows[0];
           return {
             id: row.id,
-            tenantId: row.tenant_id,
+            tenantId: row.tenantId,
             stripeSubscriptionId: row.stripe_subscription_id,
             stripeCustomerId: row.stripe_customer_id,
             planId: row.plan_id,

@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Elasticsearch Tenant Filter Middleware
- * Enforces tenant_id filtering on all Elasticsearch queries
+ * Enforces tenantId filtering on all Elasticsearch queries
  * Prevents cross-tenant data access at the query level
  */
 
@@ -8,8 +8,8 @@ import { Request, Response, NextFunction } from 'express'
 import { Client } from '@elastic/elasticsearch'
 
 /**
- * Middleware to enforce tenant_id in Elasticsearch queries
- * Automatically injects tenant_id filter based on authenticated user
+ * Middleware to enforce tenantId in Elasticsearch queries
+ * Automatically injects tenantId filter based on authenticated user
  */
 export function enforceTenantFilter(req: Request, res: Response, next: NextFunction): void {
   // Get tenantId from authenticated user
@@ -23,7 +23,7 @@ export function enforceTenantFilter(req: Request, res: Response, next: NextFunct
     return
   }
 
-  // Store tenant_id in request for downstream use
+  // Store tenantId in request for downstream use
   req.searchContext = {
     tenantId,
     originalQuery: req.body?.query
@@ -39,10 +39,10 @@ export class TenantAwareElasticsearchClient {
   constructor(private client: Client) {}
 
   /**
-   * Search with automatic tenant_id filter injection
+   * Search with automatic tenantId filter injection
    */
   async search(params: any, tenantId: string): Promise<any> {
-    // Validate tenant_id is present
+    // Validate tenantId is present
     if (!tenantId) {
       throw new Error('Tenant ID is required for search operations')
     }
@@ -50,7 +50,7 @@ export class TenantAwareElasticsearchClient {
     // Extract the original query
     const originalQuery = params.body?.query || { match_all: {} }
 
-    // Inject tenant_id filter
+    // Inject tenantId filter
     const tenantFilteredQuery = {
       bool: {
         must: [
@@ -59,7 +59,7 @@ export class TenantAwareElasticsearchClient {
         filter: [
           {
             term: {
-              tenant_id: tenantId
+              tenantId: tenantId
             }
           }
         ]
@@ -80,17 +80,17 @@ export class TenantAwareElasticsearchClient {
   }
 
   /**
-   * Index document with automatic tenant_id injection
+   * Index document with automatic tenantId injection
    */
   async index(params: any, tenantId: string): Promise<any> {
     if (!tenantId) {
       throw new Error('Tenant ID is required for indexing operations')
     }
 
-    // Inject tenant_id into document
+    // Inject tenantId into document
     const documentWithTenant = {
       ...params.body,
-      tenant_id: tenantId
+      tenantId: tenantId
     }
 
     const indexParams = {
@@ -102,7 +102,7 @@ export class TenantAwareElasticsearchClient {
   }
 
   /**
-   * Bulk operation with automatic tenant_id injection
+   * Bulk operation with automatic tenantId injection
    */
   async bulk(params: any, tenantId: string): Promise<any> {
     if (!tenantId) {
@@ -112,14 +112,14 @@ export class TenantAwareElasticsearchClient {
     // Parse bulk operations
     const operations = params.body
 
-    // Inject tenant_id into all documents
+    // Inject tenantId into all documents
     const tenantFilteredOperations = operations.map((op: any, index: number) => {
       // Bulk format: [action, document, action, document, ...]
       // Documents are at odd indices
       if (index % 2 === 1) {
         return {
           ...op,
-          tenant_id: tenantId
+          tenantId: tenantId
         }
       }
       return op
@@ -134,7 +134,7 @@ export class TenantAwareElasticsearchClient {
   }
 
   /**
-   * Update with tenant_id validation
+   * Update with tenantId validation
    */
   async update(params: any, tenantId: string): Promise<any> {
     if (!tenantId) {
@@ -147,7 +147,7 @@ export class TenantAwareElasticsearchClient {
       id: params.id
     })
 
-    const docTenantId = (getResponse._source as any)?.tenant_id
+    const docTenantId = (getResponse._source as any)?.tenantId
 
     if (docTenantId !== tenantId) {
       throw new Error(`Access denied: Document belongs to different tenant`)
@@ -158,7 +158,7 @@ export class TenantAwareElasticsearchClient {
   }
 
   /**
-   * Delete with tenant_id validation
+   * Delete with tenantId validation
    */
   async delete(params: any, tenantId: string): Promise<any> {
     if (!tenantId) {
@@ -171,7 +171,7 @@ export class TenantAwareElasticsearchClient {
       id: params.id
     })
 
-    const docTenantId = (getResponse._source as any)?.tenant_id
+    const docTenantId = (getResponse._source as any)?.tenantId
 
     if (docTenantId !== tenantId) {
       throw new Error(`Access denied: Document belongs to different tenant`)
@@ -182,7 +182,7 @@ export class TenantAwareElasticsearchClient {
   }
 
   /**
-   * Count with automatic tenant_id filter
+   * Count with automatic tenantId filter
    */
   async count(params: any, tenantId: string): Promise<any> {
     if (!tenantId) {
@@ -194,7 +194,7 @@ export class TenantAwareElasticsearchClient {
     const tenantFilteredQuery = {
       bool: {
         must: [originalQuery],
-        filter: [{ term: { tenant_id: tenantId } }]
+        filter: [{ term: { tenantId: tenantId } }]
       }
     }
 
@@ -256,7 +256,7 @@ export function getTenantAlias(indexPrefix: string, tenantId: string): string {
 }
 
 /**
- * Utility function to validate tenant_id format
+ * Utility function to validate tenantId format
  */
 export function isValidTenantId(tenantId: string): boolean {
   // UUID v4 format validation

@@ -1,9 +1,10 @@
-/**
+﻿/**
  * Search Synonyms Service
  * Manages Elasticsearch synonyms to improve search recall
  */
 
 import { Pool } from 'pg'
+
 import { logger } from '../../utils/logging/logger'
 import { getElasticsearchClient } from '../../../config/database/elasticsearch-config'
 
@@ -44,19 +45,19 @@ export class SearchSynonymsService {
       const result = await this.pool.query(
         `
         INSERT INTO search_synonyms (
-          tenant_id,
+          tenantId,
           synonyms,
           created_by,
           created_at
         ) VALUES ($1, $2, $3, NOW())
-        RETURNING id, tenant_id, synonyms, created_by, created_at
+        RETURNING id, tenantId, synonyms, created_by, created_at
         `,
         [tenantId, normalizedSynonyms, createdBy]
       )
 
       const synonym = {
         id: result.rows[0].id,
-        tenantId: result.rows[0].tenant_id,
+        tenantId: result.rows[0].tenantId,
         synonyms: result.rows[0].synonyms,
         createdBy: result.rows[0].created_by,
         createdAt: result.rows[0].created_at,
@@ -84,9 +85,9 @@ export class SearchSynonymsService {
     try {
       const result = await this.pool.query(
         `
-        SELECT id, tenant_id, synonyms, created_by, created_at
+        SELECT id, tenantId, synonyms, created_by, created_at
         FROM search_synonyms
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
         ORDER BY created_at DESC
         `,
         [tenantId]
@@ -94,7 +95,7 @@ export class SearchSynonymsService {
 
       return result.rows.map((row) => ({
         id: row.id,
-        tenantId: row.tenant_id,
+        tenantId: row.tenantId,
         synonyms: row.synonyms,
         createdBy: row.created_by,
         createdAt: row.created_at,
@@ -113,7 +114,7 @@ export class SearchSynonymsService {
       await this.pool.query(
         `
         DELETE FROM search_synonyms
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND tenantId = $2
         `,
         [synonymId, tenantId]
       )

@@ -1,10 +1,9 @@
-/**
+﻿/**
  * Email Tracking Routes
  * Handles tracking pixel requests for email open tracking
  */
 
 import { Router, Request, Response } from 'express'
-
 import { logger } from '@utils/logging/logger'
 import { getPostgresPool } from '@config/database/postgres-config'
 import { optionalAuthenticate as authenticateOptional } from '@middleware/authenticate'
@@ -31,7 +30,7 @@ router.get('/pixel/:emailSendId', async (req: Request, res: Response) => {
 
     // Check if email_send exists
     const sendResult = await pool.query(
-      `SELECT id, campaign_id, contact_id, tenant_id FROM email_sends WHERE id = $1`,
+      `SELECT id, campaign_id, contact_id, tenantId FROM email_sends WHERE id = $1`,
       [emailSendId]
     )
 
@@ -54,12 +53,12 @@ router.get('/pixel/:emailSendId', async (req: Request, res: Response) => {
     if (existingEvent.rows.length === 0) {
       await pool.query(
         `INSERT INTO email_events
-         (email_send_id, campaign_id, tenant_id, event_type, event_data, ip_address, user_agent, created_at)
+         (email_send_id, campaign_id, tenantId, event_type, event_data, ip_address, user_agent, created_at)
          VALUES ($1, $2, $3, 'open', $4, $5, $6, NOW())`,
         [
           emailSendId,
           emailSend.campaign_id,
-          emailSend.tenant_id,
+          emailSend.tenantId,
           JSON.stringify({ first_open: true }),
           ipAddress,
           userAgent,
@@ -75,12 +74,12 @@ router.get('/pixel/:emailSendId', async (req: Request, res: Response) => {
       // Record subsequent open (for engagement metrics)
       await pool.query(
         `INSERT INTO email_events
-         (email_send_id, campaign_id, tenant_id, event_type, event_data, ip_address, user_agent, created_at)
+         (email_send_id, campaign_id, tenantId, event_type, event_data, ip_address, user_agent, created_at)
          VALUES ($1, $2, $3, 'open', $4, $5, $6, NOW())`,
         [
           emailSendId,
           emailSend.campaign_id,
-          emailSend.tenant_id,
+          emailSend.tenantId,
           JSON.stringify({ subsequent_open: true }),
           ipAddress,
           userAgent,
@@ -118,7 +117,7 @@ router.get('/click/:emailSendId/:linkId', async (req: Request, res: Response) =>
 
     // Get email send info
     const sendResult = await pool.query(
-      `SELECT id, campaign_id, contact_id, tenant_id FROM email_sends WHERE id = $1`,
+      `SELECT id, campaign_id, contact_id, tenantId FROM email_sends WHERE id = $1`,
       [emailSendId]
     )
 
@@ -131,12 +130,12 @@ router.get('/click/:emailSendId/:linkId', async (req: Request, res: Response) =>
     // Record click event
     await pool.query(
       `INSERT INTO email_events
-       (email_send_id, campaign_id, tenant_id, event_type, event_data, ip_address, user_agent, created_at)
+       (email_send_id, campaign_id, tenantId, event_type, event_data, ip_address, user_agent, created_at)
        VALUES ($1, $2, $3, 'click', $4, $5, $6, NOW())`,
       [
         emailSendId,
         emailSend.campaign_id,
-        emailSend.tenant_id,
+        emailSend.tenantId,
         JSON.stringify({ link_id: linkId, url: url || '' }),
         ipAddress,
         userAgent,

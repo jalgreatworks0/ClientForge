@@ -4,12 +4,13 @@
  */
 
 import { Router, Request, Response } from 'express';
+import Stripe from 'stripe';
+
 import { StripeService } from '../../../../services/billing/stripe.service';
 import { InvoiceService } from '../../../../services/billing/invoice.service';
 import { SubscriptionService } from '../../../../services/billing/subscription.service';
 import { DunningService } from '../../../../services/billing/dunning.service';
 import { logger } from '../../../../utils/logging/logger';
-import Stripe from 'stripe';
 
 const router = Router();
 const stripeService = new StripeService();

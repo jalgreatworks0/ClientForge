@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Elasticsearch Search Service
  * Provides full-text search across all entities
  * Falls back to PostgreSQL full-text search if Elasticsearch unavailable
@@ -6,6 +6,7 @@
 
 import { Client } from '@elastic/elasticsearch';
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
 
@@ -127,7 +128,7 @@ export class ElasticsearchService {
 
       // Build Elasticsearch query
       const must: any[] = [
-        { term: { tenant_id: tenantId } },
+        { term: { tenantId: tenantId } },
         {
           multi_match: {
             query,
@@ -260,7 +261,7 @@ export class ElasticsearchService {
             c.created_at,
             c.updated_at
           FROM contacts c
-          WHERE c.tenant_id = $2
+          WHERE c.tenantId = $2
             AND to_tsvector('english', CONCAT(c.first_name, ' ', c.last_name, ' ', COALESCE(c.email, ''), ' ', COALESCE(c.phone, ''))) @@ plainto_tsquery('english', $1)
 
           UNION ALL
@@ -285,7 +286,7 @@ export class ElasticsearchService {
             d.created_at,
             d.updated_at
           FROM deals d
-          WHERE d.tenant_id = $2
+          WHERE d.tenantId = $2
             AND to_tsvector('english', CONCAT(d.name, ' ', COALESCE(d.description, ''))) @@ plainto_tsquery('english', $1)
 
           UNION ALL
@@ -310,7 +311,7 @@ export class ElasticsearchService {
             t.created_at,
             t.updated_at
           FROM tasks t
-          WHERE t.tenant_id = $2
+          WHERE t.tenantId = $2
             AND to_tsvector('english', CONCAT(t.title, ' ', COALESCE(t.description, ''))) @@ plainto_tsquery('english', $1)
 
           UNION ALL
@@ -333,7 +334,7 @@ export class ElasticsearchService {
             n.created_at,
             n.updated_at
           FROM notes n
-          WHERE n.tenant_id = $2
+          WHERE n.tenantId = $2
             AND to_tsvector('english', CONCAT(n.title, ' ', COALESCE(n.content, ''))) @@ plainto_tsquery('english', $1)
         )
         SELECT * FROM search_results
@@ -533,7 +534,7 @@ export class ElasticsearchService {
             },
             mappings: {
               properties: {
-                tenant_id: { type: 'keyword' },
+                tenantId: { type: 'keyword' },
                 entity_type: { type: 'keyword' },
                 title: { type: 'text', analyzer: 'custom_analyzer' },
                 description: { type: 'text', analyzer: 'custom_analyzer' },

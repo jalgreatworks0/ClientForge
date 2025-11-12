@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Email Sync Queue - BullMQ v3
  * Background job processor for syncing emails from Gmail and Outlook accounts
  * Uses centralized BullMQ configuration
  */
 
 import { Job } from 'bullmq'
+
 import { queueRegistry, createWorker } from '../../config/queue/bullmq.config'
 import { emailIntegrationService } from '../core/email/email-integration-service'
 import { db } from '../database/postgresql/pool'
@@ -134,7 +135,7 @@ export async function scheduleEmailSyncJobs(): Promise<number> {
 
     // Get all active email accounts
     const result = await db.query(
-      `SELECT id, user_id, tenant_id, provider, email
+      `SELECT id, user_id, tenantId, provider, email
        FROM email_accounts
        WHERE is_active = true
          AND sync_enabled = true
@@ -152,7 +153,7 @@ export async function scheduleEmailSyncJobs(): Promise<number> {
       const jobData: EmailSyncJob = {
         accountId: account.id,
         userId: account.user_id,
-        tenantId: account.tenant_id,
+        tenantId: account.tenantId,
         provider: account.provider,
       }
 

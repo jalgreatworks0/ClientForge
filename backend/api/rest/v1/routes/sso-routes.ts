@@ -4,6 +4,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+
 import { authenticate } from '../../../../middleware/authenticate';
 import { rateLimiters } from '../../../../middleware/rate-limit';
 import { SSOProviderService } from '../../../../services/auth/sso/sso-provider.service';

@@ -1,9 +1,10 @@
-/**
+﻿/**
  * Search Telemetry Service
  * Tracks search queries, results, and user behavior for analytics and improvements
  */
 
 import { Pool } from 'pg'
+
 import { logger } from '../../utils/logging/logger'
 
 export interface SearchTelemetryEvent {
@@ -50,7 +51,7 @@ export class SearchTelemetryService {
       await this.pool.query(
         `
         INSERT INTO search_telemetry (
-          tenant_id,
+          tenantId,
           user_id,
           query,
           query_lowercase,
@@ -99,7 +100,7 @@ export class SearchTelemetryService {
             clicked_id = $1,
             clicked_index = $2,
             clicked_at = NOW()
-        WHERE tenant_id = $3
+        WHERE tenantId = $3
           AND user_id = $4
           AND query_lowercase = $5
           AND created_at >= NOW() - INTERVAL '1 hour'
@@ -145,7 +146,7 @@ export class SearchTelemetryService {
             2
           ) as click_through_rate
         FROM search_telemetry
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
           ${dateFilter}
         `,
         [tenantId]
@@ -161,7 +162,7 @@ export class SearchTelemetryService {
           COUNT(*) as count,
           ROUND(AVG(result_count), 2) as avg_results
         FROM search_telemetry
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
           ${dateFilter}
         GROUP BY query_lowercase
         ORDER BY count DESC
@@ -177,7 +178,7 @@ export class SearchTelemetryService {
           query_lowercase as query,
           COUNT(*) as count
         FROM search_telemetry
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
           AND result_count = 0
           ${dateFilter}
         GROUP BY query_lowercase
@@ -223,7 +224,7 @@ export class SearchTelemetryService {
           query_lowercase as query,
           COUNT(*) as count
         FROM search_telemetry
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
           AND result_count = 0
           AND created_at >= NOW() - INTERVAL '30 days'
         GROUP BY query_lowercase

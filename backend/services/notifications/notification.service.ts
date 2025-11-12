@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Notification Service
  * Multi-channel notification system supporting:
  * - In-app notifications (WebSocket + database)
@@ -7,11 +7,13 @@
  * - Push notifications (FCM)
  */
 
+import { EventEmitter } from 'events';
+
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
 import { emailService } from '../email/email.service';
-import { EventEmitter } from 'events';
 
 export interface Notification {
   id: string;
@@ -156,7 +158,7 @@ export class NotificationService extends EventEmitter {
   private async createNotification(params: Omit<CreateNotificationParams, 'userId'> & { userId: string }): Promise<Notification> {
     const result = await this.pool.query(
       `INSERT INTO notifications (
-        tenant_id, user_id, type, title, message, data, channels, priority,
+        tenantId, user_id, type, title, message, data, channels, priority,
         action_url, image_url, expires_at, read
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, false)
@@ -368,7 +370,7 @@ export class NotificationService extends EventEmitter {
   async getPreferences(userId: string, tenantId: string): Promise<NotificationPreferences> {
     try {
       const result = await this.pool.query(
-        'SELECT * FROM notification_preferences WHERE user_id = $1 AND tenant_id = $2',
+        'SELECT * FROM notification_preferences WHERE user_id = $1 AND tenantId = $2',
         [userId, tenantId]
       );
 
@@ -380,7 +382,7 @@ export class NotificationService extends EventEmitter {
       const row = result.rows[0];
       return {
         userId: row.user_id,
-        tenantId: row.tenant_id,
+        tenantId: row.tenantId,
         channels: row.channels,
         types: row.types || {},
         quietHours: row.quiet_hours,
@@ -399,9 +401,9 @@ export class NotificationService extends EventEmitter {
    */
   async updatePreferences(userId: string, tenantId: string, preferences: Partial<NotificationPreferences>): Promise<void> {
     await this.pool.query(
-      `INSERT INTO notification_preferences (user_id, tenant_id, channels, types, quiet_hours)
+      `INSERT INTO notification_preferences (user_id, tenantId, channels, types, quiet_hours)
        VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (user_id, tenant_id)
+       ON CONFLICT (user_id, tenantId)
        DO UPDATE SET channels = $3, types = $4, quiet_hours = $5, updated_at = NOW()`,
       [
         userId,
@@ -432,7 +434,7 @@ export class NotificationService extends EventEmitter {
    */
   async markAllAsRead(userId: string, tenantId: string): Promise<void> {
     await this.pool.query(
-      'UPDATE notifications SET read = true, read_at = NOW() WHERE user_id = $1 AND tenant_id = $2 AND read = false',
+      'UPDATE notifications SET read = true, read_at = NOW() WHERE user_id = $1 AND tenantId = $2 AND read = false',
       [userId, tenantId]
     );
 
@@ -444,7 +446,7 @@ export class NotificationService extends EventEmitter {
    */
   async getUnreadCount(userId: string, tenantId: string): Promise<number> {
     const result = await this.pool.query(
-      'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND tenant_id = $2 AND read = false AND (expires_at IS NULL OR expires_at > NOW())',
+      'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND tenantId = $2 AND read = false AND (expires_at IS NULL OR expires_at > NOW())',
       [userId, tenantId]
     );
 
@@ -463,7 +465,7 @@ export class NotificationService extends EventEmitter {
 
     let query = `
       SELECT * FROM notifications
-      WHERE user_id = $1 AND tenant_id = $2
+      WHERE user_id = $1 AND tenantId = $2
       AND (expires_at IS NULL OR expires_at > NOW())
     `;
 
@@ -565,7 +567,7 @@ export class NotificationService extends EventEmitter {
         <p>Hi ${userName},</p>
         <p>${notification.message}</p>
         ${notification.actionUrl ? `<p><a href="${notification.actionUrl}" style="background-color:#2563eb;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;">View Details</a></p>` : ''}
-        <p style="color:#6b7280;font-size:14px;margin-top:30px;">© 2025 ClientForge</p>
+        <p style="color:#6b7280;font-size:14px;margin-top:30px;">Â© 2025 ClientForge</p>
       </body>
       </html>
     `;
@@ -574,7 +576,7 @@ export class NotificationService extends EventEmitter {
   private mapRowToNotification(row: any): Notification {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       userId: row.user_id,
       type: row.type,
       title: row.title,

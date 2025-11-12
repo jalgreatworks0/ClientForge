@@ -1,17 +1,20 @@
-/**
+﻿/**
  * Invoice Service
  * Manages invoice generation, PDF creation, payment tracking, and invoice history
  * Handles tax calculation integration and invoice delivery
  */
 
-import Stripe from 'stripe';
-import { Pool } from 'pg';
-import { getPool } from '../../database/postgresql/pool';
-import { logger } from '../../utils/logging/logger';
-import { StripeService } from './stripe.service';
-import puppeteer from 'puppeteer';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+import Stripe from 'stripe';
+import { Pool } from 'pg';
+import puppeteer from 'puppeteer';
+
+import { getPool } from '../../database/postgresql/pool';
+import { logger } from '../../utils/logging/logger';
+
+import { StripeService } from './stripe.service';
 
 export interface InvoiceInfo {
   id: string;
@@ -77,12 +80,12 @@ export class InvoiceService {
 
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, stripe_invoice_id, stripe_customer_id, subscription_id,
+          id, tenantId, stripe_invoice_id, stripe_customer_id, subscription_id,
           invoice_number, status, amount_due, amount_paid, amount_remaining,
           currency, tax, total, subtotal, due_date, paid_at, attempted_at,
           next_payment_attempt, pdf_url, created_at, updated_at
          FROM invoices
-         WHERE tenant_id = $1 AND id = $2`,
+         WHERE tenantId = $1 AND id = $2`,
         [tenantId, invoiceId]
       );
 
@@ -122,12 +125,12 @@ export class InvoiceService {
 
       let query = `
         SELECT
-          id, tenant_id, stripe_invoice_id, stripe_customer_id, subscription_id,
+          id, tenantId, stripe_invoice_id, stripe_customer_id, subscription_id,
           invoice_number, status, amount_due, amount_paid, amount_remaining,
           currency, tax, total, subtotal, due_date, paid_at, attempted_at,
           next_payment_attempt, pdf_url, created_at, updated_at
         FROM invoices
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
       `;
 
       const params: any[] = [tenantId];
@@ -145,7 +148,7 @@ export class InvoiceService {
       const result = await this.pool.query(query, params);
 
       // Get total count
-      let countQuery = 'SELECT COUNT(*) FROM invoices WHERE tenant_id = $1';
+      let countQuery = 'SELECT COUNT(*) FROM invoices WHERE tenantId = $1';
       const countParams: any[] = [tenantId];
 
       if (status) {
@@ -463,7 +466,7 @@ export class InvoiceService {
   private async storeInvoice(tenantId: string, invoice: Stripe.Invoice): Promise<void> {
     await this.pool.query(
       `INSERT INTO invoices (
-        tenant_id, stripe_invoice_id, stripe_customer_id, subscription_id,
+        tenantId, stripe_invoice_id, stripe_customer_id, subscription_id,
         invoice_number, status, amount_due, amount_paid, amount_remaining,
         currency, tax, total, subtotal, due_date, paid_at, attempted_at,
         next_payment_attempt
@@ -519,12 +522,12 @@ export class InvoiceService {
   ): Promise<InvoiceInfo | null> {
     const result = await this.pool.query(
       `SELECT
-        id, tenant_id, stripe_invoice_id, stripe_customer_id, subscription_id,
+        id, tenantId, stripe_invoice_id, stripe_customer_id, subscription_id,
         invoice_number, status, amount_due, amount_paid, amount_remaining,
         currency, tax, total, subtotal, due_date, paid_at, attempted_at,
         next_payment_attempt, pdf_url, created_at, updated_at
        FROM invoices
-       WHERE tenant_id = $1 AND stripe_invoice_id = $2`,
+       WHERE tenantId = $1 AND stripe_invoice_id = $2`,
       [tenantId, stripeInvoiceId]
     );
 
@@ -541,7 +544,7 @@ export class InvoiceService {
   private mapRowToInvoice(row: any): InvoiceInfo {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       stripeInvoiceId: row.stripe_invoice_id,
       stripeCustomerId: row.stripe_customer_id,
       subscriptionId: row.subscription_id,

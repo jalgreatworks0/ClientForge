@@ -1,4 +1,4 @@
-/**
+﻿/**
  * User Repository
  * Database access layer for users table
  */
@@ -126,7 +126,7 @@ export class UserRepository {
         LEFT JOIN user_roles ur ON u.id = ur.user_id
         LEFT JOIN roles r ON ur.role_id = r.id
         WHERE u.email = $1
-          AND u.tenant_id = $2`,
+          AND u.tenantId = $2`,
         [email, tenantId]
       )
 
@@ -163,7 +163,7 @@ export class UserRepository {
         LEFT JOIN user_roles ur ON u.id = ur.user_id
         LEFT JOIN roles r ON ur.role_id = r.id
         WHERE u.id = $1
-          AND u.tenant_id = $2`,
+          AND u.tenantId = $2`,
         [id, tenantId]
       )
 
@@ -189,7 +189,7 @@ export class UserRepository {
       // Insert user
       const userResult = await client.query<User>(
         `INSERT INTO users (
-          tenant_id, email, password_hash,
+          tenantId, email, password_hash,
           first_name, last_name, phone, timezone, locale
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *`,
@@ -295,7 +295,7 @@ export class UserRepository {
         `UPDATE users
         SET ${updates.join(', ')}
         WHERE id = $${paramIndex++}
-          AND tenant_id = $${paramIndex++}
+          AND tenantId = $${paramIndex++}
           AND deleted_at IS NULL
         RETURNING *`,
         values
@@ -430,7 +430,7 @@ export class UserRepository {
         SET deleted_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
-          AND tenant_id = $2`,
+          AND tenantId = $2`,
         [id, tenantId]
       )
 
@@ -447,7 +447,7 @@ export class UserRepository {
   private mapRowToUser(row: any): User {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       roleId: row.role_id,
       email: row.email,
       passwordHash: row.password_hash,

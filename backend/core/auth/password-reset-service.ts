@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Password Reset Service
  * Handles password reset token generation and password updates
  */
@@ -47,7 +47,7 @@ export class PasswordResetService {
         `SELECT id, email, first_name, is_active, deleted_at
          FROM users
          WHERE email = $1
-           AND tenant_id = $2
+           AND tenantId = $2
            AND deleted_at IS NULL`,
         [email, tenantId]
       )
@@ -141,7 +141,7 @@ export class PasswordResetService {
 
       // Find valid token
       const result = await pool.query(
-        `SELECT rt.user_id, rt.expires_at, u.email, u.tenant_id
+        `SELECT rt.user_id, rt.expires_at, u.email, u.tenantId
          FROM password_reset_tokens rt
          JOIN users u ON rt.user_id = u.id
          WHERE rt.token_hash = $1
@@ -157,7 +157,7 @@ export class PasswordResetService {
         throw new ValidationError('Invalid or expired password reset token')
       }
 
-      const { user_id, email, tenant_id } = result.rows[0]
+      const { user_id, email, tenantId } = result.rows[0]
 
       // Hash new password
       const passwordHash = await passwordService.hash(newPassword)
@@ -186,7 +186,7 @@ export class PasswordResetService {
       await sessionService.deleteAllUserSessions(user_id)
 
       // Audit log
-      await auditLogger.logPasswordChanged(user_id, email, tenant_id)
+      await auditLogger.logPasswordChanged(user_id, email, tenantId)
 
       logger.info('Password reset successfully', { userId: user_id, email })
 

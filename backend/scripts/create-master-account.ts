@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Create Master Account Script
  * Creates the default tenant and master admin user
  */
@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getPool } from '../database/postgresql/pool'
 import { hashPassword } from '../core/auth/password-service'
 
-const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'
+const DEFAULT_tenantId = '00000000-0000-0000-0000-000000000001'
 const MASTER_EMAIL = 'master@clientforge.io'
 const MASTER_PASSWORD = process.env.MASTER_PASSWORD || (() => { throw new Error("MASTER_PASSWORD environment variable is required. Please set it in .env file.") })()
 
@@ -19,7 +19,7 @@ async function createMasterAccount() {
     console.log('[SETUP] Creating master account...')
 
     // 1. Create default tenant
-    const tenantId = DEFAULT_TENANT_ID
+    const tenantId = DEFAULT_tenantId
     await pool.query(
       `
       INSERT INTO tenants (id, name, slug, status, created_at, updated_at)
@@ -32,7 +32,7 @@ async function createMasterAccount() {
 
     // 2. Check if master user already exists
     const existingUser = await pool.query(
-      'SELECT id FROM users WHERE email = $1 AND tenant_id = $2',
+      'SELECT id FROM users WHERE email = $1 AND tenantId = $2',
       [MASTER_EMAIL, tenantId]
     )
 
@@ -49,7 +49,7 @@ async function createMasterAccount() {
     await pool.query(
       `
       INSERT INTO users (
-        id, tenant_id, email, password_hash, username,
+        id, tenantId, email, password_hash, username,
         first_name, last_name, role, status,
         email_verified, created_at, updated_at
       )

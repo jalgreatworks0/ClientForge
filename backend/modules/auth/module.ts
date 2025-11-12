@@ -3,8 +3,9 @@
  * Authentication and authorization module
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
+
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { logger } from '../../utils/logging/logger';
 import authRoutes from '../../api/rest/v1/routes/auth-routes';
 

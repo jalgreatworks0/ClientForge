@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Deal Service
  * Business logic for deals/opportunities management
  */
@@ -82,7 +82,7 @@ export class DealService {
       await elasticsearchSyncService.syncDeal(
         {
           id: deal.id,
-          tenant_id: tenantId,
+          tenantId: tenantId,
           name: deal.name,
           account_name: '', // TODO: Fetch from accounts table using accountId
           contact_name: '', // TODO: Fetch from contacts table using contactId
@@ -205,7 +205,7 @@ export class DealService {
       await elasticsearchSyncService.syncDeal(
         {
           id: updatedDeal.id,
-          tenant_id: tenantId,
+          tenantId: tenantId,
           name: updatedDeal.name,
           account_name: '', // TODO: Fetch from accounts table using accountId
           contact_name: '', // TODO: Fetch from contacts table using contactId
@@ -252,7 +252,7 @@ export class DealService {
       await elasticsearchSyncService.syncDeal(
         {
           id,
-          tenant_id: tenantId,
+          tenantId: tenantId,
         },
         'delete'
       )

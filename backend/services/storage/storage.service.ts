@@ -1,13 +1,15 @@
-/**
+﻿/**
  * Storage Service
  * Handles file storage with MinIO (development) and Cloudflare R2 (production)
  * Provides signed URLs for secure file access
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import crypto from 'crypto';
 import { Readable } from 'stream';
+
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
 import { logger } from '../../utils/logging/logger';
 import { pool } from '../../database/postgresql/pool';
 
@@ -43,7 +45,7 @@ interface FileRecord {
   original_name: string;
   mime_type: string;
   size: number;
-  tenant_id: string;
+  tenantId: string;
   uploaded_by: string;
   entity_type?: string;
   entity_id?: string;
@@ -143,7 +145,7 @@ class StorageService {
       const dbResult = await pool.query(`
         INSERT INTO files (
           id, key, original_name, mime_type, size,
-          tenant_id, uploaded_by, entity_type, entity_id
+          tenantId, uploaded_by, entity_type, entity_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
       `, [
@@ -205,7 +207,7 @@ class StorageService {
     try {
       // Verify file exists and belongs to tenant
       const result = await pool.query(`
-        SELECT key, tenant_id, deleted_at
+        SELECT key, tenantId, deleted_at
         FROM files
         WHERE id = $1 AND deleted_at IS NULL
       `, [fileId]);
@@ -217,7 +219,7 @@ class StorageService {
       const file = result.rows[0];
 
       // Verify tenant access
-      if (file.tenant_id !== tenantId) {
+      if (file.tenantId !== tenantId) {
         throw new Error('Access denied: File belongs to different tenant');
       }
 
@@ -257,7 +259,7 @@ class StorageService {
     try {
       // Get file info and verify ownership
       const result = await pool.query(`
-        SELECT key, tenant_id
+        SELECT key, tenantId
         FROM files
         WHERE id = $1 AND deleted_at IS NULL
       `, [fileId]);
@@ -269,7 +271,7 @@ class StorageService {
       const file = result.rows[0];
 
       // Verify tenant access
-      if (file.tenant_id !== tenantId) {
+      if (file.tenantId !== tenantId) {
         throw new Error('Access denied: File belongs to different tenant');
       }
 
@@ -313,7 +315,7 @@ class StorageService {
       const result = await pool.query(`
         SELECT *
         FROM files
-        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL
       `, [fileId, tenantId]);
 
       if (result.rows.length === 0) {
@@ -363,7 +365,7 @@ class StorageService {
       const result = await pool.query(`
         SELECT *
         FROM files
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
           AND entity_type = $2
           AND entity_id = $3
           AND deleted_at IS NULL
@@ -404,12 +406,12 @@ class StorageService {
             entity_type,
             COUNT(*) as file_count
           FROM files
-          WHERE tenant_id = $1 AND deleted_at IS NULL
+          WHERE tenantId = $1 AND deleted_at IS NULL
           GROUP BY entity_type
         ) counts,
         files
-        WHERE files.tenant_id = $1 AND files.deleted_at IS NULL
-        GROUP BY files.tenant_id
+        WHERE files.tenantId = $1 AND files.deleted_at IS NULL
+        GROUP BY files.tenantId
       `, [tenantId]);
 
       const row = result.rows[0] || { total_files: 0, total_size: 0, files_by_type: {} };

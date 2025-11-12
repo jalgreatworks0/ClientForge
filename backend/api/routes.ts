@@ -4,11 +4,11 @@
  */
 
 import { Application } from 'express'
+import { register } from 'prom-client'
 
 import { appConfig } from '../../config/app/app-config'
 import { getPool } from '../database/postgresql/pool'
 import { performanceStatsEndpoint } from '../middleware/performance-monitoring'
-import { register } from 'prom-client'
 
 import authRoutes from './rest/v1/routes/auth-routes'
 import healthRoutes from './rest/v1/routes/health-routes'

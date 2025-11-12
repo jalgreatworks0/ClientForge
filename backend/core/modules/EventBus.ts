@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
+
 import { logger } from '../../utils/logging/logger';
 
 export class ModuleEventBus extends EventEmitter {

@@ -4,11 +4,13 @@
  * with backup codes, QR code generation, and account lockout protection
  */
 
+import * as crypto from 'crypto';
+
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
+
 import { getPool } from '../../../database/postgresql/pool';
 import { logger } from '../../../utils/logging/logger';
-import * as crypto from 'crypto';
 
 export interface TOTPSetupData {
   secret: string;

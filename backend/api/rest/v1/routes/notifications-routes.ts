@@ -4,11 +4,12 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+
 import { notificationService } from '../../../../services/notifications/notification.service';
 import { authenticate } from '../../../../middleware/authenticate';
 import { validateRequest } from '../../../../middleware/validate-request';
 import { logger } from '../../../../utils/logging/logger';
-import { z } from 'zod';
 
 const router = Router();
 

@@ -4,9 +4,11 @@
  */
 
 import { ConfidentialClientApplication, AuthorizationCodeRequest } from '@azure/msal-node';
-import { SSOProviderService, SSOTokenData } from './sso-provider.service';
+
 import { logger } from '../../../utils/logging/logger';
 import { getPool } from '../../../database/postgresql/pool';
+
+import { SSOProviderService, SSOTokenData } from './sso-provider.service';
 
 export interface MicrosoftUserProfile {
   userId: string;

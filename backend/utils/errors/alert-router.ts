@@ -1,15 +1,17 @@
-/**
+﻿/**
  * Alert Routing
  *
  * Routes error alerts based on severity:
- * - critical → PagerDuty
- * - major → Slack
- * - minor → Daily digest
+ * - critical â†’ PagerDuty
+ * - major â†’ Slack
+ * - minor â†’ Daily digest
  */
 
-import { logger } from "../logging/logger";
-import type { ProblemDetails } from "./problem-details";
 import axios from "axios";
+
+import { logger } from "../logging/logger";
+
+import type { ProblemDetails } from "./problem-details";
 
 export type Severity = "minor" | "major" | "critical";
 
@@ -108,7 +110,7 @@ async function sendToPager(problem: ProblemDetails): Promise<void> {
         custom_details: {
           error_id: problem.errorId,
           correlation_id: problem.correlationId,
-          tenant_id: problem.tenantId || "N/A",
+          tenantId: problem.tenantId || "N/A",
           runbook: problem.runbook || "N/A",
           detail: problem.detail,
           http_status: problem.status,

@@ -1,10 +1,9 @@
-/**
+﻿/**
  * Search Routes
  * Unified search across contacts, accounts, and deals using Elasticsearch
  */
 
 import { Router, Request, Response, NextFunction } from 'express'
-
 import { authenticate } from '@middleware/authenticate'
 import { getElasticsearchClient } from '@config/database/elasticsearch-config'
 import { logger } from '@utils/logging/logger'
@@ -69,7 +68,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response, n
               },
               {
                 term: {
-                  tenant_id: tenantId,
+                  tenantId: tenantId,
                 },
               },
             ],
@@ -150,7 +149,7 @@ router.get('/suggest', authenticate, async (req: AuthenticatedRequest, res: Resp
               },
               {
                 term: {
-                  tenant_id: tenantId,
+                  tenantId: tenantId,
                 },
               },
             ],
@@ -192,19 +191,19 @@ router.get('/stats', authenticate, async (req: AuthenticatedRequest, res: Respon
       elasticClient.count({
         index: 'contacts',
         query: {
-          term: { tenant_id: tenantId },
+          term: { tenantId: tenantId },
         },
       }),
       elasticClient.count({
         index: 'accounts',
         query: {
-          term: { tenant_id: tenantId },
+          term: { tenantId: tenantId },
         },
       }),
       elasticClient.count({
         index: 'deals',
         query: {
-          term: { tenant_id: tenantId },
+          term: { tenantId: tenantId },
         },
       }),
     ])

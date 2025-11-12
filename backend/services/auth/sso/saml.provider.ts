@@ -1,13 +1,15 @@
-/**
+﻿/**
  * SAML Provider
  * Implements SAML 2.0 SSO authentication for enterprise identity providers
  * Note: This is a basic implementation. For production, consider using saml2-js more extensively
  */
 
 import { SAML } from 'saml2-js';
-import { SSOProviderService } from './sso-provider.service';
+
 import { logger } from '../../../utils/logging/logger';
 import { getPool } from '../../../database/postgresql/pool';
+
+import { SSOProviderService } from './sso-provider.service';
 
 export interface SAMLUserProfile {
   userId: string;
@@ -262,7 +264,7 @@ export class SAMLProvider {
         `SELECT id, provider_type, provider_name, metadata_url,
                 saml_entity_id, saml_sso_url, enabled
          FROM sso_providers
-         WHERE tenant_id = $1 AND provider_type = 'saml' AND enabled = true`,
+         WHERE tenantId = $1 AND provider_type = 'saml' AND enabled = true`,
         [tenantId]
       );
 

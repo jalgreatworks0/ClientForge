@@ -4,6 +4,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+
 import { StripeService } from '../../../../services/billing/stripe.service';
 import { PaymentMethodsService } from '../../../../services/billing/payment-methods.service';
 import { logger } from '../../../../utils/logging/logger';

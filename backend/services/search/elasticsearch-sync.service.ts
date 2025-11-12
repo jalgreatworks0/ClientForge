@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Elasticsearch Sync Service
  * Real-time synchronization of database changes to Elasticsearch
  */
@@ -109,13 +109,13 @@ class ElasticsearchSyncService {
     const index = 'contacts'
 
     if (action === 'delete') {
-      await this.deleteDocument(index, contact.contact_id, contact.tenant_id)
+      await this.deleteDocument(index, contact.contact_id, contact.tenantId)
       return
     }
 
     const document: SyncDocument = {
       id: contact.contact_id,
-      tenantId: contact.tenant_id,
+      tenantId: contact.tenantId,
       firstName: contact.first_name,
       lastName: contact.last_name,
       fullName: `${contact.first_name} ${contact.last_name}`,
@@ -146,13 +146,13 @@ class ElasticsearchSyncService {
     const index = 'accounts'
 
     if (action === 'delete') {
-      await this.deleteDocument(index, account.account_id, account.tenant_id)
+      await this.deleteDocument(index, account.account_id, account.tenantId)
       return
     }
 
     const document: SyncDocument = {
       id: account.account_id,
-      tenantId: account.tenant_id,
+      tenantId: account.tenantId,
       name: account.name,
       website: account.website,
       industry: account.industry,
@@ -182,13 +182,13 @@ class ElasticsearchSyncService {
     const index = 'deals'
 
     if (action === 'delete') {
-      await this.deleteDocument(index, deal.deal_id, deal.tenant_id)
+      await this.deleteDocument(index, deal.deal_id, deal.tenantId)
       return
     }
 
     const document: SyncDocument = {
       id: deal.deal_id,
-      tenantId: deal.tenant_id,
+      tenantId: deal.tenantId,
       name: deal.name,
       amount: deal.amount,
       stage: deal.stage,
@@ -239,7 +239,7 @@ class ElasticsearchSyncService {
   async reindexContacts(tenantId: string, contacts: any[]): Promise<void> {
     const documents = contacts.map((contact) => ({
       id: contact.contact_id,
-      tenantId: contact.tenant_id,
+      tenantId: contact.tenantId,
       firstName: contact.first_name,
       lastName: contact.last_name,
       fullName: `${contact.first_name} ${contact.last_name}`,

@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Custom Fields Service
  * Manages dynamic custom fields for entities (contacts, deals, companies, etc.)
  * Supports various field types: text, number, date, select, multi-select, checkbox, url, email, phone
  */
 
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
 
@@ -85,7 +86,7 @@ export class CustomFieldService {
       // Check if field name already exists for this entity type
       const existingField = await this.pool.query(
         `SELECT id FROM custom_fields
-         WHERE tenant_id = $1 AND entity_type = $2 AND field_name = $3`,
+         WHERE tenantId = $1 AND entity_type = $2 AND field_name = $3`,
         [params.tenantId, params.entityType, params.fieldName]
       );
 
@@ -97,7 +98,7 @@ export class CustomFieldService {
       const orderResult = await this.pool.query(
         `SELECT COALESCE(MAX("order"), 0) + 1 as next_order
          FROM custom_fields
-         WHERE tenant_id = $1 AND entity_type = $2`,
+         WHERE tenantId = $1 AND entity_type = $2`,
         [params.tenantId, params.entityType]
       );
 
@@ -106,7 +107,7 @@ export class CustomFieldService {
       // Create custom field
       const result = await this.pool.query(
         `INSERT INTO custom_fields (
-          tenant_id, entity_type, field_name, field_label, field_type,
+          tenantId, entity_type, field_name, field_label, field_type,
           field_options, default_value, required, "order", metadata, created_by
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -198,7 +199,7 @@ export class CustomFieldService {
       const result = await this.pool.query(
         `UPDATE custom_fields
          SET ${setClauses.join(', ')}
-         WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}
+         WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1}
          RETURNING *`,
         values
       );
@@ -233,7 +234,7 @@ export class CustomFieldService {
       const result = await this.pool.query(
         `UPDATE custom_fields
          SET deleted_at = NOW()
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+         WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL
          RETURNING id`,
         [fieldId, tenantId]
       );
@@ -245,7 +246,7 @@ export class CustomFieldService {
       // Delete all associated values
       await this.pool.query(
         `DELETE FROM custom_field_values
-         WHERE field_id = $1 AND tenant_id = $2`,
+         WHERE field_id = $1 AND tenantId = $2`,
         [fieldId, tenantId]
       );
 
@@ -272,7 +273,7 @@ export class CustomFieldService {
     try {
       const result = await this.pool.query(
         `SELECT * FROM custom_fields
-         WHERE tenant_id = $1 AND entity_type = $2 AND deleted_at IS NULL
+         WHERE tenantId = $1 AND entity_type = $2 AND deleted_at IS NULL
          ORDER BY "order" ASC`,
         [tenantId, entityType]
       );
@@ -295,7 +296,7 @@ export class CustomFieldService {
     try {
       const result = await this.pool.query(
         `SELECT * FROM custom_fields
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+         WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [fieldId, tenantId]
       );
 
@@ -328,7 +329,7 @@ export class CustomFieldService {
         await this.pool.query(
           `UPDATE custom_fields
            SET "order" = $1, updated_at = NOW()
-           WHERE id = $2 AND tenant_id = $3 AND entity_type = $4`,
+           WHERE id = $2 AND tenantId = $3 AND entity_type = $4`,
           [i, fieldIdOrder[i], tenantId, entityType]
         );
       }
@@ -366,10 +367,10 @@ export class CustomFieldService {
       // Upsert value
       const result = await this.pool.query(
         `INSERT INTO custom_field_values (
-          tenant_id, field_id, entity_id, entity_type, value
+          tenantId, field_id, entity_id, entity_type, value
         )
         VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (tenant_id, field_id, entity_id)
+        ON CONFLICT (tenantId, field_id, entity_id)
         DO UPDATE SET value = $5, updated_at = NOW()
         RETURNING *`,
         [
@@ -410,7 +411,7 @@ export class CustomFieldService {
         `SELECT cf.field_name, cf.field_type, cfv.value
          FROM custom_field_values cfv
          JOIN custom_fields cf ON cfv.field_id = cf.id
-         WHERE cfv.tenant_id = $1 AND cfv.entity_type = $2 AND cfv.entity_id = $3
+         WHERE cfv.tenantId = $1 AND cfv.entity_type = $2 AND cfv.entity_id = $3
          AND cf.deleted_at IS NULL`,
         [tenantId, entityType, entityId]
       );
@@ -446,7 +447,7 @@ export class CustomFieldService {
     try {
       await this.pool.query(
         `DELETE FROM custom_field_values
-         WHERE tenant_id = $1 AND field_id = $2 AND entity_id = $3`,
+         WHERE tenantId = $1 AND field_id = $2 AND entity_id = $3`,
         [tenantId, fieldId, entityId]
       );
 
@@ -534,7 +535,7 @@ export class CustomFieldService {
   private mapRowToCustomField(row: any): CustomField {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       entityType: row.entity_type,
       fieldName: row.field_name,
       fieldLabel: row.field_label,
@@ -553,7 +554,7 @@ export class CustomFieldService {
   private mapRowToCustomFieldValue(row: any): CustomFieldValue {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       fieldId: row.field_id,
       entityId: row.entity_id,
       entityType: row.entity_type,

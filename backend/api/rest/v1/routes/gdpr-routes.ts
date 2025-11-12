@@ -1,14 +1,15 @@
-/**
+﻿/**
  * GDPR API Routes
  * Handles data subject requests and consent management
  */
 
 import express, { Request, Response, Router } from 'express';
+import { z } from 'zod';
+
 import { GDPRService } from '../../../../services/compliance/gdpr.service';
 import { authenticate } from '../../../../middleware/authenticate';
 import { validateRequest } from '../../../../middleware/validate-request';
 import { logger } from '../../../../utils/logging/logger';
-import { z } from 'zod';
 
 const router = Router();
 const gdprService = new GDPRService();
@@ -185,7 +186,7 @@ router.get('/requests', authenticate, async (req: Request, res: Response) => {
     const { status, type, limit = 50, offset = 0 } = req.query;
 
     // Build query dynamically
-    let query = 'SELECT * FROM data_subject_requests WHERE tenant_id = $1';
+    let query = 'SELECT * FROM data_subject_requests WHERE tenantId = $1';
     const params: any[] = [tenantId];
     let paramIndex = 2;
 
@@ -237,7 +238,7 @@ router.get('/requests/:id', authenticate, async (req: Request, res: Response) =>
     const tenantId = req.user!.tenantId;
 
     const result = await gdprService['pool'].query(
-      'SELECT * FROM data_subject_requests WHERE id = $1 AND tenant_id = $2',
+      'SELECT * FROM data_subject_requests WHERE id = $1 AND tenantId = $2',
       [id, tenantId]
     );
 
@@ -283,7 +284,7 @@ router.post('/requests/:id/execute', authenticate, async (req: Request, res: Res
 
     // Get request details
     const result = await gdprService['pool'].query(
-      'SELECT * FROM data_subject_requests WHERE id = $1 AND tenant_id = $2',
+      'SELECT * FROM data_subject_requests WHERE id = $1 AND tenantId = $2',
       [id, tenantId]
     );
 
@@ -356,7 +357,7 @@ router.post(
 
       // Verify user belongs to tenant
       const userResult = await gdprService['pool'].query(
-        'SELECT id FROM users WHERE id = $1 AND tenant_id = $2',
+        'SELECT id FROM users WHERE id = $1 AND tenantId = $2',
         [userId, tenantId]
       );
 
@@ -410,7 +411,7 @@ router.get('/consent/:userId', authenticate, async (req: Request, res: Response)
 
     const result = await gdprService['pool'].query(
       `SELECT * FROM consent_records
-       WHERE tenant_id = $1 AND user_id = $2
+       WHERE tenantId = $1 AND user_id = $2
        ORDER BY created_at DESC`,
       [tenantId, userId]
     );

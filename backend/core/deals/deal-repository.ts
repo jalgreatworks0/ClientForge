@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Deal Repository
  * Database access layer for deals/opportunities
  */
@@ -34,7 +34,7 @@ export class DealRepository {
   async create(tenantId: string, data: CreateDealInput): Promise<Deal> {
     const result = await this.pool.query<Deal>(
       `INSERT INTO deals (
-        tenant_id, owner_id, account_id, contact_id, pipeline_id, stage_id,
+        tenantId, owner_id, account_id, contact_id, pipeline_id, stage_id,
         name, amount, currency, probability, expected_close_date, lead_source,
         next_step, description, tags, competitors, decision_makers, key_contacts,
         last_stage_change_at
@@ -44,7 +44,7 @@ export class DealRepository {
       )
       RETURNING
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         account_id as "accountId",
         contact_id as "contactId",
@@ -104,7 +104,7 @@ export class DealRepository {
     const result = await this.pool.query<Deal>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         account_id as "accountId",
         contact_id as "contactId",
@@ -133,7 +133,7 @@ export class DealRepository {
         updated_at as "updatedAt",
         deleted_at as "deletedAt"
       FROM deals
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -182,7 +182,7 @@ export class DealRepository {
       LEFT JOIN contacts c ON c.id = d.contact_id
       LEFT JOIN pipelines p ON p.id = d.pipeline_id
       LEFT JOIN deal_stages ds ON ds.id = d.stage_id
-      WHERE d.id = $1 AND d.tenant_id = $2 AND d.deleted_at IS NULL`,
+      WHERE d.id = $1 AND d.tenantId = $2 AND d.deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -195,7 +195,7 @@ export class DealRepository {
   async list(tenantId: string, options: DealListOptions): Promise<DealListResponse> {
     const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', filters = {} } = options
 
-    const whereClauses: string[] = ['d.tenant_id = $1', 'd.deleted_at IS NULL']
+    const whereClauses: string[] = ['d.tenantId = $1', 'd.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -319,7 +319,7 @@ export class DealRepository {
     const result = await this.pool.query<Deal>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         account_id as "accountId",
         contact_id as "contactId",
@@ -412,10 +412,10 @@ export class DealRepository {
     const result = await this.pool.query<Deal>(
       `UPDATE deals
        SET ${fields.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         account_id as "accountId",
         contact_id as "contactId",
@@ -456,7 +456,7 @@ export class DealRepository {
     const result = await this.pool.query(
       `UPDATE deals
        SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -470,7 +470,7 @@ export class DealRepository {
     const result = await this.pool.query<Deal>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         account_id as "accountId",
         contact_id as "contactId",
@@ -489,7 +489,7 @@ export class DealRepository {
           plainto_tsquery('english', $2)
         ) as rank
       FROM deals
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND deleted_at IS NULL
         AND to_tsvector('english', COALESCE(name, '') || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $2)
       ORDER BY rank DESC
@@ -507,7 +507,7 @@ export class DealRepository {
     const result = await this.pool.query(
       `UPDATE deals
        SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = ANY($1::uuid[]) AND tenantId = $2 AND deleted_at IS NULL`,
       [dealIds, tenantId]
     )
 
@@ -521,7 +521,7 @@ export class DealRepository {
     const result = await this.pool.query<DealStageHistory>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         deal_id as "dealId",
         from_stage_id as "fromStageId",
         to_stage_id as "toStageId",
@@ -530,7 +530,7 @@ export class DealRepository {
         notes,
         created_at as "createdAt"
       FROM deal_stage_history
-      WHERE deal_id = $1 AND tenant_id = $2
+      WHERE deal_id = $1 AND tenantId = $2
       ORDER BY created_at DESC`,
       [dealId, tenantId]
     )
@@ -545,7 +545,7 @@ export class DealRepository {
     const result = await this.pool.query<Pipeline>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         name,
         description,
         is_default as "isDefault",
@@ -554,7 +554,7 @@ export class DealRepository {
         updated_at as "updatedAt",
         deleted_at as "deletedAt"
       FROM pipelines
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -571,7 +571,7 @@ export class DealRepository {
     const stagesResult = await this.pool.query<DealStage>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         pipeline_id as "pipelineId",
         name,
         display_order as "displayOrder",
@@ -583,7 +583,7 @@ export class DealRepository {
         updated_at as "updatedAt",
         deleted_at as "deletedAt"
       FROM deal_stages
-      WHERE pipeline_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+      WHERE pipeline_id = $1 AND tenantId = $2 AND deleted_at IS NULL
       ORDER BY display_order ASC`,
       [id, tenantId]
     )
@@ -601,7 +601,7 @@ export class DealRepository {
     const result = await this.pool.query<DealStage>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         pipeline_id as "pipelineId",
         name,
         display_order as "displayOrder",
@@ -613,7 +613,7 @@ export class DealRepository {
         updated_at as "updatedAt",
         deleted_at as "deletedAt"
       FROM deal_stages
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 

@@ -1,13 +1,14 @@
-/**
+﻿/**
  * Tax Calculation Service
  * Integrates with TaxJar for automated sales tax calculation
  * Handles tax rate lookup, nexus validation, and tax reporting
  */
 
 import { Pool } from 'pg';
+import Taxjar from 'taxjar';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
-import Taxjar from 'taxjar';
 
 export interface TaxCalculationParams {
   fromCountry: string;
@@ -371,7 +372,7 @@ export class TaxCalculationService {
       // Store in local database for audit trail
       await this.pool.query(
         `INSERT INTO tax_transactions (
-          tenant_id, transaction_id, transaction_date,
+          tenantId, transaction_id, transaction_date,
           from_country, from_state, from_zip,
           to_country, to_state, to_zip,
           amount, shipping, sales_tax

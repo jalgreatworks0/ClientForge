@@ -3,8 +3,9 @@
  * Handles: registration, dependency resolution, initialization, shutdown
  */
 
-import { IModule, IModuleRegistry, ModuleContext, ModuleError } from './ModuleContract';
 import { logger } from '../../utils/logging/logger';
+
+import { IModule, IModuleRegistry, ModuleContext, ModuleError } from './ModuleContract';
 
 export class ModuleRegistry implements IModuleRegistry {
   private modules: Map<string, IModule> = new Map();

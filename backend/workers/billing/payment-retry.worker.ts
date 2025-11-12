@@ -5,9 +5,10 @@
  */
 
 import { Worker, Job, Queue } from 'bullmq';
+import IORedis from 'ioredis';
+
 import { DunningService } from '../../services/billing/dunning.service';
 import { logger } from '../../utils/logging/logger';
-import IORedis from 'ioredis';
 
 interface PaymentRetryJob {
   tenantId: string;

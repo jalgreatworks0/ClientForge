@@ -3,8 +3,9 @@
  * Supports: Environment flags, percentage rollout, tenant-specific flags
  */
 
-import { logger } from '../../utils/logging/logger';
 import { createHash } from 'crypto';
+
+import { logger } from '../../utils/logging/logger';
 
 interface FeatureFlagConfig {
   enabled: boolean;

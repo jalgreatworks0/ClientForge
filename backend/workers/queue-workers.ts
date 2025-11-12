@@ -4,10 +4,12 @@
  */
 
 import { Job } from 'bullmq'
+
 import { createWorker, queueRegistry } from '../../config/queue/bullmq.config'
 import { initializeEmailSyncQueue, shutdownEmailSyncQueue } from '../queues/email-sync-queue'
 import { logger } from '../utils/logging/logger'
 import { SearchIndexJob } from '../services/queue/queue.service'
+
 import { runSyncJob } from './elasticsearch-sync.worker'
 
 // Store worker references for graceful shutdown

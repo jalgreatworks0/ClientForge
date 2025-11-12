@@ -1,14 +1,16 @@
-/**
+﻿/**
  * API Key Management Service
  * Handles creation, validation, rotation, and revocation of API keys
  * Implements secure key generation, hashing, and rate limiting
  */
 
+import * as crypto from 'crypto';
+
 import { Pool } from 'pg';
+import { Redis } from 'ioredis';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
-import * as crypto from 'crypto';
-import { Redis } from 'ioredis';
 
 export interface ApiKey {
   id: string;
@@ -79,11 +81,11 @@ export class ApiKeyService {
       // Store in database
       const result = await this.pool.query(
         `INSERT INTO api_keys (
-          tenant_id, name, key_prefix, key_hash, scopes, rate_limit,
+          tenantId, name, key_prefix, key_hash, scopes, rate_limit,
           expires_at, is_active, created_by
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, tenant_id, name, key_prefix, key_hash, scopes, rate_limit,
+        RETURNING id, tenantId, name, key_prefix, key_hash, scopes, rate_limit,
                   expires_at, is_active, created_by, created_at, updated_at`,
         [tenantId, name, keyPrefix, keyHash, scopes, rateLimit, expiresAt, true, userId]
       );
@@ -124,7 +126,7 @@ export class ApiKeyService {
       // Find key by prefix and hash
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, name, key_prefix, key_hash, scopes, rate_limit,
+          id, tenantId, name, key_prefix, key_hash, scopes, rate_limit,
           expires_at, last_used_at, is_active, created_by, created_at, updated_at
          FROM api_keys
          WHERE key_prefix = $1 AND key_hash = $2`,
@@ -181,10 +183,10 @@ export class ApiKeyService {
 
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, name, key_prefix, key_hash, scopes, rate_limit,
+          id, tenantId, name, key_prefix, key_hash, scopes, rate_limit,
           expires_at, last_used_at, is_active, created_by, created_at, updated_at
          FROM api_keys
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
          ORDER BY created_at DESC`,
         [tenantId]
       );
@@ -211,7 +213,7 @@ export class ApiKeyService {
       const result = await this.pool.query(
         `UPDATE api_keys
          SET is_active = false, updated_at = NOW()
-         WHERE id = $1 AND tenant_id = $2`,
+         WHERE id = $1 AND tenantId = $2`,
         [apiKeyId, tenantId]
       );
 
@@ -253,7 +255,7 @@ export class ApiKeyService {
       const result = await this.pool.query(
         `SELECT name, scopes, rate_limit, expires_at
          FROM api_keys
-         WHERE id = $1 AND tenant_id = $2`,
+         WHERE id = $1 AND tenantId = $2`,
         [apiKeyId, tenantId]
       );
 
@@ -309,7 +311,7 @@ export class ApiKeyService {
       const result = await this.pool.query(
         `UPDATE api_keys
          SET scopes = $1, updated_at = NOW()
-         WHERE id = $2 AND tenant_id = $3`,
+         WHERE id = $2 AND tenantId = $3`,
         [scopes, apiKeyId, tenantId]
       );
 
@@ -466,7 +468,7 @@ export class ApiKeyService {
   private mapRowToApiKey(row: any): ApiKey {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       name: row.name,
       keyPrefix: row.key_prefix,
       keyHash: row.key_hash,

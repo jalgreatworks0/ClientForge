@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Elasticsearch Tenant Alias Middleware
  * 
  * Enforces multi-tenant data isolation by:
@@ -9,10 +9,12 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
+
 import { esClient } from '../../config/database/elasticsearch-config'
-import { AuthRequest } from './auth'
 import { logger } from '../utils/logging/logger'
 import { AppError } from '../utils/errors/app-error'
+
+import { AuthRequest } from './auth'
 
 export interface ESRequest extends AuthRequest {
   // Tenants user has access to (can be multiple for multi-org setup)
@@ -101,10 +103,10 @@ export class TenantAwareESClient {
               ...(searchRequest.body?.query?.bool?.must || [searchRequest.body?.query || { match_all: {} }]),
             ],
             filter: [
-              // Add tenant_id filter
+              // Add tenantId filter
               {
                 term: {
-                  'tenant_id.keyword': tenantId,
+                  'tenantId.keyword': tenantId,
                 },
               },
               ...(searchRequest.body?.query?.bool?.filter || []),
@@ -132,10 +134,10 @@ export class TenantAwareESClient {
     doc: any,
     options?: any
   ): Promise<any> {
-    // Ensure tenant_id is set in document
+    // Ensure tenantId is set in document
     const validatedDoc = {
       ...doc,
-      tenant_id: tenantId,
+      tenantId: tenantId,
     }
 
     // Use tenant-specific index
@@ -217,8 +219,8 @@ export class TenantAwareESClient {
       id,
     })
 
-    // Verify tenant_id matches
-    if (result._source?.tenant_id !== tenantId) {
+    // Verify tenantId matches
+    if (result._source?.tenantId !== tenantId) {
       throw new AppError('Unauthorized access to document', 403)
     }
 
@@ -243,13 +245,13 @@ export async function createTenantAlias(
       await esClient.indices.get({ index: tenantIndex })
     } catch (error: any) {
       if (error.statusCode === 404) {
-        // Create index with tenant_id mapping
+        // Create index with tenantId mapping
         await esClient.indices.create({
           index: tenantIndex,
           body: {
             mappings: {
               properties: {
-                tenant_id: {
+                tenantId: {
                   type: 'keyword',
                 },
                 created_at: {

@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express'
+
 import { authenticate } from '../../../../middleware/authenticate'
 import {
   getLeadScore,

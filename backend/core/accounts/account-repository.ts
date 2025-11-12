@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Account Repository
  * Database access layer for accounts/companies
  */
@@ -30,7 +30,7 @@ export class AccountRepository {
   async create(tenantId: string, data: CreateAccountInput): Promise<Account> {
     const result = await this.pool.query<Account>(
       `INSERT INTO accounts (
-        tenant_id, owner_id, name, website, industry, company_size,
+        tenantId, owner_id, name, website, industry, company_size,
         annual_revenue, phone, email, description, account_type, account_status,
         parent_account_id, tags, billing_address_street, billing_address_city,
         billing_address_state, billing_address_postal_code, billing_address_country,
@@ -43,7 +43,7 @@ export class AccountRepository {
       )
       RETURNING
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         name,
         website,
@@ -122,7 +122,7 @@ export class AccountRepository {
     const result = await this.pool.query<Account>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         name,
         website,
@@ -158,7 +158,7 @@ export class AccountRepository {
         updated_at as "updatedAt",
         deleted_at as "deletedAt"
       FROM accounts
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -189,7 +189,7 @@ export class AccountRepository {
       FROM accounts a
       LEFT JOIN users u ON u.id = a.owner_id
       LEFT JOIN accounts pa ON pa.id = a.parent_account_id
-      WHERE a.id = $1 AND a.tenant_id = $2 AND a.deleted_at IS NULL`,
+      WHERE a.id = $1 AND a.tenantId = $2 AND a.deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -202,7 +202,7 @@ export class AccountRepository {
   async list(tenantId: string, options: AccountListOptions): Promise<AccountListResponse> {
     const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', filters = {} } = options
 
-    const whereClauses: string[] = ['a.tenant_id = $1', 'a.deleted_at IS NULL']
+    const whereClauses: string[] = ['a.tenantId = $1', 'a.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -316,7 +316,7 @@ export class AccountRepository {
     const result = await this.pool.query<Account>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         name,
         website,
@@ -426,10 +426,10 @@ export class AccountRepository {
     const result = await this.pool.query<Account>(
       `UPDATE accounts
        SET ${fields.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         name,
         website,
@@ -477,7 +477,7 @@ export class AccountRepository {
     const result = await this.pool.query(
       `UPDATE accounts
        SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -490,7 +490,7 @@ export class AccountRepository {
   async findByName(name: string, tenantId: string): Promise<Account[]> {
     const result = await this.pool.query<Account>(
       `SELECT * FROM accounts
-       WHERE LOWER(name) = LOWER($1) AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE LOWER(name) = LOWER($1) AND tenantId = $2 AND deleted_at IS NULL`,
       [name, tenantId]
     )
 
@@ -504,7 +504,7 @@ export class AccountRepository {
     const result = await this.pool.query<Account>(
       `SELECT
         id,
-        tenant_id as "tenantId",
+        tenantId as "tenantId",
         owner_id as "ownerId",
         name,
         website,
@@ -525,7 +525,7 @@ export class AccountRepository {
           plainto_tsquery('english', $2)
         ) as rank
       FROM accounts
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND deleted_at IS NULL
         AND to_tsvector('english', COALESCE(name, '') || ' ' || COALESCE(industry, '') || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $2)
       ORDER BY rank DESC
@@ -543,7 +543,7 @@ export class AccountRepository {
     const result = await this.pool.query(
       `UPDATE accounts
        SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = ANY($1::uuid[]) AND tenantId = $2 AND deleted_at IS NULL`,
       [accountIds, tenantId]
     )
 
@@ -557,7 +557,7 @@ export class AccountRepository {
     await this.pool.query(
       `UPDATE accounts
        SET last_activity_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
   }
@@ -571,7 +571,7 @@ export class AccountRepository {
         -- Get the account itself
         SELECT a.*, 0 as depth
         FROM accounts a
-        WHERE a.id = $1 AND a.tenant_id = $2 AND a.deleted_at IS NULL
+        WHERE a.id = $1 AND a.tenantId = $2 AND a.deleted_at IS NULL
 
         UNION ALL
 
@@ -579,7 +579,7 @@ export class AccountRepository {
         SELECT a.*, at.depth + 1
         FROM accounts a
         INNER JOIN account_tree at ON a.parent_account_id = at.id
-        WHERE a.tenant_id = $2 AND a.deleted_at IS NULL
+        WHERE a.tenantId = $2 AND a.deleted_at IS NULL
       )
       SELECT * FROM account_tree
       ORDER BY depth, name`,

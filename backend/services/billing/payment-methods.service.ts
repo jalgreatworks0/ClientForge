@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Payment Methods Service
  * Manages payment methods for customers including cards, bank accounts, and alternative payment methods
  * Provides listing, validation, and management of payment instruments
@@ -6,8 +6,10 @@
 
 import Stripe from 'stripe';
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
+
 import { StripeService } from './stripe.service';
 
 export interface PaymentMethodInfo {
@@ -51,11 +53,11 @@ export class PaymentMethodsService {
 
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, stripe_payment_method_id, stripe_customer_id,
+          id, tenantId, stripe_payment_method_id, stripe_customer_id,
           type, is_default, card_brand, card_last4, card_exp_month, card_exp_year,
           created_at, updated_at
          FROM payment_methods
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
          ORDER BY is_default DESC, created_at DESC`,
         [tenantId]
       );
@@ -67,7 +69,7 @@ export class PaymentMethodsService {
 
       return result.rows.map(row => ({
         id: row.id,
-        tenantId: row.tenant_id,
+        tenantId: row.tenantId,
         stripePaymentMethodId: row.stripe_payment_method_id,
         stripeCustomerId: row.stripe_customer_id,
         type: row.type,
@@ -102,11 +104,11 @@ export class PaymentMethodsService {
 
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, stripe_payment_method_id, stripe_customer_id,
+          id, tenantId, stripe_payment_method_id, stripe_customer_id,
           type, is_default, card_brand, card_last4, card_exp_month, card_exp_year,
           created_at, updated_at
          FROM payment_methods
-         WHERE tenant_id = $1 AND stripe_payment_method_id = $2`,
+         WHERE tenantId = $1 AND stripe_payment_method_id = $2`,
         [tenantId, paymentMethodId]
       );
 
@@ -121,7 +123,7 @@ export class PaymentMethodsService {
       const row = result.rows[0];
       return {
         id: row.id,
-        tenantId: row.tenant_id,
+        tenantId: row.tenantId,
         stripePaymentMethodId: row.stripe_payment_method_id,
         stripeCustomerId: row.stripe_customer_id,
         type: row.type,
@@ -154,11 +156,11 @@ export class PaymentMethodsService {
 
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, stripe_payment_method_id, stripe_customer_id,
+          id, tenantId, stripe_payment_method_id, stripe_customer_id,
           type, is_default, card_brand, card_last4, card_exp_month, card_exp_year,
           created_at, updated_at
          FROM payment_methods
-         WHERE tenant_id = $1 AND is_default = true
+         WHERE tenantId = $1 AND is_default = true
          LIMIT 1`,
         [tenantId]
       );
@@ -171,7 +173,7 @@ export class PaymentMethodsService {
       const row = result.rows[0];
       return {
         id: row.id,
-        tenantId: row.tenant_id,
+        tenantId: row.tenantId,
         stripePaymentMethodId: row.stripe_payment_method_id,
         stripeCustomerId: row.stripe_customer_id,
         type: row.type,
@@ -264,7 +266,7 @@ export class PaymentMethodsService {
         // Check if there are active subscriptions
         const activeSubsResult = await this.pool.query(
           `SELECT COUNT(*) as count FROM subscriptions
-           WHERE tenant_id = $1 AND status IN ('active', 'trialing', 'past_due')`,
+           WHERE tenantId = $1 AND status IN ('active', 'trialing', 'past_due')`,
           [tenantId]
         );
 
@@ -439,7 +441,7 @@ export class PaymentMethodsService {
       for (const pm of paymentMethods.data) {
         await this.pool.query(
           `INSERT INTO payment_methods (
-            tenant_id, stripe_payment_method_id, stripe_customer_id,
+            tenantId, stripe_payment_method_id, stripe_customer_id,
             type, card_brand, card_last4, card_exp_month, card_exp_year
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -466,7 +468,7 @@ export class PaymentMethodsService {
         await this.pool.query('BEGIN');
 
         await this.pool.query(
-          'UPDATE payment_methods SET is_default = false WHERE tenant_id = $1',
+          'UPDATE payment_methods SET is_default = false WHERE tenantId = $1',
           [tenantId]
         );
 

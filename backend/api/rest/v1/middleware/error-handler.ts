@@ -6,10 +6,11 @@
  * Returns RFC 7807 compliant error responses
  */
 
+import { Request, Response, NextFunction } from "express";
+
 import { AppError } from "../../../../utils/errors/AppError";
 import { logger } from "../../../../utils/logging/logger";
 import { toProblemDetails } from "../../../../utils/errors/problem-details";
-import { Request, Response, NextFunction } from "express";
 
 export function errorHandler(
   err: any,

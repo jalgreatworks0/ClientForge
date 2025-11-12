@@ -4,9 +4,11 @@
  */
 
 import { OAuth2Client } from 'google-auth-library';
-import { SSOProviderService, SSOTokenData } from './sso-provider.service';
+
 import { logger } from '../../../utils/logging/logger';
 import { getPool } from '../../../database/postgresql/pool';
+
+import { SSOProviderService, SSOTokenData } from './sso-provider.service';
 
 export interface GoogleUserProfile {
   userId: string;

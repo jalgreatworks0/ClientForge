@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Embeddings Service
  * Handles vector embeddings generation for semantic search
  *
@@ -20,6 +20,7 @@
 
 import { Pool } from 'pg'
 import { OpenAI } from 'openai'
+
 import { logger } from '../../utils/logging/logger'
 
 export interface EmbeddingDocument {
@@ -131,7 +132,7 @@ export class EmbeddingsService {
       await this.pool.query(
         `
         INSERT INTO embeddings (
-          tenant_id,
+          tenantId,
           entity_type,
           entity_id,
           content,
@@ -140,7 +141,7 @@ export class EmbeddingsService {
           model,
           created_at
         ) VALUES ($1, $2, $3, $4, $5::vector, $6, $7, NOW())
-        ON CONFLICT (tenant_id, entity_type, entity_id)
+        ON CONFLICT (tenantId, entity_type, entity_id)
         DO UPDATE SET
           content = EXCLUDED.content,
           embedding = EXCLUDED.embedding,
@@ -187,7 +188,7 @@ export class EmbeddingsService {
           1 - (embedding <=> $2::vector) as similarity,
           metadata
         FROM embeddings
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
           ${entityFilter}
           AND 1 - (embedding <=> $2::vector) >= ${threshold}
         ORDER BY embedding <=> $2::vector
@@ -230,7 +231,7 @@ export class EmbeddingsService {
   async deleteEmbedding(tenantId: string, entityType: string, entityId: string): Promise<void> {
     try {
       await this.pool.query(
-        'DELETE FROM embeddings WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3',
+        'DELETE FROM embeddings WHERE tenantId = $1 AND entity_type = $2 AND entity_id = $3',
         [tenantId, entityType, entityId]
       )
 
@@ -250,14 +251,14 @@ export class EmbeddingsService {
   }> {
     try {
       const totalResult = await this.pool.query(
-        'SELECT COUNT(*) as count FROM embeddings WHERE tenant_id = $1',
+        'SELECT COUNT(*) as count FROM embeddings WHERE tenantId = $1',
         [tenantId]
       )
 
       const byTypeResult = await this.pool.query(
         `SELECT entity_type, COUNT(*) as count
          FROM embeddings
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
          GROUP BY entity_type`,
         [tenantId]
       )

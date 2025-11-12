@@ -1,9 +1,10 @@
-/**
+﻿/**
  * Email Integration API Routes
  * Handles OAuth flow, account management, email sync, and sending
  */
 
 import { Router, Request, Response } from 'express'
+
 import { authenticate } from '../../../../middleware/authenticate'
 import { emailIntegrationService } from '../../../../core/email/email-integration-service'
 import { logger } from '../../../../utils/logging/logger'
@@ -342,7 +343,7 @@ router.get(
       const tenantId = req.user?.tenantId
 
       const result = await db.query(
-        `SELECT id, account_id as "accountId", tenant_id as "tenantId",
+        `SELECT id, account_id as "accountId", tenantId as "tenantId",
                 message_id as "messageId", thread_id as "threadId",
                 from_name, from_email, to_addresses, cc_addresses, bcc_addresses,
                 subject, body_text as "bodyText", body_html as "bodyHtml",
@@ -351,7 +352,7 @@ router.get(
                 labels, contact_id as "contactId", deal_id as "dealId",
                 created_at as "createdAt", updated_at as "updatedAt"
          FROM email_messages
-         WHERE id = $1 AND tenant_id = $2`,
+         WHERE id = $1 AND tenantId = $2`,
         [messageId, tenantId]
       )
 
@@ -480,7 +481,7 @@ router.patch(
       await db.query(
         `UPDATE email_messages
          SET ${updates.join(', ')}, updated_at = NOW()
-         WHERE id = $${paramCount} AND tenant_id = $${paramCount + 1}`,
+         WHERE id = $${paramCount} AND tenantId = $${paramCount + 1}`,
         values
       )
 

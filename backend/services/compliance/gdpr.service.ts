@@ -1,15 +1,18 @@
-/**
+﻿/**
  * GDPR Compliance Service
  * Handles data subject rights: access, rectification, erasure, portability, restriction
  * Implements consent management and audit logging
  */
 
-import { Pool } from 'pg';
-import { getPool } from '../../database/postgresql/pool';
-import { logger } from '../../utils/logging/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+import { Pool } from 'pg';
 import { MongoClient } from 'mongodb';
+
+import { getPool } from '../../database/postgresql/pool';
+import { logger } from '../../utils/logging/logger';
+
 
 export interface DataSubjectRequest {
   id: string;
@@ -61,11 +64,11 @@ export class GDPRService {
       // Create request record
       const result = await this.pool.query(
         `INSERT INTO data_subject_requests (
-          tenant_id, request_type, subject_email, subject_identifier,
+          tenantId, request_type, subject_email, subject_identifier,
           status, requested_by, request_date
         )
         VALUES ($1, $2, $3, $4, $5, $6, NOW())
-        RETURNING id, tenant_id, request_type, subject_email, subject_identifier,
+        RETURNING id, tenantId, request_type, subject_email, subject_identifier,
                   status, requested_by, request_date, created_at, updated_at`,
         [tenantId, 'access', subjectEmail, subjectEmail, 'pending', requestedBy]
       );
@@ -104,11 +107,11 @@ export class GDPRService {
       // Create request record
       const result = await this.pool.query(
         `INSERT INTO data_subject_requests (
-          tenant_id, request_type, subject_email, subject_identifier,
+          tenantId, request_type, subject_email, subject_identifier,
           status, requested_by, request_date
         )
         VALUES ($1, $2, $3, $4, $5, $6, NOW())
-        RETURNING id, tenant_id, request_type, subject_email, subject_identifier,
+        RETURNING id, tenantId, request_type, subject_email, subject_identifier,
                   status, requested_by, request_date, created_at, updated_at`,
         [tenantId, 'erasure', subjectEmail, subjectEmail, 'pending', requestedBy]
       );
@@ -146,11 +149,11 @@ export class GDPRService {
     try {
       const result = await this.pool.query(
         `INSERT INTO data_subject_requests (
-          tenant_id, request_type, subject_email, subject_identifier,
+          tenantId, request_type, subject_email, subject_identifier,
           status, requested_by, request_date
         )
         VALUES ($1, $2, $3, $4, $5, $6, NOW())
-        RETURNING id, tenant_id, request_type, subject_email, subject_identifier,
+        RETURNING id, tenantId, request_type, subject_email, subject_identifier,
                   status, requested_by, request_date, created_at, updated_at`,
         [tenantId, 'portability', subjectEmail, subjectEmail, 'pending', requestedBy]
       );
@@ -212,8 +215,8 @@ export class GDPRService {
 
       // Get user data
       const userResult = await this.pool.query(
-        'SELECT * FROM users WHERE email = $1 AND tenant_id = $2',
-        [request.subject_email, request.tenant_id]
+        'SELECT * FROM users WHERE email = $1 AND tenantId = $2',
+        [request.subject_email, request.tenantId]
       );
 
       if (userResult.rows.length > 0) {
@@ -229,7 +232,7 @@ export class GDPRService {
       }
 
       // Create export file
-      const exportDir = path.join(process.cwd(), 'storage', 'gdpr-exports', request.tenant_id);
+      const exportDir = path.join(process.cwd(), 'storage', 'gdpr-exports', request.tenantId);
       await fs.mkdir(exportDir, { recursive: true });
 
       const filename = `data-export-${requestId}-${Date.now()}.${format}`;
@@ -243,7 +246,7 @@ export class GDPRService {
         await fs.writeFile(filepath, csv);
       }
 
-      const downloadUrl = `/gdpr-exports/${request.tenant_id}/${filename}`;
+      const downloadUrl = `/gdpr-exports/${request.tenantId}/${filename}`;
 
       // Update request as completed
       await this.pool.query(
@@ -306,8 +309,8 @@ export class GDPRService {
 
       // Get user
       const userResult = await this.pool.query(
-        'SELECT id FROM users WHERE email = $1 AND tenant_id = $2',
-        [request.subject_email, request.tenant_id]
+        'SELECT id FROM users WHERE email = $1 AND tenantId = $2',
+        [request.subject_email, request.tenantId]
       );
 
       if (userResult.rows.length === 0) {
@@ -389,7 +392,7 @@ export class GDPRService {
     try {
       const result = await this.pool.query(
         `INSERT INTO consent_records (
-          tenant_id, user_id, consent_type, granted,
+          tenantId, user_id, consent_type, granted,
           granted_at, revoked_at, ip_address, user_agent, version
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -433,7 +436,7 @@ export class GDPRService {
     try {
       const result = await this.pool.query(
         `SELECT granted FROM consent_records
-         WHERE tenant_id = $1 AND user_id = $2 AND consent_type = $3
+         WHERE tenantId = $1 AND user_id = $2 AND consent_type = $3
          ORDER BY created_at DESC
          LIMIT 1`,
         [tenantId, userId, consentType]
@@ -516,7 +519,7 @@ export class GDPRService {
   private mapRowToRequest(row: any): DataSubjectRequest {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       requestType: row.request_type,
       subjectEmail: row.subject_email,
       subjectIdentifier: row.subject_identifier,
@@ -534,7 +537,7 @@ export class GDPRService {
   private mapRowToConsent(row: any): ConsentRecord {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       userId: row.user_id,
       consentType: row.consent_type,
       granted: row.granted,

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI-Powered Features Service
  * Implements advanced AI capabilities for CRM intelligence
  * - Lead Scoring with ML
@@ -8,9 +8,10 @@
  * - Sentiment Analysis
  */
 
-import { aiService } from './ai-service'
 import { db } from '../../database/postgresql/pool'
 import { logger } from '../../utils/logging/logger'
+
+import { aiService } from './ai-service'
 import {
   AIFeatureType,
   QueryComplexity,
@@ -60,7 +61,7 @@ export async function scoreContact(
       LEFT JOIN activities a ON c.id = a.contact_id AND a.deleted_at IS NULL
       LEFT JOIN deals d ON c.id = d.contact_id AND d.deleted_at IS NULL
       LEFT JOIN email_messages em ON c.id = em.contact_id AND em.deleted_at IS NULL
-      WHERE c.id = $1 AND c.tenant_id = $2 AND c.deleted_at IS NULL
+      WHERE c.id = $1 AND c.tenantId = $2 AND c.deleted_at IS NULL
       GROUP BY c.id
     `,
       [contactId, tenantId]
@@ -147,7 +148,7 @@ Please provide a lead score analysis in the following JSON format:
 
     // Store lead score in database for tracking
     await db.query(
-      `INSERT INTO ai_lead_scores (contact_id, tenant_id, score, grade, factors, reasoning, priority, next_steps, confidence, created_by)
+      `INSERT INTO ai_lead_scores (contact_id, tenantId, score, grade, factors, reasoning, priority, next_steps, confidence, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (contact_id) DO UPDATE SET
          score = $3, grade = $4, factors = $5, reasoning = $6, priority = $7, next_steps = $8,
@@ -230,7 +231,7 @@ export async function suggestNextActions(
       LEFT JOIN users u ON d.owner_id = u.id
       LEFT JOIN activities a ON d.id = a.deal_id AND a.deleted_at IS NULL
       LEFT JOIN email_messages em ON d.id = em.deal_id AND em.deleted_at IS NULL
-      WHERE d.id = $1 AND d.tenant_id = $2 AND d.deleted_at IS NULL
+      WHERE d.id = $1 AND d.tenantId = $2 AND d.deleted_at IS NULL
       GROUP BY d.id, c.id, u.id
     `,
       [dealId, tenantId]
@@ -482,7 +483,7 @@ export async function recognizePatterns(
       LEFT JOIN contacts c ON d.contact_id = c.id
       LEFT JOIN activities a ON d.id = a.deal_id AND a.deleted_at IS NULL
       LEFT JOIN email_messages em ON d.id = em.deal_id AND em.deleted_at IS NULL
-      WHERE d.id = $1 AND d.tenant_id = $2 AND d.deleted_at IS NULL
+      WHERE d.id = $1 AND d.tenantId = $2 AND d.deleted_at IS NULL
       GROUP BY d.id, c.id
     `,
       [dealId, tenantId]
@@ -613,7 +614,7 @@ export async function analyzeSentiment(
       FROM email_messages em
       LEFT JOIN contacts c ON em.contact_id = c.id
       LEFT JOIN deals d ON em.deal_id = d.id
-      WHERE em.id = $1 AND em.tenant_id = $2 AND em.deleted_at IS NULL
+      WHERE em.id = $1 AND em.tenantId = $2 AND em.deleted_at IS NULL
     `,
       [emailId, tenantId]
     )
@@ -629,7 +630,7 @@ export async function analyzeSentiment(
       `
       SELECT subject, body_text, from_email, sent_at
       FROM email_messages
-      WHERE thread_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+      WHERE thread_id = $1 AND tenantId = $2 AND deleted_at IS NULL
       ORDER BY sent_at DESC
       LIMIT 5
     `,

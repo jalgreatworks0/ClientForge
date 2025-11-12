@@ -1,14 +1,17 @@
-/**
+﻿/**
  * Export Service
  * Handles bulk data export to CSV, Excel, JSON
  */
 
-import { Pool } from 'pg';
-import { getPool } from '../../database/postgresql/pool';
-import { logger } from '../../utils/logging/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+import { Pool } from 'pg';
 import * as XLSX from 'xlsx';
+
+import { getPool } from '../../database/postgresql/pool';
+import { logger } from '../../utils/logging/logger';
+
 
 export interface ExportJob {
   id: string;
@@ -41,7 +44,7 @@ export class ExportService {
     createdBy: string;
   }): Promise<ExportJob> {
     const result = await this.pool.query(
-      `INSERT INTO export_jobs (tenant_id, entity_type, file_format, filters, fields, created_by, status)
+      `INSERT INTO export_jobs (tenantId, entity_type, file_format, filters, fields, created_by, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'pending')
        RETURNING *`,
       [
@@ -110,7 +113,7 @@ export class ExportService {
     const table = entityType + 's';
     const fieldsList = fields && fields.length > 0 ? fields.join(', ') : '*';
 
-    let query = `SELECT ${fieldsList} FROM ${table} WHERE tenant_id = $1`;
+    let query = `SELECT ${fieldsList} FROM ${table} WHERE tenantId = $1`;
     const params: any[] = [tenantId];
 
     // Apply filters
@@ -173,7 +176,7 @@ export class ExportService {
 
   async getExportJobs(tenantId: string): Promise<ExportJob[]> {
     const result = await this.pool.query(
-      'SELECT * FROM export_jobs WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 50',
+      'SELECT * FROM export_jobs WHERE tenantId = $1 ORDER BY created_at DESC LIMIT 50',
       [tenantId]
     );
     return result.rows.map(row => this.mapRowToExportJob(row));
@@ -182,7 +185,7 @@ export class ExportService {
   private mapRowToExportJob(row: any): ExportJob {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       entityType: row.entity_type,
       fileFormat: row.file_format,
       status: row.status,

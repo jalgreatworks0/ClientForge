@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Metadata Repository
  * Data access layer for notes, tags, comments, and custom fields
  */
@@ -51,7 +51,7 @@ export class MetadataRepository {
   async createNote(tenantId: string, userId: string, data: CreateNoteInput): Promise<Note> {
     const result = await this.pool.query<Note>(
       `INSERT INTO notes (
-        tenant_id, title, content, is_pinned,
+        tenantId, title, content, is_pinned,
         entity_type, entity_id, created_by
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *`,
@@ -71,7 +71,7 @@ export class MetadataRepository {
 
   async findNoteById(id: string, tenantId: string): Promise<Note | null> {
     const result = await this.pool.query<Note>(
-      `SELECT * FROM notes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      `SELECT * FROM notes WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -82,7 +82,7 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    const whereConditions: string[] = ['n.tenant_id = $1', 'n.deleted_at IS NULL']
+    const whereConditions: string[] = ['n.tenantId = $1', 'n.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -166,7 +166,7 @@ export class MetadataRepository {
 
     const result = await this.pool.query<Note>(
       `UPDATE notes SET ${fields.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING *`,
       params
     )
@@ -180,7 +180,7 @@ export class MetadataRepository {
 
   async deleteNote(id: string, tenantId: string): Promise<void> {
     await this.pool.query(
-      `UPDATE notes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+      `UPDATE notes SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
       [id, tenantId]
     )
   }
@@ -188,7 +188,7 @@ export class MetadataRepository {
   async bulkDeleteNotes(ids: string[], tenantId: string): Promise<number> {
     const result = await this.pool.query(
       `UPDATE notes SET deleted_at = NOW()
-       WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = ANY($1::uuid[]) AND tenantId = $2 AND deleted_at IS NULL`,
       [ids, tenantId]
     )
     return result.rowCount || 0
@@ -197,7 +197,7 @@ export class MetadataRepository {
   async bulkPinNotes(ids: string[], tenantId: string, isPinned: boolean): Promise<number> {
     const result = await this.pool.query(
       `UPDATE notes SET is_pinned = $1, updated_at = NOW()
-       WHERE id = ANY($2::uuid[]) AND tenant_id = $3 AND deleted_at IS NULL`,
+       WHERE id = ANY($2::uuid[]) AND tenantId = $3 AND deleted_at IS NULL`,
       [isPinned, ids, tenantId]
     )
     return result.rowCount || 0
@@ -206,7 +206,7 @@ export class MetadataRepository {
   async searchNotes(tenantId: string, query: string, limit: number): Promise<Note[]> {
     const result = await this.pool.query<Note>(
       `SELECT * FROM notes
-       WHERE tenant_id = $1
+       WHERE tenantId = $1
          AND deleted_at IS NULL
          AND to_tsvector('english', COALESCE(title, '') || ' ' || COALESCE(content, ''))
          @@ plainto_tsquery('english', $2)
@@ -225,7 +225,7 @@ export class MetadataRepository {
   async createComment(tenantId: string, userId: string, data: CreateCommentInput): Promise<Comment> {
     const result = await this.pool.query<Comment>(
       `INSERT INTO comments (
-        tenant_id, content, entity_type, entity_id, parent_id, created_by
+        tenantId, content, entity_type, entity_id, parent_id, created_by
       ) VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *`,
       [
@@ -243,7 +243,7 @@ export class MetadataRepository {
 
   async findCommentById(id: string, tenantId: string): Promise<Comment | null> {
     const result = await this.pool.query<Comment>(
-      `SELECT * FROM comments WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      `SELECT * FROM comments WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -254,7 +254,7 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    const whereConditions: string[] = ['c.tenant_id = $1', 'c.deleted_at IS NULL']
+    const whereConditions: string[] = ['c.tenantId = $1', 'c.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -318,7 +318,7 @@ export class MetadataRepository {
     const result = await this.pool.query<Comment>(
       `UPDATE comments
        SET content = $1, updated_by = $2
-       WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL
+       WHERE id = $3 AND tenantId = $4 AND deleted_at IS NULL
        RETURNING *`,
       [data.content, userId, id, tenantId]
     )
@@ -332,7 +332,7 @@ export class MetadataRepository {
 
   async deleteComment(id: string, tenantId: string): Promise<void> {
     await this.pool.query(
-      `UPDATE comments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+      `UPDATE comments SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
       [id, tenantId]
     )
   }
@@ -346,7 +346,7 @@ export class MetadataRepository {
 
     const result = await this.pool.query<Tag>(
       `INSERT INTO tags (
-        tenant_id, name, slug, description, color, category
+        tenantId, name, slug, description, color, category
       ) VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *`,
       [
@@ -364,7 +364,7 @@ export class MetadataRepository {
 
   async findTagById(id: string, tenantId: string): Promise<Tag | null> {
     const result = await this.pool.query<Tag>(
-      `SELECT * FROM tags WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      `SELECT * FROM tags WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -373,7 +373,7 @@ export class MetadataRepository {
 
   async findTagByName(name: string, tenantId: string): Promise<Tag | null> {
     const result = await this.pool.query<Tag>(
-      `SELECT * FROM tags WHERE name = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      `SELECT * FROM tags WHERE name = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [name, tenantId]
     )
 
@@ -384,7 +384,7 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    const whereConditions: string[] = ['t.tenant_id = $1', 't.deleted_at IS NULL']
+    const whereConditions: string[] = ['t.tenantId = $1', 't.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -455,7 +455,7 @@ export class MetadataRepository {
 
     const result = await this.pool.query<Tag>(
       `UPDATE tags SET ${fields.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING *`,
       params
     )
@@ -469,16 +469,16 @@ export class MetadataRepository {
 
   async deleteTag(id: string, tenantId: string): Promise<void> {
     await this.pool.query(
-      `UPDATE tags SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+      `UPDATE tags SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
       [id, tenantId]
     )
   }
 
   async assignTag(tenantId: string, data: AssignTagInput): Promise<EntityTag> {
     const result = await this.pool.query<EntityTag>(
-      `INSERT INTO entity_tags (tenant_id, entity_type, entity_id, tag_id)
+      `INSERT INTO entity_tags (tenantId, entity_type, entity_id, tag_id)
        VALUES ($1, $2, $3, $4)
-       ON CONFLICT (tenant_id, entity_type, entity_id, tag_id) DO NOTHING
+       ON CONFLICT (tenantId, entity_type, entity_id, tag_id) DO NOTHING
        RETURNING *`,
       [tenantId, data.entityType, data.entityId, data.tagId]
     )
@@ -489,7 +489,7 @@ export class MetadataRepository {
   async unassignTag(tenantId: string, entityType: string, entityId: string, tagId: string): Promise<void> {
     await this.pool.query(
       `DELETE FROM entity_tags
-       WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3 AND tag_id = $4`,
+       WHERE tenantId = $1 AND entity_type = $2 AND entity_id = $3 AND tag_id = $4`,
       [tenantId, entityType, entityId, tagId]
     )
   }
@@ -498,7 +498,7 @@ export class MetadataRepository {
     const result = await this.pool.query<Tag>(
       `SELECT t.* FROM tags t
        INNER JOIN entity_tags et ON t.id = et.tag_id
-       WHERE et.tenant_id = $1 AND et.entity_type = $2 AND et.entity_id = $3
+       WHERE et.tenantId = $1 AND et.entity_type = $2 AND et.entity_id = $3
          AND t.deleted_at IS NULL
        ORDER BY t.name ASC`,
       [tenantId, entityType, entityId]
@@ -514,7 +514,7 @@ export class MetadataRepository {
   async createCustomField(tenantId: string, data: CreateCustomFieldInput): Promise<CustomField> {
     const result = await this.pool.query<CustomField>(
       `INSERT INTO custom_fields (
-        tenant_id, entity_type, field_name, field_label, field_type,
+        tenantId, entity_type, field_name, field_label, field_type,
         field_options, default_value, is_required, is_searchable, is_visible,
         validation_rules, display_order, help_text, placeholder_text
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -542,7 +542,7 @@ export class MetadataRepository {
 
   async findCustomFieldById(id: string, tenantId: string): Promise<CustomField | null> {
     const result = await this.pool.query<CustomField>(
-      `SELECT * FROM custom_fields WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      `SELECT * FROM custom_fields WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -553,7 +553,7 @@ export class MetadataRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    const whereConditions: string[] = ['cf.tenant_id = $1', 'cf.deleted_at IS NULL']
+    const whereConditions: string[] = ['cf.tenantId = $1', 'cf.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -671,7 +671,7 @@ export class MetadataRepository {
     const result = await this.pool.query<CustomField>(
       `UPDATE custom_fields
        SET ${fields.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING *`,
       [...params, id, tenantId]
     )
@@ -681,16 +681,16 @@ export class MetadataRepository {
 
   async deleteCustomField(id: string, tenantId: string): Promise<void> {
     await this.pool.query(
-      `UPDATE custom_fields SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+      `UPDATE custom_fields SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
       [id, tenantId]
     )
   }
 
   async setCustomFieldValue(tenantId: string, data: SetCustomFieldValueInput): Promise<CustomFieldValue> {
     const result = await this.pool.query<CustomFieldValue>(
-      `INSERT INTO custom_field_values (tenant_id, entity_type, entity_id, field_id, value)
+      `INSERT INTO custom_field_values (tenantId, entity_type, entity_id, field_id, value)
        VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (tenant_id, entity_type, entity_id, field_id)
+       ON CONFLICT (tenantId, entity_type, entity_id, field_id)
        DO UPDATE SET value = EXCLUDED.value
        RETURNING *`,
       [tenantId, data.entityType, data.entityId, data.fieldId, data.value]
@@ -702,7 +702,7 @@ export class MetadataRepository {
   async getCustomFieldValues(tenantId: string, entityType: string, entityId: string): Promise<CustomFieldValue[]> {
     const result = await this.pool.query<CustomFieldValue>(
       `SELECT * FROM custom_field_values
-       WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3`,
+       WHERE tenantId = $1 AND entity_type = $2 AND entity_id = $3`,
       [tenantId, entityType, entityId]
     )
 
@@ -716,7 +716,7 @@ export class MetadataRepository {
   private mapNote(row: any): Note {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       title: row.title,
       content: row.content,
       isPinned: row.is_pinned,
@@ -733,7 +733,7 @@ export class MetadataRepository {
   private mapComment(row: any): Comment {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       content: row.content,
       entityType: row.entity_type,
       entityId: row.entity_id,
@@ -750,7 +750,7 @@ export class MetadataRepository {
   private mapTag(row: any): Tag {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       name: row.name,
       slug: row.slug,
       description: row.description,
@@ -766,7 +766,7 @@ export class MetadataRepository {
   private mapEntityTag(row: any): EntityTag {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       entityType: row.entity_type,
       entityId: row.entity_id,
       tagId: row.tag_id,
@@ -777,7 +777,7 @@ export class MetadataRepository {
   private mapCustomField(row: any): CustomField {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       entityType: row.entity_type,
       fieldName: row.field_name,
       fieldLabel: row.field_label,
@@ -800,7 +800,7 @@ export class MetadataRepository {
   private mapCustomFieldValue(row: any): CustomFieldValue {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       entityType: row.entity_type,
       entityId: row.entity_id,
       fieldId: row.field_id,

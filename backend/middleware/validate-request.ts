@@ -17,23 +17,30 @@ export interface ValidationSchemas {
 
 /**
  * Middleware factory for request validation
+ * Accepts either ValidationSchemas interface or a ZodObject with body/query/params
  */
-export function validateRequest(schemas: ValidationSchemas) {
+export function validateRequest(schemas: ValidationSchemas | ZodSchema) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // If schemas is a ZodObject with shape property, extract body/query/params
+      const validationSchemas: ValidationSchemas =
+        schemas && typeof schemas === 'object' && 'shape' in schemas
+          ? (schemas as any).shape
+          : (schemas as ValidationSchemas);
+
       // Validate body
-      if (schemas.body) {
-        req.body = await schemas.body.parseAsync(req.body)
+      if (validationSchemas.body) {
+        req.body = await validationSchemas.body.parseAsync(req.body)
       }
 
       // Validate query params
-      if (schemas.query) {
-        req.query = await schemas.query.parseAsync(req.query)
+      if (validationSchemas.query) {
+        req.query = await validationSchemas.query.parseAsync(req.query)
       }
 
       // Validate route params
-      if (schemas.params) {
-        req.params = await schemas.params.parseAsync(req.params)
+      if (validationSchemas.params) {
+        req.params = await validationSchemas.params.parseAsync(req.params)
       }
 
       next()

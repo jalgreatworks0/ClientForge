@@ -5,10 +5,11 @@
  */
 
 import { Worker, Job, Queue } from 'bullmq';
+import IORedis from 'ioredis';
+
 import { InvoiceService } from '../../services/billing/invoice.service';
 import { TaxCalculationService } from '../../services/billing/tax-calculation.service';
 import { logger } from '../../utils/logging/logger';
-import IORedis from 'ioredis';
 
 interface InvoiceGenerationJob {
   tenantId: string;

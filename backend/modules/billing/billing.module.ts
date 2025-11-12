@@ -4,12 +4,14 @@
  * Integrates with Stripe for payments and TaxJar for tax compliance
  */
 
-import { Express } from 'express';
-import express from 'express';
-import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
-import { logger } from '../../utils/logging/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+import { Express } from 'express';
+import express from 'express';
+
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
+import { logger } from '../../utils/logging/logger';
 
 // Import routes
 import billingRoutes from '../../api/rest/v1/routes/billing-routes';

@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Activity Timeline Service
  * Tracks all entity changes and user activities
  * Provides comprehensive audit trail and activity feed
  */
 
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
 
@@ -94,7 +95,7 @@ export class ActivityService {
     try {
       const result = await this.pool.query(
         `INSERT INTO activities (
-          tenant_id, user_id, activity_type, entity_type, entity_id, entity_name,
+          tenantId, user_id, activity_type, entity_type, entity_id, entity_name,
           action, description, changes, metadata, ip_address, user_agent
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -148,7 +149,7 @@ export class ActivityService {
       `SELECT a.*, u.first_name, u.last_name, u.avatar_url
        FROM activities a
        LEFT JOIN users u ON a.user_id = u.id
-       WHERE a.tenant_id = $1 AND a.entity_type = $2 AND a.entity_id = $3
+       WHERE a.tenantId = $1 AND a.entity_type = $2 AND a.entity_id = $3
        ORDER BY a.created_at DESC
        LIMIT $4 OFFSET $5`,
       [tenantId, entityType, entityId, limit, offset]
@@ -171,7 +172,7 @@ export class ActivityService {
       SELECT a.*, u.first_name, u.last_name, u.avatar_url
       FROM activities a
       LEFT JOIN users u ON a.user_id = u.id
-      WHERE a.tenant_id = $1 AND a.user_id = $2
+      WHERE a.tenantId = $1 AND a.user_id = $2
     `;
 
     const params: any[] = [tenantId, userId];
@@ -204,7 +205,7 @@ export class ActivityService {
       SELECT a.*, u.first_name, u.last_name, u.avatar_url
       FROM activities a
       LEFT JOIN users u ON a.user_id = u.id
-      WHERE a.tenant_id = $1
+      WHERE a.tenantId = $1
     `;
 
     const params: any[] = [tenantId];
@@ -258,7 +259,7 @@ export class ActivityService {
         action,
         COUNT(*) as count
       FROM activities
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
     `;
 
     const params: any[] = [tenantId];
@@ -297,7 +298,7 @@ export class ActivityService {
       `SELECT a.*, u.first_name, u.last_name, u.avatar_url
        FROM activities a
        LEFT JOIN users u ON a.user_id = u.id
-       WHERE a.tenant_id = $1
+       WHERE a.tenantId = $1
        AND (
          a.description ILIKE $2
          OR a.entity_name ILIKE $2
@@ -370,7 +371,7 @@ export class ActivityService {
   private mapRowToActivity(row: any): Activity {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       userId: row.user_id,
       activityType: row.activity_type,
       entityType: row.entity_type,

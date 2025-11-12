@@ -2,13 +2,16 @@
  * Custom Fields Module
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
 import { Express } from 'express';
+
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import customFieldsRoutes from '../../api/rest/v1/routes/custom-fields-routes';
 import { logger } from '../../utils/logging/logger';
 import { CustomFieldService } from '../../services/custom-fields/custom-field.service';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+
 
 export class CustomFieldsModule implements IModule {
   name = 'custom-fields';

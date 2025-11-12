@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Analytics Repository
  * Database queries for analytics and metrics
  */
@@ -54,10 +54,10 @@ export class AnalyticsRepository {
         ),
         previous_metrics AS (
           SELECT
-            (SELECT COUNT(*) FROM contacts WHERE tenant_id = $1 AND created_at < $2 ${ownerId ? 'AND owner_id = $3' : ''}) as prev_contacts,
-            (SELECT COUNT(*) FROM deals WHERE tenant_id = $1 AND created_at < $2 ${ownerId ? 'AND owner_id = $3' : ''}) as prev_deals,
-            (SELECT COUNT(*) FROM tasks WHERE tenant_id = $1 AND created_at < $2 ${ownerId ? 'AND assigned_to = $3' : ''}) as prev_tasks,
-            (SELECT COALESCE(SUM(amount), 0) FROM deals WHERE tenant_id = $1 AND actual_close_date < $2 ${ownerId ? 'AND owner_id = $3' : ''} AND is_won = true) as prev_revenue
+            (SELECT COUNT(*) FROM contacts WHERE tenantId = $1 AND created_at < $2 ${ownerId ? 'AND owner_id = $3' : ''}) as prev_contacts,
+            (SELECT COUNT(*) FROM deals WHERE tenantId = $1 AND created_at < $2 ${ownerId ? 'AND owner_id = $3' : ''}) as prev_deals,
+            (SELECT COUNT(*) FROM tasks WHERE tenantId = $1 AND created_at < $2 ${ownerId ? 'AND assigned_to = $3' : ''}) as prev_tasks,
+            (SELECT COALESCE(SUM(amount), 0) FROM deals WHERE tenantId = $1 AND actual_close_date < $2 ${ownerId ? 'AND owner_id = $3' : ''} AND is_won = true) as prev_revenue
         )
         SELECT
           cm.*,
@@ -241,7 +241,7 @@ export class AnalyticsRepository {
           COALESCE(SUM(amount), 0) as total_value,
           COALESCE(SUM(amount * (probability / 100.0)), 0) as weighted_value
         FROM deals
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
         GROUP BY stage
         ORDER BY stage
       `
@@ -393,8 +393,8 @@ export class AnalyticsRepository {
             ELSE 0
           END as completion_rate
         FROM users u
-        LEFT JOIN tasks t ON u.id = t.assigned_to AND t.tenant_id = $1
-        WHERE u.tenant_id = $1
+        LEFT JOIN tasks t ON u.id = t.assigned_to AND t.tenantId = $1
+        WHERE u.tenantId = $1
         GROUP BY u.id, u.first_name, u.last_name
         HAVING COUNT(*) > 0
         ORDER BY completion_rate DESC
@@ -445,7 +445,7 @@ export class AnalyticsRepository {
     filters?: AnalyticsFilters
   ): string {
     // Note: deleted_at column doesn't exist in current schema, removed soft delete check
-    let where = `${table}.tenant_id = $1`
+    let where = `${table}.tenantId = $1`
 
     if (filters?.ownerId) {
       where += ` AND ${table === 'tasks' ? 'assigned_to' : 'owner_id'} = $${filters?.ownerId ? 3 : 2}`

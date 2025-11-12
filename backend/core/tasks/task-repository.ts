@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Task Repository
  * Data access layer for tasks and activities
  */
@@ -40,7 +40,7 @@ export class TaskRepository {
   async create(tenantId: string, data: CreateTaskInput): Promise<Task> {
     const result = await this.pool.query<Task>(
       `INSERT INTO tasks (
-        tenant_id, title, description, status, priority,
+        tenantId, title, description, status, priority,
         assigned_to, created_by, due_date, start_date,
         related_entity_type, related_entity_id, tags
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -67,7 +67,7 @@ export class TaskRepository {
   async findById(id: string, tenantId: string): Promise<Task | null> {
     const result = await this.pool.query<Task>(
       `SELECT * FROM tasks
-       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -93,7 +93,7 @@ export class TaskRepository {
        FROM tasks t
        LEFT JOIN users u1 ON t.assigned_to = u1.id AND u1.deleted_at IS NULL
        LEFT JOIN users u2 ON t.created_by = u2.id AND u2.deleted_at IS NULL
-       WHERE t.id = $1 AND t.tenant_id = $2 AND t.deleted_at IS NULL`,
+       WHERE t.id = $1 AND t.tenantId = $2 AND t.deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -104,7 +104,7 @@ export class TaskRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    const whereConditions: string[] = ['t.tenant_id = $1', 't.deleted_at IS NULL']
+    const whereConditions: string[] = ['t.tenantId = $1', 't.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -225,7 +225,7 @@ export class TaskRepository {
     const result = await this.pool.query<Task>(
       `UPDATE tasks
        SET ${fields.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING *`,
       params
     )
@@ -239,7 +239,7 @@ export class TaskRepository {
 
   async delete(id: string, tenantId: string): Promise<void> {
     await this.pool.query(
-      `UPDATE tasks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+      `UPDATE tasks SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
       [id, tenantId]
     )
   }
@@ -247,7 +247,7 @@ export class TaskRepository {
   async bulkDelete(ids: string[], tenantId: string): Promise<number> {
     const result = await this.pool.query(
       `UPDATE tasks SET deleted_at = NOW()
-       WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = ANY($1::uuid[]) AND tenantId = $2 AND deleted_at IS NULL`,
       [ids, tenantId]
     )
     return result.rowCount || 0
@@ -256,7 +256,7 @@ export class TaskRepository {
   async search(tenantId: string, query: string, limit: number): Promise<Task[]> {
     const result = await this.pool.query<Task>(
       `SELECT * FROM tasks
-       WHERE tenant_id = $1
+       WHERE tenantId = $1
          AND deleted_at IS NULL
          AND to_tsvector('english', COALESCE(title, '') || ' ' || COALESCE(description, ''))
          @@ plainto_tsquery('english', $2)
@@ -275,7 +275,7 @@ export class TaskRepository {
   async createActivity(tenantId: string, userId: string, data: CreateActivityInput): Promise<Activity> {
     const result = await this.pool.query<Activity>(
       `INSERT INTO activities (
-        tenant_id, type, title, description, outcome,
+        tenantId, type, title, description, outcome,
         entity_type, entity_id, performed_by, performed_at, duration_minutes,
         email_subject, email_to, email_cc, email_bcc,
         meeting_location, meeting_start_time, meeting_end_time,
@@ -320,7 +320,7 @@ export class TaskRepository {
   async findActivityById(id: string, tenantId: string): Promise<Activity | null> {
     const result = await this.pool.query<Activity>(
       `SELECT * FROM activities
-       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+       WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -331,7 +331,7 @@ export class TaskRepository {
     const { page, limit, sortBy, sortOrder, filters } = options
     const offset = (page - 1) * limit
 
-    const whereConditions: string[] = ['a.tenant_id = $1', 'a.deleted_at IS NULL']
+    const whereConditions: string[] = ['a.tenantId = $1', 'a.deleted_at IS NULL']
     const params: any[] = [tenantId]
     let paramIndex = 2
 
@@ -441,7 +441,7 @@ export class TaskRepository {
     const result = await this.pool.query<Activity>(
       `UPDATE activities
        SET ${fields.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1} AND deleted_at IS NULL
+       WHERE id = $${paramIndex} AND tenantId = $${paramIndex + 1} AND deleted_at IS NULL
        RETURNING *`,
       params
     )
@@ -455,7 +455,7 @@ export class TaskRepository {
 
   async deleteActivity(id: string, tenantId: string): Promise<void> {
     await this.pool.query(
-      `UPDATE activities SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+      `UPDATE activities SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
       [id, tenantId]
     )
   }
@@ -491,7 +491,7 @@ export class TaskRepository {
 
     await this.pool.query(
       `INSERT INTO activity_participants (
-        tenant_id, activity_id, participant_type, participant_id,
+        tenantId, activity_id, participant_type, participant_id,
         participant_email, participant_name, role
       ) VALUES ${values}`,
       params
@@ -501,7 +501,7 @@ export class TaskRepository {
   async getActivityParticipants(activityId: string, tenantId: string): Promise<ActivityParticipant[]> {
     const result = await this.pool.query<ActivityParticipant>(
       `SELECT * FROM activity_participants
-       WHERE activity_id = $1 AND tenant_id = $2
+       WHERE activity_id = $1 AND tenantId = $2
        ORDER BY created_at`,
       [activityId, tenantId]
     )
@@ -515,7 +515,7 @@ export class TaskRepository {
 
   async createTaskReminder(tenantId: string, data: CreateTaskReminderInput): Promise<TaskReminder> {
     const result = await this.pool.query<TaskReminder>(
-      `INSERT INTO task_reminders (tenant_id, task_id, remind_at, reminder_type)
+      `INSERT INTO task_reminders (tenantId, task_id, remind_at, reminder_type)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
       [tenantId, data.taskId, data.remindAt, data.reminderType]
@@ -527,7 +527,7 @@ export class TaskRepository {
   async getTaskReminders(taskId: string, tenantId: string): Promise<TaskReminder[]> {
     const result = await this.pool.query<TaskReminder>(
       `SELECT * FROM task_reminders
-       WHERE task_id = $1 AND tenant_id = $2
+       WHERE task_id = $1 AND tenantId = $2
        ORDER BY remind_at`,
       [taskId, tenantId]
     )
@@ -542,7 +542,7 @@ export class TaskRepository {
   private mapTask(row: any): Task {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       title: row.title,
       description: row.description,
       status: row.status,
@@ -572,7 +572,7 @@ export class TaskRepository {
   private mapActivity(row: any): Activity {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       type: row.type,
       title: row.title,
       description: row.description,
@@ -602,7 +602,7 @@ export class TaskRepository {
   private mapActivityParticipant(row: any): ActivityParticipant {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       activityId: row.activity_id,
       participantType: row.participant_type,
       participantId: row.participant_id,
@@ -618,7 +618,7 @@ export class TaskRepository {
   private mapTaskReminder(row: any): TaskReminder {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       taskId: row.task_id,
       remindAt: row.remind_at,
       reminderType: row.reminder_type,

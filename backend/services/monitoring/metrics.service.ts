@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Prometheus Metrics Service
  * Provides application-level metrics for monitoring and observability
  */
 
 import { register, Counter, Histogram, Gauge, Summary, collectDefaultMetrics } from 'prom-client';
 import { Request, Response, NextFunction } from 'express';
+
 import { logger } from '../../utils/logging/logger';
 
 // Initialize default metrics (CPU, memory, etc.)
@@ -121,19 +122,19 @@ export const queueJobsFailed = new Gauge({
 export const activeUsers = new Gauge({
   name: 'crm_active_users',
   help: 'Number of active users in last 5 minutes',
-  labelNames: ['tenant_id']
+  labelNames: ['tenantId']
 });
 
 export const activeSessions = new Gauge({
   name: 'crm_active_sessions',
   help: 'Number of active user sessions',
-  labelNames: ['tenant_id']
+  labelNames: ['tenantId']
 });
 
 export const apiCallsTotal = new Counter({
   name: 'crm_api_calls_total',
   help: 'Total number of API calls',
-  labelNames: ['tenant_id', 'endpoint', 'status']
+  labelNames: ['tenantId', 'endpoint', 'status']
 });
 
 // ============================================
@@ -426,14 +427,14 @@ export async function updateQueueMetrics(
  * Update active users metric
  */
 export async function updateActiveUsersMetric(tenantId: string, count: number) {
-  activeUsers.set({ tenant_id: tenantId }, count);
+  activeUsers.set({ tenantId: tenantId }, count);
 }
 
 /**
  * Update active sessions metric
  */
 export async function updateActiveSessionsMetric(tenantId: string, count: number) {
-  activeSessions.set({ tenant_id: tenantId }, count);
+  activeSessions.set({ tenantId: tenantId }, count);
 }
 
 export default {

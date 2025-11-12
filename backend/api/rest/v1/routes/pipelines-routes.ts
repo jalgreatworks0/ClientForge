@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Pipelines API Routes
  * RESTful endpoints for pipeline management
  */
 
 import { Router } from 'express'
 import { Response } from 'express'
+
 import { AuthRequest } from '../../../../middleware/authenticate'
 import { authenticate } from '../../../../middleware/authenticate'
 import { validateRequest } from '../../../../middleware/validate-request'
@@ -29,10 +30,10 @@ router.get(
       const { tenantId } = req.user!
 
       const result = await db.query(
-        `SELECT id, tenant_id as "tenantId", name, description, is_default as "isDefault",
+        `SELECT id, tenantId as "tenantId", name, description, is_default as "isDefault",
                 is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt"
          FROM pipelines
-         WHERE tenant_id = $1 AND deleted_at IS NULL
+         WHERE tenantId = $1 AND deleted_at IS NULL
          ORDER BY is_default DESC, name ASC`,
         [tenantId]
       )
@@ -70,10 +71,10 @@ router.get(
 
       // Get pipeline
       const pipelineResult = await db.query(
-        `SELECT id, tenant_id as "tenantId", name, description, is_default as "isDefault",
+        `SELECT id, tenantId as "tenantId", name, description, is_default as "isDefault",
                 is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt"
          FROM pipelines
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+         WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [id, tenantId]
       )
 
@@ -89,11 +90,11 @@ router.get(
       // Include stages if requested
       if (includeStages) {
         const stagesResult = await db.query(
-          `SELECT id, tenant_id as "tenantId", pipeline_id as "pipelineId", name, display_order as "displayOrder",
+          `SELECT id, tenantId as "tenantId", pipeline_id as "pipelineId", name, display_order as "displayOrder",
                   probability, is_closed_stage as "isClosedStage", is_won_stage as "isWonStage", color,
                   created_at as "createdAt", updated_at as "updatedAt"
            FROM deal_stages
-           WHERE pipeline_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+           WHERE pipeline_id = $1 AND tenantId = $2 AND deleted_at IS NULL
            ORDER BY display_order ASC`,
           [id, tenantId]
         )
@@ -142,15 +143,15 @@ router.post(
       // If setting as default, unset other defaults first
       if (isDefault) {
         await db.query(
-          `UPDATE pipelines SET is_default = false WHERE tenant_id = $1 AND deleted_at IS NULL`,
+          `UPDATE pipelines SET is_default = false WHERE tenantId = $1 AND deleted_at IS NULL`,
           [tenantId]
         )
       }
 
       const result = await db.query(
-        `INSERT INTO pipelines (tenant_id, name, description, is_default, is_active)
+        `INSERT INTO pipelines (tenantId, name, description, is_default, is_active)
          VALUES ($1, $2, $3, $4, $5)
-         RETURNING id, tenant_id as "tenantId", name, description, is_default as "isDefault",
+         RETURNING id, tenantId as "tenantId", name, description, is_default as "isDefault",
                    is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt"`,
         [tenantId, name.trim(), description || null, isDefault || false, isActive !== false]
       )
@@ -193,7 +194,7 @@ router.put(
 
       // Check pipeline exists
       const existingResult = await db.query(
-        `SELECT id FROM pipelines WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+        `SELECT id FROM pipelines WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [id, tenantId]
       )
 
@@ -207,7 +208,7 @@ router.put(
       // If setting as default, unset other defaults first
       if (isDefault) {
         await db.query(
-          `UPDATE pipelines SET is_default = false WHERE tenant_id = $1 AND id != $2 AND deleted_at IS NULL`,
+          `UPDATE pipelines SET is_default = false WHERE tenantId = $1 AND id != $2 AND deleted_at IS NULL`,
           [tenantId, id]
         )
       }
@@ -240,8 +241,8 @@ router.put(
       const result = await db.query(
         `UPDATE pipelines
          SET ${updates.join(', ')}
-         WHERE id = $${paramCount++} AND tenant_id = $${paramCount++} AND deleted_at IS NULL
-         RETURNING id, tenant_id as "tenantId", name, description, is_default as "isDefault",
+         WHERE id = $${paramCount++} AND tenantId = $${paramCount++} AND deleted_at IS NULL
+         RETURNING id, tenantId as "tenantId", name, description, is_default as "isDefault",
                    is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt"`,
         values
       )
@@ -278,7 +279,7 @@ router.delete(
 
       // Check pipeline exists
       const existingResult = await db.query(
-        `SELECT id, is_default FROM pipelines WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+        `SELECT id, is_default FROM pipelines WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [id, tenantId]
       )
 
@@ -292,7 +293,7 @@ router.delete(
       // Prevent deleting default pipeline if it's the only one
       if (existingResult.rows[0].is_default) {
         const pipelineCount = await db.query(
-          `SELECT COUNT(*) FROM pipelines WHERE tenant_id = $1 AND deleted_at IS NULL`,
+          `SELECT COUNT(*) FROM pipelines WHERE tenantId = $1 AND deleted_at IS NULL`,
           [tenantId]
         )
 
@@ -306,12 +307,12 @@ router.delete(
 
       // Soft delete pipeline and its stages
       await db.query(
-        `UPDATE pipelines SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+        `UPDATE pipelines SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
         [id, tenantId]
       )
 
       await db.query(
-        `UPDATE deal_stages SET deleted_at = NOW() WHERE pipeline_id = $1 AND tenant_id = $2`,
+        `UPDATE deal_stages SET deleted_at = NOW() WHERE pipeline_id = $1 AND tenantId = $2`,
         [id, tenantId]
       )
 

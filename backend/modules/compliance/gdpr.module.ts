@@ -3,13 +3,16 @@
  * Handles data subject rights and consent management
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
 import { Express } from 'express';
+
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import gdprRoutes from '../../api/rest/v1/routes/gdpr-routes';
 import { logger } from '../../utils/logging/logger';
 import { GDPRService } from '../../services/compliance/gdpr.service';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+
 
 export class GDPRModule implements IModule {
   name = 'gdpr';

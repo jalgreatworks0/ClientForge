@@ -7,8 +7,9 @@
  */
 
 import { EventEmitter } from 'events';
-import { logger } from '../utils/logging/logger';
 import { Server as HTTPServer } from 'http';
+
+import { logger } from '../utils/logging/logger';
 
 // Global event emitter for inter-module communication
 export const globalEventEmitter = new EventEmitter();

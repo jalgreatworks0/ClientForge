@@ -1,11 +1,12 @@
-/**
+﻿/**
  * Search Module
  * Handles Elasticsearch initialization and automatic indexing
  */
 
+import { EventEmitter } from 'events';
+
 import { elasticsearchService } from '../../services/search/elasticsearch.service';
 import { logger } from '../../utils/logging/logger';
-import { EventEmitter } from 'events';
 
 export interface IModule {
   name: string;
@@ -123,7 +124,7 @@ export class SearchModule implements IModule {
   private async indexContact(data: any): Promise<void> {
     try {
       await elasticsearchService.index('contact', data.contactId, {
-        tenant_id: data.tenantId,
+        tenantId: data.tenantId,
         title: `${data.firstName} ${data.lastName}`,
         description: data.email,
         content: `${data.firstName} ${data.lastName} ${data.email || ''} ${data.phone || ''} ${data.companyName || ''}`,
@@ -185,7 +186,7 @@ export class SearchModule implements IModule {
   private async indexDeal(data: any): Promise<void> {
     try {
       await elasticsearchService.index('deal', data.dealId, {
-        tenant_id: data.tenantId,
+        tenantId: data.tenantId,
         title: data.dealName || data.name,
         description: data.description,
         content: `${data.dealName || data.name} ${data.description || ''}`,
@@ -243,7 +244,7 @@ export class SearchModule implements IModule {
   private async indexTask(data: any): Promise<void> {
     try {
       await elasticsearchService.index('task', data.taskId, {
-        tenant_id: data.tenantId,
+        tenantId: data.tenantId,
         title: data.taskTitle || data.title,
         description: data.description,
         content: `${data.taskTitle || data.title} ${data.description || ''}`,
@@ -301,7 +302,7 @@ export class SearchModule implements IModule {
   private async indexNote(data: any): Promise<void> {
     try {
       await elasticsearchService.index('note', data.noteId, {
-        tenant_id: data.tenantId,
+        tenantId: data.tenantId,
         title: data.title,
         description: data.content?.substring(0, 200),
         content: `${data.title} ${data.content || ''}`,
@@ -351,7 +352,7 @@ export class SearchModule implements IModule {
   private async indexCompany(data: any): Promise<void> {
     try {
       await elasticsearchService.index('company', data.companyId, {
-        tenant_id: data.tenantId,
+        tenantId: data.tenantId,
         title: data.name,
         description: data.description,
         content: `${data.name} ${data.description || ''} ${data.website || ''} ${data.industry || ''}`,

@@ -1,15 +1,19 @@
-/**
+﻿/**
  * Import Service
  * Handles bulk data import from CSV, Excel, JSON
  */
 
+import * as fs from 'fs/promises';
+import { createReadStream } from 'fs';
+
 import { Pool } from 'pg';
+import * as csv from 'csv-parser';
+import * as XLSX from 'xlsx';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
-import * as fs from 'fs/promises';
-import * as csv from 'csv-parser';
-import { createReadStream } from 'fs';
-import * as XLSX from 'xlsx';
+
+
 
 export interface ImportJob {
   id: string;
@@ -45,7 +49,7 @@ export class ImportService {
     createdBy: string;
   }): Promise<ImportJob> {
     const result = await this.pool.query(
-      `INSERT INTO import_jobs (tenant_id, entity_type, file_name, file_format, mapping, created_by, status)
+      `INSERT INTO import_jobs (tenantId, entity_type, file_name, file_format, mapping, created_by, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'pending')
        RETURNING *`,
       [params.tenantId, params.entityType, params.fileName, params.fileFormat, JSON.stringify(params.mapping), params.createdBy]
@@ -153,7 +157,7 @@ export class ImportService {
     const placeholders = fields.map((_, i) => '$' + (i + 3)).join(', ');
     const fieldsList = fields.join(', ');
 
-    const query = `INSERT INTO ${table} (tenant_id, created_by, ${fieldsList}) VALUES ($1, $2, ${placeholders})`;
+    const query = `INSERT INTO ${table} (tenantId, created_by, ${fieldsList}) VALUES ($1, $2, ${placeholders})`;
     await this.pool.query(query, [tenantId, createdBy, ...values]);
   }
 
@@ -168,7 +172,7 @@ export class ImportService {
 
   async getImportJobs(tenantId: string): Promise<ImportJob[]> {
     const result = await this.pool.query(
-      'SELECT * FROM import_jobs WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 50',
+      'SELECT * FROM import_jobs WHERE tenantId = $1 ORDER BY created_at DESC LIMIT 50',
       [tenantId]
     );
     return result.rows.map(row => this.mapRowToImportJob(row));
@@ -177,7 +181,7 @@ export class ImportService {
   private mapRowToImportJob(row: any): ImportJob {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       entityType: row.entity_type,
       fileName: row.file_name,
       fileFormat: row.file_format,

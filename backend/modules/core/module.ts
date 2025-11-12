@@ -4,12 +4,14 @@
  * This allows us to use the module system without rewriting every route file
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
+import { register } from 'prom-client';
+
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { logger } from '../../utils/logging/logger';
 import { getPool } from '../../database/postgresql/pool';
 import { performanceStatsEndpoint } from '../../middleware/performance-monitoring';
-import { register } from 'prom-client';
+
 
 // Import all existing routes
 import authRoutes from '../../api/rest/v1/routes/auth-routes';

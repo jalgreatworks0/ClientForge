@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Performance Monitoring Middleware
  * Tracks API request/response times and logs slow endpoints
  */
@@ -105,7 +105,7 @@ async function logPerformanceToDatabase(metrics: PerformanceMetrics): Promise<vo
         execution_time_ms,
         query_text,
         params,
-        tenant_id,
+        tenantId,
         user_id
       ) VALUES ($1, $2, $3, $4, $5, $6)
       `,

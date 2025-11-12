@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Contact Repository
  * Database access layer for contacts
  */
@@ -33,13 +33,13 @@ export class ContactRepository {
     const result = await trackedQuery<Contact>(
       this.pool,
       `INSERT INTO contacts (
-        tenant_id, owner_id, account_id, first_name, last_name, email, phone, mobile,
+        tenantId, owner_id, account_id, first_name, last_name, email, phone, mobile,
         title, department, lead_source, lead_status, lifecycle_stage, tags,
         address_street, address_city, address_state, address_postal_code, address_country,
         social_linkedin, social_twitter, social_facebook, notes
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       RETURNING
-        id, tenant_id as "tenantId", owner_id as "ownerId", account_id as "accountId",
+        id, tenantId as "tenantId", owner_id as "ownerId", account_id as "accountId",
         first_name as "firstName", last_name as "lastName", email, phone, mobile,
         title, department, lead_source as "leadSource", lead_status as "leadStatus",
         lifecycle_stage as "lifecycleStage", lead_score as "leadScore", tags,
@@ -88,7 +88,7 @@ export class ContactRepository {
     const result = await trackedQuery<Contact>(
       this.pool,
       `SELECT
-        id, tenant_id as "tenantId", owner_id as "ownerId", account_id as "accountId",
+        id, tenantId as "tenantId", owner_id as "ownerId", account_id as "accountId",
         first_name as "firstName", last_name as "lastName", email, phone, mobile,
         title, department, lead_source as "leadSource", lead_status as "leadStatus",
         lifecycle_stage as "lifecycleStage", lead_score as "leadScore", tags,
@@ -99,7 +99,7 @@ export class ContactRepository {
         notes, is_active as "isActive", last_contacted_at as "lastContactedAt",
         created_at as "createdAt", updated_at as "updatedAt", deleted_at as "deletedAt"
       FROM contacts
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId],
       { queryName: 'contacts.findById', tenantId }
     )
@@ -113,7 +113,7 @@ export class ContactRepository {
   async findByIdWithRelations(id: string, tenantId: string): Promise<ContactWithRelations | null> {
     const result = await this.pool.query(
       `SELECT
-        c.id, c.tenant_id as "tenantId", c.owner_id as "ownerId", c.account_id as "accountId",
+        c.id, c.tenantId as "tenantId", c.owner_id as "ownerId", c.account_id as "accountId",
         c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.mobile,
         c.title, c.department, c.lead_source as "leadSource", c.lead_status as "leadStatus",
         c.lifecycle_stage as "lifecycleStage", c.lead_score as "leadScore", c.tags,
@@ -139,7 +139,7 @@ export class ContactRepository {
       FROM contacts c
       LEFT JOIN users u ON c.owner_id = u.id
       LEFT JOIN accounts a ON c.account_id = a.id
-      WHERE c.id = $1 AND c.tenant_id = $2 AND c.deleted_at IS NULL`,
+      WHERE c.id = $1 AND c.tenantId = $2 AND c.deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -166,7 +166,7 @@ export class ContactRepository {
     let paramIndex = 4
 
     // Build WHERE clause
-    const whereClauses = ['c.tenant_id = $1', 'c.deleted_at IS NULL']
+    const whereClauses = ['c.tenantId = $1', 'c.deleted_at IS NULL']
 
     if (filters.search) {
       whereClauses.push(`(
@@ -284,7 +284,7 @@ export class ContactRepository {
     // Get contacts
     const result = await this.pool.query<Contact>(
       `SELECT
-        c.id, c.tenant_id as "tenantId", c.owner_id as "ownerId", c.account_id as "accountId",
+        c.id, c.tenantId as "tenantId", c.owner_id as "ownerId", c.account_id as "accountId",
         c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.mobile,
         c.title, c.department, c.lead_source as "leadSource", c.lead_status as "leadStatus",
         c.lifecycle_stage as "lifecycleStage", c.lead_score as "leadScore", c.tags,
@@ -339,9 +339,9 @@ export class ContactRepository {
     const result = await this.pool.query<Contact>(
       `UPDATE contacts
       SET ${updateFields.join(', ')}
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL
       RETURNING
-        id, tenant_id as "tenantId", owner_id as "ownerId", account_id as "accountId",
+        id, tenantId as "tenantId", owner_id as "ownerId", account_id as "accountId",
         first_name as "firstName", last_name as "lastName", email, phone, mobile,
         title, department, lead_source as "leadSource", lead_status as "leadStatus",
         lifecycle_stage as "lifecycleStage", lead_score as "leadScore", tags,
@@ -365,7 +365,7 @@ export class ContactRepository {
     const result = await this.pool.query(
       `UPDATE contacts
       SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
 
@@ -380,7 +380,7 @@ export class ContactRepository {
     const result = await this.pool.query(
       `UPDATE contacts
       SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ANY($1) AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = ANY($1) AND tenantId = $2 AND deleted_at IS NULL`,
       [ids, tenantId]
     )
 
@@ -395,7 +395,7 @@ export class ContactRepository {
   async search(tenantId: string, query: string, limit: number = 20): Promise<Contact[]> {
     const result = await this.pool.query<Contact>(
       `SELECT
-        id, tenant_id as "tenantId", owner_id as "ownerId", account_id as "accountId",
+        id, tenantId as "tenantId", owner_id as "ownerId", account_id as "accountId",
         first_name as "firstName", last_name as "lastName", email, phone, mobile,
         title, department, lead_source as "leadSource", lead_status as "leadStatus",
         lifecycle_stage as "lifecycleStage", lead_score as "leadScore", tags,
@@ -416,7 +416,7 @@ export class ContactRepository {
           plainto_tsquery('english', $2)
         ) as rank
       FROM contacts
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND deleted_at IS NULL
         AND to_tsvector('english',
               COALESCE(first_name, '') || ' ' ||
@@ -438,7 +438,7 @@ export class ContactRepository {
    */
   async getCountByTenant(tenantId: string): Promise<number> {
     const result = await this.pool.query(
-      `SELECT COUNT(*) FROM contacts WHERE tenant_id = $1 AND deleted_at IS NULL`,
+      `SELECT COUNT(*) FROM contacts WHERE tenantId = $1 AND deleted_at IS NULL`,
       [tenantId]
     )
     return parseInt(result.rows[0].count, 10)
@@ -450,7 +450,7 @@ export class ContactRepository {
   async findByEmail(email: string, tenantId: string): Promise<Contact[]> {
     const result = await this.pool.query<Contact>(
       `SELECT
-        id, tenant_id as "tenantId", owner_id as "ownerId", account_id as "accountId",
+        id, tenantId as "tenantId", owner_id as "ownerId", account_id as "accountId",
         first_name as "firstName", last_name as "lastName", email, phone, mobile,
         title, department, lead_source as "leadSource", lead_status as "leadStatus",
         lifecycle_stage as "lifecycleStage", lead_score as "leadScore", tags,
@@ -461,7 +461,7 @@ export class ContactRepository {
         notes, is_active as "isActive", last_contacted_at as "lastContactedAt",
         created_at as "createdAt", updated_at as "updatedAt", deleted_at as "deletedAt"
       FROM contacts
-      WHERE LOWER(email) = LOWER($1) AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE LOWER(email) = LOWER($1) AND tenantId = $2 AND deleted_at IS NULL`,
       [email, tenantId]
     )
 
@@ -475,7 +475,7 @@ export class ContactRepository {
     await this.pool.query(
       `UPDATE contacts
       SET last_contacted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
       [id, tenantId]
     )
   }

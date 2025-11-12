@@ -1,7 +1,7 @@
-import type { RequestHandler } from "express";
+﻿import type { RequestHandler } from "express";
 
 // Optional emergency fallback (disabled by default). Do NOT set in production.
-const EMERGENCY_DEFAULT_TENANT = process.env.FALLBACK_TENANT_ID?.trim();
+const EMERGENCY_DEFAULT_TENANT = process.env.FALLBACK_tenantId?.trim();
 const DEFAULT_TENANT_SENTINEL = "00000000-0000-0000-0000-000000000001";
 
 export const tenantGuard: RequestHandler = (req, res, next) => {

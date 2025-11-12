@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+
 import { getPool } from '../../../database/postgresql/pool';
 import { logger } from '../../../utils/logging/logger';
 

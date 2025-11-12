@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Email Verification Service
  * Handles email verification token generation and verification
  */
@@ -170,7 +170,7 @@ export class EmailVerificationService {
         `SELECT id, email, first_name, is_verified
          FROM users
          WHERE email = $1
-           AND tenant_id = $2
+           AND tenantId = $2
            AND deleted_at IS NULL`,
         [email, tenantId]
       )

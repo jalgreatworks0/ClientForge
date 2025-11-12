@@ -4,11 +4,13 @@
  * Supports transactional emails, templates, and attachments
  */
 
-import sgMail from '@sendgrid/mail';
-import * as nodemailer from 'nodemailer';
-import { logger } from '../../utils/logging/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+import sgMail from '@sendgrid/mail';
+import * as nodemailer from 'nodemailer';
+
+import { logger } from '../../utils/logging/logger';
 
 export interface EmailOptions {
   to: string | string[];

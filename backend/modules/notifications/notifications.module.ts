@@ -3,15 +3,18 @@
  * Multi-channel notification system
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { Server as HTTPServer } from 'http';
+
 import { Express } from 'express';
+
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import notificationsRoutes from '../../api/rest/v1/routes/notifications-routes';
 import { logger } from '../../utils/logging/logger';
 import { notificationService } from '../../services/notifications/notification.service';
 import { websocketService } from '../../services/notifications/websocket.service';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { Server as HTTPServer } from 'http';
+
 
 export class NotificationsModule implements IModule {
   name = 'notifications';

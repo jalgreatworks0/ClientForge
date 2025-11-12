@@ -5,7 +5,9 @@
 
 import { Client } from '@microsoft/microsoft-graph-client'
 import type { Message, User } from '@microsoft/microsoft-graph-types'
+
 import { logger } from '../../utils/logging/logger'
+
 import type {
   EmailMessage,
   EmailAddress,

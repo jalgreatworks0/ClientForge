@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Permission Repository
  * Database access layer for permissions and role-permission mappings
  */
@@ -94,11 +94,11 @@ export class PermissionRepository {
     try {
       // Get role
       const roleResult = await this.pool.query<Role>(
-        `SELECT id, tenant_id as "tenantId", name, description, level,
+        `SELECT id, tenantId as "tenantId", name, description, level,
                 is_system_role as "isSystemRole", created_at as "createdAt",
                 updated_at as "updatedAt"
          FROM roles
-         WHERE id = $1 AND tenant_id = $2`,
+         WHERE id = $1 AND tenantId = $2`,
         [roleId, tenantId]
       )
 
@@ -131,11 +131,11 @@ export class PermissionRepository {
   async getTenantRoles(tenantId: string): Promise<Role[]> {
     try {
       const result = await this.pool.query<Role>(
-        `SELECT id, tenant_id as "tenantId", name, description, level,
+        `SELECT id, tenantId as "tenantId", name, description, level,
                 is_system_role as "isSystemRole", created_at as "createdAt",
                 updated_at as "updatedAt"
          FROM roles
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
          ORDER BY level DESC, name`,
         [tenantId]
       )
@@ -255,9 +255,9 @@ export class PermissionRepository {
   ): Promise<Role> {
     try {
       const result = await this.pool.query<Role>(
-        `INSERT INTO roles (tenant_id, name, level, description, is_system_role)
+        `INSERT INTO roles (tenantId, name, level, description, is_system_role)
          VALUES ($1, $2, $3, $4, false)
-         RETURNING id, tenant_id as "tenantId", name, description, level,
+         RETURNING id, tenantId as "tenantId", name, description, level,
                    is_system_role as "isSystemRole", created_at as "createdAt",
                    updated_at as "updatedAt"`,
         [tenantId, name, level, description]

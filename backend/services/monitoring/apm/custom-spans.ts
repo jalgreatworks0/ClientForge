@@ -4,6 +4,7 @@
  */
 
 import { trace, context, Span, SpanStatusCode } from '@opentelemetry/api';
+
 import { logger } from '../../../utils/logging/logger';
 
 const tracer = trace.getTracer('clientforge-crm');

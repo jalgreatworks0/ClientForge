@@ -1,9 +1,10 @@
-/**
+﻿/**
  * Analytics API Routes (Simplified)
  * Direct SQL aggregations for reporting dashboard
  */
 
 import { Router, Request, Response } from 'express'
+
 import { authenticate } from '../../../../middleware/authenticate'
 import { db } from '../../../../database/postgresql/pool'
 import { logger } from '../../../../utils/logging/logger'
@@ -33,7 +34,7 @@ router.get('/revenue-metrics', async (req: Request, res: Response) => {
         AVG(amount) FILTER (WHERE is_won = true) as average_deal_size,
         SUM(amount * (probability / 100.0)) FILTER (WHERE is_closed = false) as forecasted_revenue
        FROM deals
-       WHERE tenant_id = $1
+       WHERE tenantId = $1
          AND created_at >= $2
          AND created_at <= $3
          AND deleted_at IS NULL`,
@@ -51,7 +52,7 @@ router.get('/revenue-metrics', async (req: Request, res: Response) => {
       const comparisonResult = await db.query(
         `SELECT SUM(amount) FILTER (WHERE is_won = true) as total_revenue
          FROM deals
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
            AND created_at >= $2
            AND created_at <= $3
            AND deleted_at IS NULL`,
@@ -109,7 +110,7 @@ router.get('/sales-funnel', async (req: Request, res: Response) => {
         COALESCE(SUM(d.amount), 0) as total_value
       FROM deal_stages ds
       LEFT JOIN deals d ON d.stage_id = ds.id
-        AND d.tenant_id = $1
+        AND d.tenantId = $1
         AND d.deleted_at IS NULL
         ${pipelineId ? 'AND d.pipeline_id = $2' : ''}
       WHERE ds.deleted_at IS NULL
@@ -175,7 +176,7 @@ router.get('/team-performance', async (req: Request, res: Response) => {
          AND d.created_at >= $2
          AND d.created_at <= $3
          AND d.deleted_at IS NULL
-       WHERE u.tenant_id = $1
+       WHERE u.tenantId = $1
          AND u.is_active = true
        GROUP BY u.id, u.first_name, u.last_name
        HAVING COUNT(d.id) > 0
@@ -229,7 +230,7 @@ router.get('/revenue-trend', async (req: Request, res: Response) => {
         COALESCE(SUM(amount), 0) as revenue,
         COUNT(*) as deal_count
        FROM deals
-       WHERE tenant_id = $1
+       WHERE tenantId = $1
          AND is_won = true
          AND actual_close_date >= $2
          AND actual_close_date <= $3
@@ -285,7 +286,7 @@ router.get('/lead-sources', async (req: Request, res: Response) => {
           2
         ) as conversion_rate
        FROM deals
-       WHERE tenant_id = $1
+       WHERE tenantId = $1
          AND created_at >= $2
          AND created_at <= $3
          AND deleted_at IS NULL
@@ -337,7 +338,7 @@ router.get('/pipeline-health', async (req: Request, res: Response) => {
                           AND expected_close_date >= NOW()
                           AND is_closed = false) as hot_deals
       FROM deals
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         ${pipelineId ? 'AND pipeline_id = $2' : ''}
         AND is_closed = false
         AND deleted_at IS NULL

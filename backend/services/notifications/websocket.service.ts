@@ -4,10 +4,13 @@
  */
 
 import { Server as HTTPServer } from 'http';
+
 import { Server as SocketIOServer, Socket } from 'socket.io';
-import { logger } from '../../utils/logging/logger';
-import { notificationService } from './notification.service';
 import * as jwt from 'jsonwebtoken';
+
+import { logger } from '../../utils/logging/logger';
+
+import { notificationService } from './notification.service';
 
 export class WebSocketService {
   private io: SocketIOServer | null = null;

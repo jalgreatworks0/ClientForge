@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dunning Service
  * Handles failed payment recovery, retry logic, and subscription suspension
  * Manages payment retry schedules, customer notifications, and grace periods
@@ -6,8 +6,10 @@
 
 import Stripe from 'stripe';
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
+
 import { StripeService } from './stripe.service';
 import { SubscriptionService } from './subscription.service';
 
@@ -96,7 +98,7 @@ export class DunningService {
       // Create dunning attempt record
       await this.pool.query(
         `INSERT INTO dunning_attempts (
-          tenant_id, subscription_id, invoice_id, stripe_invoice_id,
+          tenantId, subscription_id, invoice_id, stripe_invoice_id,
           attempt_number, attempt_date, status, failure_reason, next_attempt_date
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
@@ -155,7 +157,7 @@ export class DunningService {
 
       // Get invoice from database
       const result = await this.pool.query(
-        'SELECT stripe_invoice_id FROM invoices WHERE tenant_id = $1 AND id = $2',
+        'SELECT stripe_invoice_id FROM invoices WHERE tenantId = $1 AND id = $2',
         [tenantId, invoiceId]
       );
 
@@ -176,7 +178,7 @@ export class DunningService {
         await this.pool.query(
           `UPDATE dunning_attempts
            SET status = 'succeeded', updated_at = NOW()
-           WHERE tenant_id = $1 AND invoice_id = $2`,
+           WHERE tenantId = $1 AND invoice_id = $2`,
           [tenantId, invoiceId]
         );
 
@@ -231,14 +233,14 @@ export class DunningService {
     try {
       // Get all pending retries that are due
       const result = await this.pool.query(
-        `SELECT DISTINCT tenant_id, invoice_id, next_attempt_date
+        `SELECT DISTINCT tenantId, invoice_id, next_attempt_date
          FROM dunning_attempts
          WHERE status = 'failed'
            AND next_attempt_date IS NOT NULL
            AND next_attempt_date <= NOW()
            AND attempt_number <= (
              SELECT COALESCE(
-               (SELECT max_retries FROM dunning_configs WHERE tenant_id = dunning_attempts.tenant_id),
+               (SELECT max_retries FROM dunning_configs WHERE tenantId = dunning_attempts.tenantId),
                4
              )
            )
@@ -254,11 +256,11 @@ export class DunningService {
           await this.pool.query(
             `UPDATE dunning_attempts
              SET status = 'retrying', updated_at = NOW()
-             WHERE tenant_id = $1 AND invoice_id = $2 AND status = 'failed'`,
-            [row.tenant_id, row.invoice_id]
+             WHERE tenantId = $1 AND invoice_id = $2 AND status = 'failed'`,
+            [row.tenantId, row.invoice_id]
           );
 
-          const success = await this.retryPayment(row.tenant_id, row.invoice_id);
+          const success = await this.retryPayment(row.tenantId, row.invoice_id);
 
           if (success) {
             succeeded++;
@@ -267,7 +269,7 @@ export class DunningService {
           }
         } catch (error: any) {
           logger.error('[Dunning] Failed to process retry', {
-            tenantId: row.tenant_id,
+            tenantId: row.tenantId,
             invoiceId: row.invoice_id,
             error: error.message,
           });
@@ -297,18 +299,18 @@ export class DunningService {
     try {
       const result = await this.pool.query(
         `SELECT
-          id, tenant_id, subscription_id, invoice_id, stripe_invoice_id,
+          id, tenantId, subscription_id, invoice_id, stripe_invoice_id,
           attempt_number, attempt_date, status, failure_reason, next_attempt_date,
           created_at, updated_at
          FROM dunning_attempts
-         WHERE tenant_id = $1 AND invoice_id = $2
+         WHERE tenantId = $1 AND invoice_id = $2
          ORDER BY attempt_number ASC`,
         [tenantId, invoiceId]
       );
 
       return result.rows.map(row => ({
         id: row.id,
-        tenantId: row.tenant_id,
+        tenantId: row.tenantId,
         subscriptionId: row.subscription_id,
         invoiceId: row.invoice_id,
         stripeInvoiceId: row.stripe_invoice_id,
@@ -409,14 +411,14 @@ export class DunningService {
       await this.pool.query(
         `UPDATE dunning_attempts
          SET status = 'abandoned', updated_at = NOW()
-         WHERE tenant_id = $1 AND invoice_id = $2`,
+         WHERE tenantId = $1 AND invoice_id = $2`,
         [tenantId, invoiceId]
       );
 
       // Check if we should cancel the subscription
       const firstAttempt = await this.pool.query(
         `SELECT attempt_date FROM dunning_attempts
-         WHERE tenant_id = $1 AND invoice_id = $2
+         WHERE tenantId = $1 AND invoice_id = $2
          ORDER BY attempt_number ASC
          LIMIT 1`,
         [tenantId, invoiceId]
@@ -466,7 +468,7 @@ export class DunningService {
           max_retries, retry_intervals, grace_period_days,
           suspend_after_failures, cancel_after_days, send_notifications
          FROM dunning_configs
-         WHERE tenant_id = $1`,
+         WHERE tenantId = $1`,
         [tenantId]
       );
 

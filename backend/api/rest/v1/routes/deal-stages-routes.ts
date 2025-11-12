@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Deal Stages API Routes
  * RESTful endpoints for deal stage management
  */
 
 import { Router } from 'express'
 import { Response } from 'express'
+
 import { AuthRequest } from '../../../../middleware/authenticate'
 import { authenticate } from '../../../../middleware/authenticate'
 import { requirePermission } from '../../../../middleware/authorize'
@@ -35,11 +36,11 @@ router.get(
       const { pipelineId } = req.query
 
       let query = `
-        SELECT id, tenant_id as "tenantId", pipeline_id as "pipelineId", name,
+        SELECT id, tenantId as "tenantId", pipeline_id as "pipelineId", name,
                display_order as "displayOrder", probability, is_closed_stage as "isClosedStage",
                is_won_stage as "isWonStage", color, created_at as "createdAt", updated_at as "updatedAt"
         FROM deal_stages
-        WHERE tenant_id = $1 AND deleted_at IS NULL
+        WHERE tenantId = $1 AND deleted_at IS NULL
       `
       const params: any[] = [tenantId]
 
@@ -82,11 +83,11 @@ router.get(
       const { tenantId } = req.user!
 
       const result = await db.query(
-        `SELECT id, tenant_id as "tenantId", pipeline_id as "pipelineId", name,
+        `SELECT id, tenantId as "tenantId", pipeline_id as "pipelineId", name,
                 display_order as "displayOrder", probability, is_closed_stage as "isClosedStage",
                 is_won_stage as "isWonStage", color, created_at as "createdAt", updated_at as "updatedAt"
          FROM deal_stages
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+         WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [id, tenantId]
       )
 
@@ -151,7 +152,7 @@ router.post(
 
       // Verify pipeline exists
       const pipelineResult = await db.query(
-        `SELECT id FROM pipelines WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+        `SELECT id FROM pipelines WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [pipelineId, tenantId]
       )
 
@@ -163,9 +164,9 @@ router.post(
       }
 
       const result = await db.query(
-        `INSERT INTO deal_stages (tenant_id, pipeline_id, name, display_order, probability, is_closed_stage, is_won_stage, color)
+        `INSERT INTO deal_stages (tenantId, pipeline_id, name, display_order, probability, is_closed_stage, is_won_stage, color)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         RETURNING id, tenant_id as "tenantId", pipeline_id as "pipelineId", name,
+         RETURNING id, tenantId as "tenantId", pipeline_id as "pipelineId", name,
                    display_order as "displayOrder", probability, is_closed_stage as "isClosedStage",
                    is_won_stage as "isWonStage", color, created_at as "createdAt", updated_at as "updatedAt"`,
         [tenantId, pipelineId, name.trim(), displayOrder, probability, isClosedStage || false, isWonStage || false, color || null]
@@ -213,7 +214,7 @@ router.put(
 
       // Check stage exists
       const existingResult = await db.query(
-        `SELECT id FROM deal_stages WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+        `SELECT id FROM deal_stages WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [id, tenantId]
       )
 
@@ -268,8 +269,8 @@ router.put(
       const result = await db.query(
         `UPDATE deal_stages
          SET ${updates.join(', ')}
-         WHERE id = $${paramCount++} AND tenant_id = $${paramCount++} AND deleted_at IS NULL
-         RETURNING id, tenant_id as "tenantId", pipeline_id as "pipelineId", name,
+         WHERE id = $${paramCount++} AND tenantId = $${paramCount++} AND deleted_at IS NULL
+         RETURNING id, tenantId as "tenantId", pipeline_id as "pipelineId", name,
                    display_order as "displayOrder", probability, is_closed_stage as "isClosedStage",
                    is_won_stage as "isWonStage", color, created_at as "createdAt", updated_at as "updatedAt"`,
         values
@@ -309,7 +310,7 @@ router.delete(
 
       // Check stage exists
       const existingResult = await db.query(
-        `SELECT id, pipeline_id FROM deal_stages WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+        `SELECT id, pipeline_id FROM deal_stages WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [id, tenantId]
       )
 
@@ -324,7 +325,7 @@ router.delete(
 
       // Check if there are deals in this stage
       const dealsCount = await db.query(
-        `SELECT COUNT(*) FROM deals WHERE stage_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+        `SELECT COUNT(*) FROM deals WHERE stage_id = $1 AND tenantId = $2 AND deleted_at IS NULL`,
         [id, tenantId]
       )
 
@@ -337,7 +338,7 @@ router.delete(
 
       // Soft delete stage
       await db.query(
-        `UPDATE deal_stages SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2`,
+        `UPDATE deal_stages SET deleted_at = NOW() WHERE id = $1 AND tenantId = $2`,
         [id, tenantId]
       )
 

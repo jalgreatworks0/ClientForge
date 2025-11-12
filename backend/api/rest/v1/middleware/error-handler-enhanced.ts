@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Enhanced Error Handler Middleware
  *
  * Integrates:
@@ -10,6 +10,7 @@
  */
 
 import { Request, Response, NextFunction } from "express";
+
 import { AppError } from "../../../../utils/errors/AppError";
 import { toProblemDetails } from "../../../../utils/errors/problem-details";
 import { logger } from "../../../../utils/logging/logger";
@@ -63,12 +64,12 @@ export function errorHandler(
     span.setAttribute("cf.severity", severity);
     span.setAttribute("cf.fingerprint", fp);
     span.setAttribute("cf.correlation_id", problemDetails.correlationId);
-    span.setAttribute("cf.tenant_id", problemDetails.tenantId || "");
+    span.setAttribute("cf.tenantId", problemDetails.tenantId || "");
     span.setStatus({ code: 2, message: problemDetails.title }); // ERROR
   }
 
   if (err instanceof AppError) {
-    // Structured log → MongoDB (with redaction)
+    // Structured log â†’ MongoDB (with redaction)
     logger.error("[ERROR]", {
       problem: problemDetails,
       fingerprint: fp,

@@ -5,7 +5,9 @@
 
 import { google } from 'googleapis'
 import type { GaxiosResponse } from 'gaxios'
+
 import { logger } from '../../utils/logging/logger'
+
 import type {
   EmailMessage,
   EmailAddress,

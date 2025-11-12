@@ -3,11 +3,12 @@
  * Every module must implement IModule to be loadable
  */
 
+import { EventEmitter } from 'events';
+
 import { Express } from 'express';
 import { Pool } from 'pg';
 import { Queue } from 'bullmq';
 import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
-import { EventEmitter } from 'events';
 
 export interface ModuleContext {
   // Database access

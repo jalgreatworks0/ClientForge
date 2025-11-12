@@ -428,7 +428,7 @@ export async function verifyToken(
           userId: req.user?.userId,
           tenantId: req.user?.tenantId,
           email: req.user?.email,
-          roleId: req.user?.roleId,
+          role: req.user?.role,
         },
       },
     })

@@ -1,14 +1,16 @@
-/**
+﻿/**
  * Files Controller
  * Handles file upload, download, and signed URL generation
  * All file access goes through signed URLs for security
  */
 
+import { Readable } from 'stream'
+
 import { Request, Response } from 'express'
+import multer from 'multer'
+
 import { storageService } from '../../../../services/storage/storage.service'
 import { logger } from '../../../../utils/logging/logger'
-import multer from 'multer'
-import { Readable } from 'stream'
 
 // Configure multer for memory storage
 const upload = multer({
@@ -40,7 +42,7 @@ export const uploadFile = [
     try {
       const file = req.file
       const { entityType, entityId } = req.body
-      const tenantId = req.user!.tenant_id
+      const tenantId = req.user!.tenantId
       const userId = req.user!.id
 
       if (!file) {
@@ -104,7 +106,7 @@ export const getFileSignedUrl = async (req: Request, res: Response): Promise<voi
   try {
     const { fileId } = req.params
     const { expiresIn = 3600 } = req.query // Default 1 hour
-    const tenantId = req.user!.tenant_id
+    const tenantId = req.user!.tenantId
 
     // Validate expiresIn
     const expiresInNum = parseInt(expiresIn as string, 10)
@@ -160,7 +162,7 @@ export const getFileSignedUrl = async (req: Request, res: Response): Promise<voi
 export const getFileMetadata = async (req: Request, res: Response): Promise<void> => {
   try {
     const { fileId } = req.params
-    const tenantId = req.user!.tenant_id
+    const tenantId = req.user!.tenantId
 
     const metadata = await storageService.getFileMetadata(fileId, tenantId)
 
@@ -191,7 +193,7 @@ export const getFileMetadata = async (req: Request, res: Response): Promise<void
 export const deleteFile = async (req: Request, res: Response): Promise<void> => {
   try {
     const { fileId } = req.params
-    const tenantId = req.user!.tenant_id
+    const tenantId = req.user!.tenantId
 
     await storageService.deleteFile(fileId, tenantId)
 
@@ -230,7 +232,7 @@ export const deleteFile = async (req: Request, res: Response): Promise<void> => 
 export const listEntityFiles = async (req: Request, res: Response): Promise<void> => {
   try {
     const { entityType, entityId } = req.params
-    const tenantId = req.user!.tenant_id
+    const tenantId = req.user!.tenantId
 
     const files = await storageService.listEntityFiles(tenantId, entityType, entityId)
 
@@ -260,7 +262,7 @@ export const listEntityFiles = async (req: Request, res: Response): Promise<void
  */
 export const getStorageStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const tenantId = req.user!.tenant_id
+    const tenantId = req.user!.tenantId
 
     const stats = await storageService.getTenantStorageStats(tenantId)
 
@@ -289,7 +291,7 @@ export const getStorageStats = async (req: Request, res: Response): Promise<void
 export const bulkGenerateSignedUrls = async (req: Request, res: Response): Promise<void> => {
   try {
     const { fileIds, expiresIn = 3600 } = req.body
-    const tenantId = req.user!.tenant_id
+    const tenantId = req.user!.tenantId
 
     if (!Array.isArray(fileIds) || fileIds.length === 0) {
       res.status(400).json({

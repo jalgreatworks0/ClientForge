@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Query Performance Tracker
  * Wraps database queries with performance tracking
  */
@@ -111,7 +111,7 @@ async function logQueryPerformance(
         execution_time_ms,
         query_text,
         params,
-        tenant_id,
+        tenantId,
         user_id
       ) VALUES ($1, $2, $3, $4, $5, $6)
       `,
@@ -214,7 +214,7 @@ export async function getQueryPerformanceStats(
     FROM query_performance_log
     WHERE created_at >= $1
       AND execution_time_ms >= $2
-      ${tenantId ? 'AND tenant_id = $3' : ''}
+      ${tenantId ? 'AND tenantId = $3' : ''}
     GROUP BY query_name
     ORDER BY avg_execution_time DESC
     LIMIT $${tenantId ? 4 : 3}
@@ -246,7 +246,7 @@ export async function getSlowestQueries(
       execution_time_ms,
       query_text,
       params,
-      tenant_id,
+      tenantId,
       user_id,
       created_at
     FROM query_performance_log

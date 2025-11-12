@@ -1,13 +1,16 @@
-/**
+﻿/**
  * SSO Provider Service
  * Centralized service for managing SSO provider configurations and operations
  */
 
-import { getPool } from '../../../database/postgresql/pool';
-import { logger } from '../../../utils/logging/logger';
+import * as crypto from 'crypto';
+
 import { OAuth2Client } from 'google-auth-library';
 import { ConfidentialClientApplication } from '@azure/msal-node';
-import * as crypto from 'crypto';
+
+import { getPool } from '../../../database/postgresql/pool';
+import { logger } from '../../../utils/logging/logger';
+
 
 export interface SSOProviderConfig {
   clientId: string;
@@ -34,7 +37,7 @@ export class SSOProviderService {
       const result = await this.pool.query(
         `SELECT id, provider_type, provider_name, client_id, enabled, auto_provision
          FROM sso_providers
-         WHERE tenant_id = $1 AND enabled = true`,
+         WHERE tenantId = $1 AND enabled = true`,
         [tenantId]
       );
 
@@ -54,7 +57,7 @@ export class SSOProviderService {
         `SELECT id, provider_type, provider_name, client_id, client_secret,
                 metadata_url, enabled, auto_provision, config
          FROM sso_providers
-         WHERE tenant_id = $1 AND provider_type = $2 AND enabled = true`,
+         WHERE tenantId = $1 AND provider_type = $2 AND enabled = true`,
         [tenantId, providerType]
       );
 
@@ -85,7 +88,7 @@ export class SSOProviderService {
 
       const result = await this.pool.query(
         `INSERT INTO sso_providers (
-          tenant_id, provider_type, client_id, client_secret,
+          tenantId, provider_type, client_id, client_secret,
           metadata_url, enabled, created_by
         )
         VALUES ($1, $2, $3, $4, $5, true, $6)
@@ -151,7 +154,7 @@ export class SSOProviderService {
       const result = await this.pool.query(
         `UPDATE sso_providers
          SET ${updates.join(', ')}
-         WHERE id = $${paramIndex++} AND tenant_id = $${paramIndex++}
+         WHERE id = $${paramIndex++} AND tenantId = $${paramIndex++}
          RETURNING id`,
         values
       );

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI Usage Tracking Repository
  * Track AI usage for billing, analytics, and quota management
  */
@@ -31,7 +31,7 @@ export class AIUsageRepository {
   async recordUsage(record: Omit<AIUsageRecord, 'id' | 'createdAt'>): Promise<AIUsageRecord> {
     const query = `
       INSERT INTO ai_usage_tracking (
-        tenant_id,
+        tenantId,
         user_id,
         feature_type,
         complexity,
@@ -95,7 +95,7 @@ export class AIUsageRepository {
         AVG(latency_ms) as avg_latency,
         CAST(COUNT(CASE WHEN cached = true THEN 1 END) AS FLOAT) / NULLIF(COUNT(*), 0) as cache_hit_rate
       FROM ai_usage_tracking
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND created_at >= $2
         AND created_at <= $3
     `
@@ -107,7 +107,7 @@ export class AIUsageRepository {
     const featureQuery = `
       SELECT feature_type, COUNT(*) as count
       FROM ai_usage_tracking
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND created_at >= $2
         AND created_at <= $3
       GROUP BY feature_type
@@ -123,7 +123,7 @@ export class AIUsageRepository {
     const modelQuery = `
       SELECT model, COUNT(*) as count
       FROM ai_usage_tracking
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND created_at >= $2
         AND created_at <= $3
       GROUP BY model
@@ -139,7 +139,7 @@ export class AIUsageRepository {
     const costFeatureQuery = `
       SELECT feature_type, SUM(cost_usd) as cost
       FROM ai_usage_tracking
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND created_at >= $2
         AND created_at <= $3
       GROUP BY feature_type
@@ -155,7 +155,7 @@ export class AIUsageRepository {
     const costModelQuery = `
       SELECT model, SUM(cost_usd) as cost
       FROM ai_usage_tracking
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND created_at >= $2
         AND created_at <= $3
       GROUP BY model
@@ -201,7 +201,7 @@ export class AIUsageRepository {
   async getSubscriptionQuota(tenantId: string): Promise<SubscriptionQuota> {
     const query = `
       SELECT
-        s.tenant_id,
+        s.tenantId,
         s.plan_type,
         s.ai_quota_monthly,
         s.ai_quota_used,
@@ -210,7 +210,7 @@ export class AIUsageRepository {
         s.billing_period_start,
         s.billing_period_end
       FROM subscriptions s
-      WHERE s.tenant_id = $1
+      WHERE s.tenantId = $1
         AND s.status = 'active'
     `
 
@@ -235,7 +235,7 @@ export class AIUsageRepository {
     const row = result.rows[0]
 
     return {
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       plan: row.plan_type as SubscriptionPlan,
       aiQuotaMonthly: row.ai_quota_monthly,
       aiQuotaUsed: row.ai_quota_used,
@@ -255,7 +255,7 @@ export class AIUsageRepository {
     const query = `
       UPDATE subscriptions
       SET ai_quota_used = ai_quota_used + $2
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
     `
 
     await pool.query(query, [tenantId, count])
@@ -291,7 +291,7 @@ export class AIUsageRepository {
     const values: any[] = []
 
     if (tenantId) {
-      query += ` AND tenant_id = $1`
+      query += ` AND tenantId = $1`
       values.push(tenantId)
     }
 
@@ -310,7 +310,7 @@ export class AIUsageRepository {
     const query = `
       SELECT *
       FROM ai_usage_tracking
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND created_at >= $2
         AND created_at <= $3
       ORDER BY created_at DESC
@@ -328,7 +328,7 @@ export class AIUsageRepository {
     const query = `
       SELECT COALESCE(SUM(cost_usd), 0) as total_cost
       FROM ai_usage_tracking
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
         AND created_at >= $2
         AND created_at <= $3
     `
@@ -370,7 +370,7 @@ export class AIUsageRepository {
   private mapToUsageRecord(row: any): AIUsageRecord {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       userId: row.user_id,
       featureType: row.feature_type,
       complexity: row.complexity,

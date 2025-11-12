@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Contact Service
  * Business logic for contacts management
  */
@@ -55,7 +55,7 @@ export class ContactService {
       try {
         await elasticsearchSyncService.syncContact('index', {
           contact_id: contact.id,
-          tenant_id: tenantId,
+          tenantId: tenantId,
           first_name: contact.firstName,
           last_name: contact.lastName,
           email: contact.email || '',
@@ -156,7 +156,7 @@ export class ContactService {
     try {
       await elasticsearchSyncService.syncContact('update', {
         contact_id: updatedContact.id,
-        tenant_id: tenantId,
+        tenantId: tenantId,
         first_name: updatedContact.firstName,
         last_name: updatedContact.lastName,
         email: updatedContact.email || '',
@@ -205,7 +205,7 @@ export class ContactService {
     try {
       await elasticsearchSyncService.syncContact('delete', {
         contact_id: id,
-        tenant_id: tenantId,
+        tenantId: tenantId,
       })
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to delete contact from search index', {

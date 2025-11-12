@@ -4,6 +4,7 @@
  */
 
 import { Request, Response } from 'express'
+
 import {
   scoreContact,
   suggestNextActions,

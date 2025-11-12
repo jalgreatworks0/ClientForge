@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Usage Metering Service
  * Tracks usage metrics for metered billing including API calls, storage, and custom metrics
  * Provides usage reporting, overage calculation, and Stripe usage record synchronization
@@ -6,8 +6,10 @@
 
 import Stripe from 'stripe';
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
+
 import { StripeService } from './stripe.service';
 import { SubscriptionService } from './subscription.service';
 
@@ -90,11 +92,11 @@ export class UsageMeteringService {
       // Store usage record
       const result = await this.pool.query(
         `INSERT INTO usage_records (
-          tenant_id, subscription_id, metric_name, quantity,
+          tenantId, subscription_id, metric_name, quantity,
           timestamp, metadata, reported_to_stripe
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, tenant_id, subscription_id, metric_name, quantity,
+        RETURNING id, tenantId, subscription_id, metric_name, quantity,
                   timestamp, metadata, reported_to_stripe, stripe_usage_record_id,
                   created_at`,
         [
@@ -239,7 +241,7 @@ export class UsageMeteringService {
           metric_name,
           SUM(quantity) as total_usage
          FROM usage_records
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
            AND timestamp >= $2
            AND timestamp < $3
          GROUP BY metric_name`,
@@ -311,11 +313,11 @@ export class UsageMeteringService {
 
       let query = `
         SELECT
-          id, tenant_id, subscription_id, metric_name, quantity,
+          id, tenantId, subscription_id, metric_name, quantity,
           timestamp, metadata, reported_to_stripe, stripe_usage_record_id,
           created_at
         FROM usage_records
-        WHERE tenant_id = $1
+        WHERE tenantId = $1
       `;
 
       const params: any[] = [tenantId];
@@ -345,7 +347,7 @@ export class UsageMeteringService {
       const result = await this.pool.query(query, params);
 
       // Get total count
-      let countQuery = 'SELECT COUNT(*) FROM usage_records WHERE tenant_id = $1';
+      let countQuery = 'SELECT COUNT(*) FROM usage_records WHERE tenantId = $1';
       const countParams: any[] = [tenantId];
       let countParamIndex = 2;
 
@@ -446,7 +448,7 @@ export class UsageMeteringService {
       const result = await this.pool.query(
         `SELECT SUM(quantity) as total_usage
          FROM usage_records
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
            AND metric_name = $2
            AND timestamp >= $3
            AND timestamp < $4`,
@@ -568,7 +570,7 @@ export class UsageMeteringService {
           DATE(timestamp) as date,
           SUM(quantity) as usage
          FROM usage_records
-         WHERE tenant_id = $1
+         WHERE tenantId = $1
            AND metric_name = $2
            AND timestamp >= $3
          GROUP BY DATE(timestamp)
@@ -605,7 +607,7 @@ export class UsageMeteringService {
   private mapRowToUsageRecord(row: any): UsageRecord {
     return {
       id: row.id,
-      tenantId: row.tenant_id,
+      tenantId: row.tenantId,
       subscriptionId: row.subscription_id,
       metricName: row.metric_name,
       quantity: row.quantity,

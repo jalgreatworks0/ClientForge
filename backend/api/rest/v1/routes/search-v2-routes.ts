@@ -5,6 +5,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+
 import { elasticsearchService } from '../../../../services/search/elasticsearch.service';
 import { authenticate } from '../../../../middleware/authenticate';
 import { validateRequest } from '../../../../middleware/validate-request';

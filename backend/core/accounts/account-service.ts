@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Account Service
  * Business logic for accounts/companies management
  */
@@ -60,7 +60,7 @@ export class AccountService {
       await elasticsearchSyncService.syncAccount(
         {
           id: account.id,
-          tenant_id: tenantId,
+          tenantId: tenantId,
           name: account.name,
           website: account.website,
           industry: account.industry,
@@ -171,7 +171,7 @@ export class AccountService {
       await elasticsearchSyncService.syncAccount(
         {
           id: updatedAccount.id,
-          tenant_id: tenantId,
+          tenantId: tenantId,
           name: updatedAccount.name,
           website: updatedAccount.website,
           industry: updatedAccount.industry,
@@ -225,7 +225,7 @@ export class AccountService {
       await elasticsearchSyncService.syncAccount(
         {
           id,
-          tenant_id: tenantId,
+          tenantId: tenantId,
         },
         'delete'
       )

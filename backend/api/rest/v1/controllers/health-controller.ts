@@ -4,7 +4,6 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
-
 import { getPostgresPool } from '@config/database/postgres-config'
 import { getRedisClient } from '@config/database/redis-config'
 import { getMongoClient } from '@config/database/mongodb-config'

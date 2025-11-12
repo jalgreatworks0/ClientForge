@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Stripe Service
  * Handles all Stripe API interactions for billing and payment processing
  * Provides customer management, payment methods, and webhook handling
@@ -6,6 +6,7 @@
 
 import Stripe from 'stripe';
 import { Pool } from 'pg';
+
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
 
@@ -60,7 +61,7 @@ export class StripeService {
 
       // Check if customer already exists for this tenant
       const existing = await this.pool.query(
-        'SELECT stripe_customer_id FROM billing_customers WHERE tenant_id = $1',
+        'SELECT stripe_customer_id FROM billing_customers WHERE tenantId = $1',
         [tenantId]
       );
 
@@ -82,9 +83,9 @@ export class StripeService {
 
       // Store in database
       await this.pool.query(
-        `INSERT INTO billing_customers (tenant_id, stripe_customer_id, email, name, currency)
+        `INSERT INTO billing_customers (tenantId, stripe_customer_id, email, name, currency)
          VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (tenant_id) DO UPDATE SET
+         ON CONFLICT (tenantId) DO UPDATE SET
          stripe_customer_id = EXCLUDED.stripe_customer_id,
          email = EXCLUDED.email,
          name = EXCLUDED.name,
@@ -153,7 +154,7 @@ export class StripeService {
   async getCustomerIdForTenant(tenantId: string): Promise<string | null> {
     try {
       const result = await this.pool.query(
-        'SELECT stripe_customer_id FROM billing_customers WHERE tenant_id = $1',
+        'SELECT stripe_customer_id FROM billing_customers WHERE tenantId = $1',
         [tenantId]
       );
 
@@ -200,7 +201,7 @@ export class StripeService {
       if (tenantId) {
         await this.pool.query(
           `INSERT INTO payment_methods (
-            tenant_id, stripe_payment_method_id, stripe_customer_id,
+            tenantId, stripe_payment_method_id, stripe_customer_id,
             type, card_brand, card_last4, card_exp_month, card_exp_year
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -272,7 +273,7 @@ export class StripeService {
 
         // Set all payment methods for this tenant to non-default
         await this.pool.query(
-          'UPDATE payment_methods SET is_default = false WHERE tenant_id = $1',
+          'UPDATE payment_methods SET is_default = false WHERE tenantId = $1',
           [tenantId]
         );
 

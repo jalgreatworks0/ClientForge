@@ -1,10 +1,11 @@
-/**
+﻿/**
  * Email Integration Service
  * Manages Gmail and Outlook integrations for CRM email sync
  */
 
 import { db } from '../../database/postgresql/pool'
 import { logger } from '../../utils/logging/logger'
+
 import { GmailService } from './gmail-service'
 import { OutlookService } from './outlook-service'
 import type {
@@ -31,7 +32,7 @@ export class EmailIntegrationService {
       clientId: process.env.OUTLOOK_CLIENT_ID || '',
       clientSecret: process.env.OUTLOOK_CLIENT_SECRET || '',
       redirectUri: process.env.OUTLOOK_REDIRECT_URI || '',
-      tenantId: process.env.OUTLOOK_TENANT_ID || 'common',
+      tenantId: process.env.OUTLOOK_tenantId || 'common',
     })
   }
 
@@ -79,7 +80,7 @@ export class EmailIntegrationService {
       // Save to database
       const result = await db.query(
         `INSERT INTO email_accounts (
-          user_id, tenant_id, provider, email, access_token, refresh_token, expires_at,
+          user_id, tenantId, provider, email, access_token, refresh_token, expires_at,
           is_active, sync_enabled
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, true)
         ON CONFLICT (user_id, provider, email)
@@ -90,7 +91,7 @@ export class EmailIntegrationService {
           is_active = true,
           updated_at = NOW()
         RETURNING
-          id, user_id as "userId", tenant_id as "tenantId", provider, email,
+          id, user_id as "userId", tenantId as "tenantId", provider, email,
           access_token as "accessToken", refresh_token as "refreshToken",
           expires_at as "expiresAt", is_active as "isActive",
           sync_enabled as "syncEnabled", last_sync_at as "lastSyncAt",
@@ -117,7 +118,7 @@ export class EmailIntegrationService {
     try {
       // Get account
       const accountResult = await db.query(
-        `SELECT id, user_id, tenant_id, provider, email, access_token, refresh_token, expires_at, last_sync_at
+        `SELECT id, user_id, tenantId, provider, email, access_token, refresh_token, expires_at, last_sync_at
          FROM email_accounts WHERE id = $1 AND is_active = true AND deleted_at IS NULL`,
         [accountId]
       )
@@ -163,7 +164,7 @@ export class EmailIntegrationService {
         try {
           await db.query(
             `INSERT INTO email_messages (
-              account_id, tenant_id, message_id, thread_id,
+              account_id, tenantId, message_id, thread_id,
               from_name, from_email, to_addresses, cc_addresses, bcc_addresses,
               subject, body_text, body_html, received_at, sent_at,
               is_read, has_attachments, labels
@@ -171,7 +172,7 @@ export class EmailIntegrationService {
             ON CONFLICT (account_id, message_id) DO NOTHING`,
             [
               accountId,
-              account.tenant_id,
+              account.tenantId,
               message.messageId,
               message.threadId,
               message.from.name,
@@ -323,12 +324,12 @@ export class EmailIntegrationService {
    */
   async listAccounts(userId: string, tenantId: string): Promise<EmailAccount[]> {
     const result = await db.query(
-      `SELECT id, user_id as "userId", tenant_id as "tenantId", provider, email,
+      `SELECT id, user_id as "userId", tenantId as "tenantId", provider, email,
               is_active as "isActive", sync_enabled as "syncEnabled",
               last_sync_at as "lastSyncAt", created_at as "createdAt",
               updated_at as "updatedAt"
        FROM email_accounts
-       WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+       WHERE user_id = $1 AND tenantId = $2 AND deleted_at IS NULL
        ORDER BY created_at DESC`,
       [userId, tenantId]
     )
@@ -348,7 +349,7 @@ export class EmailIntegrationService {
     const offset = (page - 1) * limit
 
     let query = `
-      SELECT id, account_id as "accountId", tenant_id as "tenantId",
+      SELECT id, account_id as "accountId", tenantId as "tenantId",
              message_id as "messageId", thread_id as "threadId",
              from_name, from_email, to_addresses, cc_addresses,
              subject, body_text as "bodyText", received_at as "receivedAt",
@@ -356,7 +357,7 @@ export class EmailIntegrationService {
              labels, contact_id as "contactId", deal_id as "dealId",
              created_at as "createdAt"
       FROM email_messages
-      WHERE tenant_id = $1
+      WHERE tenantId = $1
     `
 
     const params: any[] = [tenantId]
@@ -409,7 +410,7 @@ export class EmailIntegrationService {
 
     const [messagesResult, countResult] = await Promise.all([
       db.query(query, params),
-      db.query(`SELECT COUNT(*) FROM email_messages WHERE tenant_id = $1`, [tenantId]),
+      db.query(`SELECT COUNT(*) FROM email_messages WHERE tenantId = $1`, [tenantId]),
     ])
 
     return {

@@ -11,9 +11,10 @@ import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { logger } from '../../../utils/logging/logger';
 import * as Sentry from '@sentry/node';
 import { ProfilingIntegration } from '@sentry/profiling-node';
+
+import { logger } from '../../../utils/logging/logger';
 
 export class APMService {
   private sdk: NodeSDK | null = null;
