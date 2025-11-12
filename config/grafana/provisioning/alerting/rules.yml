@@ -1,0 +1,23 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: clientforge-log-alerts
+    folder: ClientForge
+    interval: 1m
+    rules:
+      - uid: loki_error_burst
+        title: Loki ERROR burst (5m)
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: loki
+            model:
+              datasource:
+                type: loki
+                uid: loki
+              expr: 'count_over_time({job="backend"} |= "ERROR" [5m]) > 50'
+              queryType: range
+        annotations:
+          summary: "High ERROR volume in logs (5m)"
+        labels:
+          severity: warning

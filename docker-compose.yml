@@ -148,6 +148,7 @@ services:
     container_name: clientforge-prometheus
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - prometheus-data:/prometheus
     ports:
       - "9090:9090"
@@ -196,6 +197,7 @@ services:
       - ./config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./dashboards:/var/lib/grafana/dashboards
+      - ./config/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting
     ports:
       - "3005:3000"
     depends_on:

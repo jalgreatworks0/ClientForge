@@ -1,0 +1,30 @@
+groups:
+  - name: clientforge-backend
+    interval: 15s
+    rules:
+      - alert: BackendDown
+        expr: up{job="clientforge-backend"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Backend is DOWN"
+          description: "Prometheus cannot scrape /metrics for clientforge-backend."
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{code=~"5.."}[5m]))
+            / clamp_min(sum(rate(http_requests_total[5m])), 1) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "5xx error rate > 5% (5m)"
+          description: "Investigate failing endpoints and dependencies."
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.750
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "p95 > 750ms (5m)"
+          description: "Requests are slow; check DB, queue, or ES load."
