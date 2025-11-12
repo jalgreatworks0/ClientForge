@@ -53,7 +53,7 @@ export class GDPRModule implements IModule {
     logger.info('[GDPR Module] Registering GDPR event handlers...');
 
     // Listen for user deletion events
-    context.eventBus?.on('user:deleted', async (data: any) => {
+    context.events?.on('user:deleted', async (data: any) => {
       logger.info('[GDPR Module] User deletion event received', {
         userId: data.userId,
         tenantId: data.tenantId,
@@ -79,7 +79,7 @@ export class GDPRModule implements IModule {
     });
 
     // Listen for consent change events
-    context.eventBus?.on('consent:changed', async (data: any) => {
+    context.events?.on('consent:changed', async (data: any) => {
       logger.info('[GDPR Module] Consent change event received', {
         userId: data.userId,
         consentType: data.consentType,

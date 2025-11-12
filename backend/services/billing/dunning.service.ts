@@ -526,7 +526,9 @@ export class DunningService {
       tenantId,
       details,
     });
-    const { emailService } = await import('../email/email.service'); await emailService.sendPaymentFailed(user.email, invoice.invoiceNumber, invoice.amountDue, nextRetry);
+    // TODO: Implement email notification
+    // const { emailService } = await import('../email/email.service');
+    // await emailService.sendPaymentFailed(userEmail, invoiceNumber, amountDue, nextRetryDate);
   }
 
   /**
@@ -536,7 +538,9 @@ export class DunningService {
     logger.info('[Dunning] Would send subscription suspended notification', {
       tenantId,
     });
-    const { emailService } = await import('../email/email.service'); await emailService.sendPaymentFailed(user.email, invoice.invoiceNumber, invoice.amountDue, nextRetry);
+    // TODO: Implement email notification
+    // const { emailService } = await import('../email/email.service');
+    // await emailService.sendSubscriptionSuspended(userEmail);
   }
 
   /**
@@ -546,7 +550,9 @@ export class DunningService {
     logger.info('[Dunning] Would send subscription reactivated notification', {
       tenantId,
     });
-    const { emailService } = await import('../email/email.service'); await emailService.sendPaymentFailed(user.email, invoice.invoiceNumber, invoice.amountDue, nextRetry);
+    // TODO: Implement email notification
+    // const { emailService } = await import('../email/email.service');
+    // await emailService.sendSubscriptionReactivated(userEmail);
   }
 
   /**
@@ -556,6 +562,8 @@ export class DunningService {
     logger.info('[Dunning] Would send subscription canceled notification', {
       tenantId,
     });
-    const { emailService } = await import('../email/email.service'); await emailService.sendPaymentFailed(user.email, invoice.invoiceNumber, invoice.amountDue, nextRetry);
+    // TODO: Implement email notification
+    // const { emailService } = await import('../email/email.service');
+    // await emailService.sendSubscriptionCanceled(userEmail);
   }
 }
