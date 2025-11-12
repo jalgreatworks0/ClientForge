@@ -18,10 +18,12 @@ import { redact } from "../../../../utils/errors/redaction";
 import { routeAlert, type Severity } from "../../../../utils/errors/alert-router";
 
 // OpenTelemetry imports (optional - gracefully degrade if not available)
+// Note: Using require() here intentionally for optional dependency loading
 let otelAvailable = false;
 let trace: any, context: any;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const otel = require("@opentelemetry/api");
   trace = otel.trace;
   context = otel.context;

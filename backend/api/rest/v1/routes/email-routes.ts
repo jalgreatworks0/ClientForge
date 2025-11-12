@@ -8,6 +8,7 @@ import { authenticate } from '../../../../middleware/authenticate'
 import { emailIntegrationService } from '../../../../core/email/email-integration-service'
 import { logger } from '../../../../utils/logging/logger'
 import type { EmailSearchFilters, SendEmailDto } from '../../../../core/email/email-types'
+import { db } from '../../../../database/postgresql/pool'
 
 const router = Router()
 
@@ -235,7 +236,6 @@ router.delete(
       const userId = req.user?.id
 
       // Soft delete by setting deleted_at
-      const { db } = require('../../../../database/postgresql/pool')
       await db.query(
         `UPDATE email_accounts
          SET deleted_at = NOW(), is_active = false, updated_at = NOW()
@@ -341,7 +341,6 @@ router.get(
       const { messageId } = req.params
       const tenantId = req.user?.tenantId
 
-      const { db } = require('../../../../database/postgresql/pool')
       const result = await db.query(
         `SELECT id, account_id as "accountId", tenant_id as "tenantId",
                 message_id as "messageId", thread_id as "threadId",
@@ -459,8 +458,6 @@ router.patch(
           message: 'Must provide at least one of: contactId, dealId',
         })
       }
-
-      const { db } = require('../../../../database/postgresql/pool')
 
       const updates: string[] = []
       const values: any[] = []

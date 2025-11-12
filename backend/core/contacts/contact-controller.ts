@@ -4,6 +4,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
+import Papa from 'papaparse'
+import * as XLSX from 'xlsx'
 
 import { AuthRequest } from '../../middleware/authenticate'
 import { logger } from '../../utils/logging/logger'
@@ -384,8 +386,6 @@ export const exportContacts = async (
 
     if (format === 'csv') {
       // Generate CSV
-      const Papa = require('papaparse')
-
       const csvData = contacts.map((c) => ({
         'First Name': c.firstName,
         'Last Name': c.lastName,
@@ -408,8 +408,6 @@ export const exportContacts = async (
       res.send(csv)
     } else if (format === 'xlsx') {
       // Generate Excel
-      const XLSX = require('xlsx')
-
       const worksheetData = contacts.map((c) => ({
         'First Name': c.firstName,
         'Last Name': c.lastName,
@@ -473,13 +471,11 @@ export const importContacts = async (
 
     if (fileExt === 'csv') {
       // Parse CSV
-      const Papa = require('papaparse')
       const csvString = file.buffer.toString('utf-8')
       const parsed = Papa.parse(csvString, { header: true, skipEmptyLines: true })
       contacts = parsed.data
     } else if (fileExt === 'xlsx' || fileExt === 'xls') {
       // Parse Excel
-      const XLSX = require('xlsx')
       const workbook = XLSX.read(file.buffer, { type: 'buffer' })
       const sheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[sheetName]

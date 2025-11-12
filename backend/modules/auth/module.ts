@@ -6,6 +6,7 @@
 import { IModule, ModuleContext } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
 import { logger } from '../../utils/logging/logger';
+import authRoutes from '../../api/rest/v1/routes/auth-routes';
 
 export class AuthModule implements IModule {
   name = 'auth';
@@ -29,12 +30,9 @@ export class AuthModule implements IModule {
   }
 
   registerRoutes(app: Express, context: ModuleContext): void {
-    // Import existing auth routes
-    const authRoutes = require('../../api/rest/v1/routes/auth-routes');
-
     // Auth routes are already configured in the router
     // Just mount them at the base path
-    app.use('/api/v1/auth', authRoutes.default || authRoutes);
+    app.use('/api/v1/auth', authRoutes);
 
     context.logger.info('Auth routes registered');
   }
