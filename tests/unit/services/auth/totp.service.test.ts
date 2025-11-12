@@ -79,9 +79,9 @@ describe('TOTPService', () => {
   describe('getMFAStatus', () => {
     it('should get MFA status for a user', async () => {
       const mockResult = {
-        rows: [{ mfa_type: 'totp', enabled: true }]
+        rows: [{ mfa_type: 'totp', mfa_enabled: true, backup_codes: [] }]
       };
-      
+
       mockPool.query.mockResolvedValue(mockResult);
       
       const result = await service.getMFAStatus('user-123');
@@ -90,7 +90,11 @@ describe('TOTPService', () => {
         'SELECT mfa_type, mfa_enabled, backup_codes FROM user_mfa WHERE user_id = $1',
         ['user-123']
       );
-      expect(result).toEqual({ type: 'totp', enabled: true });
+      expect(result).toEqual({
+        type: 'totp',
+        enabled: true,
+        backupCodesRemaining: 0
+      });
     });
 
     it('should return disabled status when no MFA record exists', async () => {
@@ -159,14 +163,18 @@ describe('TOTPService', () => {
 
   describe('validateBackupCode', () => {
     it('should validate a backup code and remove used codes', async () => {
+      // Hash the backup code using SHA-256 (matching the implementation)
+      const crypto = require('crypto');
+      const hashedCode = crypto.createHash('sha256').update('CODE123').digest('hex');
+
       const mockResult = {
-        rows: [{ backup_codes: ['CODE123', 'CODE456'] }]
+        rows: [{ backup_codes: [hashedCode, 'OTHER_HASH'] }]
       };
-      
+
       mockPool.query.mockResolvedValueOnce(mockResult); // For get codes
       mockPool.query.mockResolvedValue({ rows: [] });   // For update
-      
-      await expect(service.validateBackupCode('user-123', 'CODE123')).resolves.toBe(true);
+
+      await expect(service.validateBackupCode('user-123', 'code123')).resolves.toBe(true);
     });
 
     it('should return false for invalid backup code', async () => {

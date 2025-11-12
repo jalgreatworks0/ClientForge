@@ -421,9 +421,15 @@ describe('AccountService', () => {
 
     it('should perform bulk tag addition', async () => {
       const accountIds = ['account-1', 'account-2']
+      // Each account requires TWO findById calls:
+      // 1. In bulkOperation loop to get current tags
+      // 2. Inside updateAccount to validate account exists
       mockedRepository.findById
-        .mockResolvedValueOnce({ ...mockAccount, tags: ['existing'] })
-        .mockResolvedValueOnce({ ...mockAccount, tags: [] })
+        .mockResolvedValueOnce({ ...mockAccount, id: 'account-1', tags: ['existing'] }) // bulkOp account-1
+        .mockResolvedValueOnce({ ...mockAccount, id: 'account-1', tags: ['existing'] }) // updateAccount account-1
+        .mockResolvedValueOnce({ ...mockAccount, id: 'account-2', tags: [] }) // bulkOp account-2
+        .mockResolvedValueOnce({ ...mockAccount, id: 'account-2', tags: [] }) // updateAccount account-2
+      mockedRepository.findByName.mockResolvedValue([]) // updateAccount name check
       mockedRepository.update.mockResolvedValue(mockAccount)
 
       const result = await accountService.bulkOperation(
@@ -437,6 +443,7 @@ describe('AccountService', () => {
       )
 
       expect(result.success).toBe(2)
+      expect(result.failed).toBe(0)
       expect(mockedRepository.update).toHaveBeenCalledTimes(2)
     })
 
