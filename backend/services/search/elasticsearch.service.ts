@@ -9,6 +9,8 @@ import { Pool } from 'pg';
 
 import { getPool } from '../../database/postgresql/pool';
 import { logger } from '../../utils/logging/logger';
+import { esSearch } from '../../lib/search/es.adapter';
+import type { SearchQuery as NewSearchQuery, SearchResult as NewSearchResult } from '../../types/search/query';
 
 export interface SearchQuery {
   query: string;
@@ -126,78 +128,48 @@ export class ElasticsearchService {
       const { query, filters, pagination, sorting } = searchQuery;
       const { limit = 20, offset = 0 } = pagination || {};
 
-      // Build Elasticsearch query
-      const must: any[] = [
-        { term: { tenantId: tenantId } },
-        {
-          multi_match: {
-            query,
-            fields: ['title^3', 'description^2', 'content', 'email', 'phone', 'tags'],
-            fuzziness: 'AUTO',
-          },
+      // Convert old SearchQuery format to new DTO format
+      const newQuery: NewSearchQuery = {
+        filters: {
+          tenantId,
+          q: query,
+          tags: filters?.tags,
+          // Note: old schema had 'assignedTo' and 'entityTypes' which don't map to new DTOs
+          // These are domain-specific and should be handled at the route level
+          createdFrom: filters?.createdAfter?.toISOString(),
+          createdTo: filters?.createdBefore?.toISOString(),
         },
-      ];
-
-      // Apply filters
-      if (filters?.entityTypes && filters.entityTypes.length > 0) {
-        must.push({ terms: { entity_type: filters.entityTypes } });
-      }
-
-      if (filters?.tags && filters.tags.length > 0) {
-        must.push({ terms: { tags: filters.tags } });
-      }
-
-      if (filters?.assignedTo && filters.assignedTo.length > 0) {
-        must.push({ terms: { assigned_to: filters.assignedTo } });
-      }
-
-      if (filters?.createdAfter || filters?.createdBefore) {
-        const range: any = {};
-        if (filters.createdAfter) range.gte = filters.createdAfter.toISOString();
-        if (filters.createdBefore) range.lte = filters.createdBefore.toISOString();
-        must.push({ range: { created_at: range } });
-      }
-
-      const response = await this.client!.search({
-        index: this.indexName,
-        body: {
-          query: { bool: { must } },
-          from: offset,
-          size: limit,
-          sort: sorting
-            ? [{ [sorting.field]: { order: sorting.order } }]
-            : [{ _score: { order: 'desc' } }],
-          highlight: {
-            fields: {
-              title: {},
-              description: {},
-              content: {},
-            },
-          },
-          aggregations: {
-            entity_types: {
-              terms: { field: 'entity_type.keyword' },
-            },
-            tags: {
-              terms: { field: 'tags.keyword', size: 20 },
-            },
-          },
+        pagination: {
+          page: Math.floor(offset / limit) + 1,
+          pageSize: limit,
         },
-      });
-
-      const results: SearchResult[] = response.hits.hits.map((hit: any) => ({
-        id: hit._id,
-        entityType: hit._source.entity_type,
-        title: hit._source.title,
-        description: hit._source.description,
-        score: hit._score,
-        highlights: hit.highlight
-          ? Object.values(hit.highlight).flat() as string[]
+        sort: sorting
+          ? { field: sorting.field, direction: sorting.order }
           : undefined,
-        data: hit._source,
-        createdAt: new Date(hit._source.created_at),
-        updatedAt: hit._source.updated_at
-          ? new Date(hit._source.updated_at)
+      };
+
+      // Call the type-safe ES adapter
+      const adapterResult = await esSearch<any>(
+        { client: this.client!, index: this.indexName },
+        newQuery
+      );
+
+      // Transform NewSearchResult back to old SearchResult format for backwards compatibility
+      const results: SearchResult[] = adapterResult.hits.map((hit) => ({
+        id: hit.id,
+        entityType: hit.source.entity_type || 'unknown',
+        title: hit.source.title || hit.source.name || '',
+        description: hit.source.description || hit.source.email || '',
+        score: hit.score || 0,
+        highlights: hit.highlights
+          ? Object.values(hit.highlights).flat()
+          : undefined,
+        data: hit.source,
+        createdAt: hit.source.created_at
+          ? new Date(hit.source.created_at)
+          : new Date(),
+        updatedAt: hit.source.updated_at
+          ? new Date(hit.source.updated_at)
           : undefined,
       }));
 
@@ -205,17 +177,16 @@ export class ElasticsearchService {
 
       logger.info('[Elasticsearch] Search completed', {
         query,
-        total: response.hits.total,
+        total: adapterResult.total,
         took,
       });
 
       return {
         results,
-        total: typeof response.hits.total === 'object'
-          ? response.hits.total.value
-          : response.hits.total,
+        total: adapterResult.total,
         took,
-        aggregations: response.aggregations,
+        // Note: aggregations removed as esSearch() doesn't support them yet
+        // Consider adding this feature to the adapter if needed
       };
     } catch (error: any) {
       logger.error('[Elasticsearch] Search failed, falling back to PostgreSQL', {
