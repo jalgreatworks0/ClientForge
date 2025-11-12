@@ -41,7 +41,7 @@ class TokenBlacklist {
   private async initRedis(): Promise<void> {
     try {
       this.redisClient = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        url: process.env.REDIS_URL || 'redis://redis:6379',
         socket: {
           reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
         },

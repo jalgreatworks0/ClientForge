@@ -5,6 +5,10 @@
 
 import { createClient, RedisClientType } from 'redis'
 
+const NODE_ENV = process.env.NODE_ENV ?? 'development'
+const REDIS_URL = (process.env.REDIS_URL && process.env.REDIS_URL.trim())
+  || (NODE_ENV === 'production' ? '' : 'redis://redis:6379')
+
 export interface RedisConfig {
   url: string
   host: string
@@ -18,8 +22,8 @@ export interface RedisConfig {
 }
 
 export const redisConfig: RedisConfig = {
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-  host: process.env.REDIS_HOST || 'localhost',
+  url: REDIS_URL,
+  host: process.env.REDIS_HOST || 'redis',
   port: parseInt(process.env.REDIS_PORT || '6379', 10),
   password: process.env.REDIS_PASSWORD || undefined,
   db: parseInt(process.env.REDIS_DB || '0', 10),
@@ -35,6 +39,10 @@ export const redisConfig: RedisConfig = {
 let client: RedisClientType | null = null
 
 export async function getRedisClient(): Promise<RedisClientType> {
+  if (!REDIS_URL) {
+    throw new Error('REDIS_URL missing; set env or provide service URL.')
+  }
+
   if (!client) {
     client = createClient({
       url: redisConfig.url,

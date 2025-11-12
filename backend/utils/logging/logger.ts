@@ -7,6 +7,7 @@ import path from 'path'
 
 import winston from 'winston'
 import 'winston-mongodb'
+import { RUNTIME_ENV } from '../../config/runtime-env'
 
 // Define log levels
 const levels = {
@@ -89,25 +90,30 @@ transports.push(
 )
 
 // MongoDB transport for centralized logging
-const mongodbUri = process.env.MONGODB_URI || 'mongodb://crm:password@localhost:27017/clientforge?authSource=admin'
-transports.push(
-  new winston.transports.MongoDB({
-    db: mongodbUri,
-    collection: 'app_logs',
-    level: 'info',
-    format: winston.format.combine(
-      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-      winston.format.errors({ stack: true }),
-      winston.format.splat(),
-      winston.format.json()
-    ),
-    options: {
-      useUnifiedTopology: true,
-    },
-    tryReconnect: true,
-    decolorize: true,
-  } as any)
-)
+// Only add Mongo transport if a URI is explicitly provided.
+const mongodbUri = (process.env.MONGODB_URI && process.env.MONGODB_URI.trim()) || process.env.MONGODB_URL
+const mongoTransportEnabled = Boolean(mongodbUri)
+
+if (mongoTransportEnabled) {
+  transports.push(
+    new winston.transports.MongoDB({
+      db: mongodbUri,
+      collection: 'app_logs',
+      level: 'info',
+      format: winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.errors({ stack: true }),
+        winston.format.splat(),
+        winston.format.json()
+      ),
+      options: {
+        useUnifiedTopology: true,
+      },
+      tryReconnect: true,
+      decolorize: true,
+    } as any)
+  )
+}
 
 // Create the logger
 export const logger = winston.createLogger({

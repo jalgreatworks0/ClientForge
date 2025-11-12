@@ -352,6 +352,144 @@ npm run clean
 
 ---
 
+## Monitoring
+
+ClientForge-CRM includes a comprehensive monitoring stack for development and production observability.
+
+### Starting the Monitoring Stack
+
+```bash
+# Start all monitoring services
+npm run monitor:start
+
+# Check status
+npm run monitor:status
+
+# View logs
+npm run monitor:logs
+```
+
+### Accessing Monitoring Tools
+
+| Service | URL | Purpose | Credentials |
+|---------|-----|---------|-------------|
+| **Grafana** | http://localhost:3005 | Dashboards & visualization | admin/admin |
+| **Prometheus** | http://localhost:9090 | Metrics database & queries | None |
+| **Loki** | http://localhost:3100 | Log aggregation API | None |
+
+### Viewing Metrics
+
+**Grafana Dashboard**:
+1. Open http://localhost:3005
+2. Login with `admin` / `admin`
+3. Navigate to **Dashboards** → **ClientForge** → **Backend Overview**
+
+**Dashboard Panels**:
+- HTTP Request Rate (requests/second)
+- Response Time p95 (95th percentile latency)
+- Error Logs (recent ERROR-level entries)
+
+**Prometheus Direct Queries** (http://localhost:9090/graph):
+```promql
+# Request rate
+rate(http_requests_total[5m])
+
+# p95 latency
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Error rate
+sum(rate(http_request_errors_total[5m]))
+
+# Memory usage
+nodejs_heap_size_used_bytes / nodejs_heap_size_total_bytes * 100
+```
+
+### Viewing Logs
+
+**Grafana Explore** (http://localhost:3005/explore):
+
+```
+# All backend logs
+{job="backend"}
+
+# Error logs only
+{job="backend"} |= "ERROR"
+
+# Logs for specific tenant
+{job="backend"} | json | tenantId="tenant-uuid"
+
+# Slow requests (>1 second)
+{job="backend"} | json | duration > 1000
+```
+
+**Loki API Direct Query**:
+```bash
+curl -G -s "http://localhost:3100/loki/api/v1/query" \
+  --data-urlencode 'query={job="backend"} |= "ERROR"' \
+  --data-urlencode 'limit=10'
+```
+
+### Generating Test Traffic
+
+**Windows PowerShell**:
+```powershell
+1..25 | % { 
+  iwr http://localhost:3000/api/v1/health `
+    -Headers @{ 'x-tenant-id'='test' } | Out-Null 
+}
+```
+
+**Linux/macOS**:
+```bash
+for i in {1..25}; do
+  curl -H "x-tenant-id: test" \
+    http://localhost:3000/api/v1/health > /dev/null
+done
+```
+
+### Verifying Monitoring
+
+**After generating test traffic**:
+
+1. **Prometheus Targets** - Verify backend is being scraped:
+   ```bash
+   curl http://localhost:9090/api/v1/targets
+   # Backend target should show "health": "up"
+   ```
+
+2. **Metrics Endpoint** - Check backend metrics:
+   ```bash
+   curl http://localhost:3000/metrics
+   # Should return Prometheus-format metrics
+   ```
+
+3. **Grafana Dashboard** - Refresh dashboard to see request spike
+
+4. **Loki Logs** - Query for health check logs in Grafana Explore
+
+### Monitoring Stack Components
+
+**Architecture**:
+```
+Backend (/metrics) ──scrape──> Prometheus ──query──> Grafana
+Backend (logs/*.log) ──ship──> Promtail ──push──> Loki ──query──> Grafana
+```
+
+**Services**:
+- **Prometheus**: Scrapes `/metrics` endpoint every 10 seconds
+- **Loki**: Aggregates logs with 7-day retention
+- **Promtail**: Ships logs from `logs/*.log` and Docker containers
+- **Grafana**: Provides unified dashboard for metrics + logs
+
+**Performance Impact**:
+- CPU: <5% overhead
+- Memory: ~200MB for all services
+- Per-request overhead: <1ms
+
+**Reference**: See `/docs/MONITORING.md` for complete monitoring guide and [ADR-0006](/docs/architecture/decisions/ADR-0006-monitoring-observability-stack.md) for technical design.
+
+---
+
 ## Debugging
 
 ### Backend Debugging
@@ -421,6 +559,20 @@ rm -rf node_modules/.cache
 npm install
 ```
 
+### Monitoring Stack Not Starting
+
+```bash
+# Check Docker is running
+docker --version
+
+# Check service status
+docker compose ps
+
+# View logs for specific service
+docker compose logs prometheus
+docker compose logs grafana
+```
+
 ---
 
 ## Tools & Extensions
@@ -432,6 +584,7 @@ npm install
 - TypeScript and JavaScript Language Features
 - GitLens
 - Thunder Client (API testing)
+- Docker (for monitoring stack)
 
 ### Configuration Files
 
@@ -441,6 +594,7 @@ npm install
 - `tsconfig.json` - TypeScript configuration
 - `.env` - Environment variables (gitignored)
 - `.env.example` - Environment template (committed)
+- `docker-compose.yml` - Container orchestration
 
 ---
 
@@ -449,6 +603,7 @@ npm install
 - [System Architecture](/docs/ARCHITECTURE.md)
 - [API Documentation](/docs/api/)
 - [Security Guidelines](/docs/SECURITY.md)
+- [Monitoring Guide](/docs/MONITORING.md)
 - [Module System](/docs/MODULE_SYSTEM.md)
 - [Environment & Secrets](/docs/architecture/decisions/ADR-0004-environment-validator-secrets-manager.md)
 

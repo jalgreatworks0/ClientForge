@@ -17,7 +17,7 @@ import { AppError } from '../errors/app-error'
 
 // Initialize Redis client for rate limiting
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  url: process.env.REDIS_URL || 'redis://redis:6379',
 })
 
 redisClient.on('error', (error) => {

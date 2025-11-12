@@ -16,7 +16,7 @@ import { Queue } from 'bullmq'
 import { Registry, Counter, Gauge } from 'prom-client'
 import { createClient } from 'redis'
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
+const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
 
 const QUEUE_NAMES = [
   'email',

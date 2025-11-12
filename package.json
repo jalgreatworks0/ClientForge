@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
-    "dev:backend": "ts-node-dev --respawn --transpile-only backend/index.ts",
+    "dev:backend": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register backend/index.ts",
     "build": "turbo run build",
     "build:backend": "tsc -p backend/tsconfig.json || true",
     "start:backend": "node dist/backend/index.js",

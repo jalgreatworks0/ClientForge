@@ -20,10 +20,25 @@ services:
       - DATABASE_URL=postgresql://crm:password@postgres:5432/clientforge
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - JWT_SECRET=dev-jwt-secret-change-in-production
+      - SESSION_SECRET=dev-session-secret-change-in-production
+      - ENCRYPTION_KEY=dev-encryption-key-32-bytes-min
+      - OPENAI_API_KEY=sk-dev-openai-key
+      - ANTHROPIC_API_KEY=sk-ant-dev-anthropic-key
+      - TS_NODE_PROJECT=backend/tsconfig.json
+      - MONGODB_URL=mongodb://mongodb:27017/clientforge
+      - MONGODB_URI=mongodb://mongodb:27017/clientforge
     depends_on:
       - postgres
       - redis
+      - mongodb
       - elasticsearch
+    healthcheck:
+      test: ["CMD","curl","-f","http://localhost:3000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   # PostgreSQL Database with pgvector
   postgres:

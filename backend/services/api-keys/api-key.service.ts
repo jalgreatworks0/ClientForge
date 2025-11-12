@@ -49,7 +49,7 @@ export class ApiKeyService {
 
   constructor() {
     this.pool = getPool();
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    this.redis = new Redis(process.env.REDIS_URL || 'redis://redis:6379');
   }
 
   /**

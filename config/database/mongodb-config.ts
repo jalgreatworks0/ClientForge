@@ -6,6 +6,11 @@
 import { MongoClient, MongoClientOptions, Db } from 'mongodb'
 import { logger } from '../../backend/utils/logging/logger'
 
+const NODE_ENV = process.env.NODE_ENV ?? 'development'
+const mongoUrl = (process.env.MONGODB_URI && process.env.MONGODB_URI.trim())
+  || (process.env.MONGODB_URL && process.env.MONGODB_URL.trim())
+  || (NODE_ENV === 'production' ? '' : 'mongodb://mongodb:27017/clientforge')
+
 export interface MongoDBConfig {
   uri: string
   dbName: string
@@ -13,7 +18,7 @@ export interface MongoDBConfig {
 }
 
 export const mongodbConfig: MongoDBConfig = {
-  uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/clientforge_logs',
+  uri: mongoUrl,
   dbName: process.env.MONGODB_DB_NAME || 'clientforge_logs',
   options: {
     maxPoolSize: 10,
@@ -32,6 +37,10 @@ let client: MongoClient | null = null
 let db: Db | null = null
 
 export async function getMongoClient(): Promise<MongoClient> {
+  if (!mongoUrl) {
+    throw new Error('MONGODB_URL/MONGODB_URI missing; set env or provide service URL.')
+  }
+
   if (!client) {
     client = new MongoClient(mongodbConfig.uri, mongodbConfig.options)
 
@@ -64,9 +73,15 @@ export async function getMongoClient(): Promise<MongoClient> {
  * Get MongoDB database instance
  */
 export async function getMongoDatabase(): Promise<Db> {
+  if (!mongoUrl) {
+    throw new Error('MONGODB_URL/MONGODB_URI missing; set env or provide service URL.')
+  }
+
   if (!db) {
     const mongoClient = await getMongoClient()
-    db = mongoClient.db(mongodbConfig.dbName)
+    // Extract database name from URL path or use default
+    const dbName = (new URL(mongoUrl)).pathname.replace(/^\//, '') || 'clientforge'
+    db = mongoClient.db(dbName)
   }
 
   return db

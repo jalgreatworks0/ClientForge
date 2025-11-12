@@ -65,7 +65,7 @@ export class AIService {
   private async initializeRedis(): Promise<void> {
     try {
       this.redis = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        url: process.env.REDIS_URL || 'redis://redis:6379',
       })
 
       this.redis.on('error', (err) => {

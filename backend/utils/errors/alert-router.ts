@@ -264,7 +264,7 @@ async function addToDailyDigest(problem: ProblemDetails): Promise<void> {
   try {
     // Lazy load Redis client
     const Redis = await import("ioredis");
-    const redis = new Redis.default(process.env.REDIS_URL || "redis://localhost:6379");
+    const redis = new Redis.default(process.env.REDIS_URL || "redis://redis:6379");
 
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     const keyPrefix = alertConfig.digest.redisKeyPrefix || "error_digest";
@@ -315,7 +315,7 @@ export async function sendDailyDigest(): Promise<void> {
 
   try {
     const Redis = await import("ioredis");
-    const redis = new Redis.default(process.env.REDIS_URL || "redis://localhost:6379");
+    const redis = new Redis.default(process.env.REDIS_URL || "redis://redis:6379");
 
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
       .toISOString()
