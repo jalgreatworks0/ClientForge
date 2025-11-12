@@ -11,7 +11,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, Head
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { logger } from '../../utils/logging/logger';
-import { pool } from '../../database/postgresql/pool';
+import { getPool } from '../../database/postgresql/pool';
 
 interface StorageConfig {
   type: 'minio' | 'r2';
@@ -56,6 +56,7 @@ class StorageService {
   private client: S3Client;
   private bucket: string;
   private config: StorageConfig;
+  private pool = getPool();
 
   constructor() {
     this.config = this.getConfig();
@@ -142,7 +143,7 @@ class StorageService {
       }
 
       // Store metadata in database first
-      const dbResult = await pool.query(`
+      const dbResult = await this.pool.query(`
         INSERT INTO files (
           id, key, original_name, mime_type, size,
           tenantId, uploaded_by, entity_type, entity_id
@@ -206,7 +207,7 @@ class StorageService {
   ): Promise<string> {
     try {
       // Verify file exists and belongs to tenant
-      const result = await pool.query(`
+      const result = await this.pool.query(`
         SELECT key, tenantId, deleted_at
         FROM files
         WHERE id = $1 AND deleted_at IS NULL
@@ -258,7 +259,7 @@ class StorageService {
   async deleteFile(fileId: string, tenantId: string): Promise<void> {
     try {
       // Get file info and verify ownership
-      const result = await pool.query(`
+      const result = await this.pool.query(`
         SELECT key, tenantId
         FROM files
         WHERE id = $1 AND deleted_at IS NULL
@@ -278,7 +279,7 @@ class StorageService {
       const key = file.key;
 
       // Soft delete in database
-      await pool.query(`
+      await this.pool.query(`
         UPDATE files
         SET deleted_at = NOW()
         WHERE id = $1
@@ -312,7 +313,7 @@ class StorageService {
    */
   async getFileMetadata(fileId: string, tenantId: string): Promise<FileRecord> {
     try {
-      const result = await pool.query(`
+      const result = await this.pool.query(`
         SELECT *
         FROM files
         WHERE id = $1 AND tenantId = $2 AND deleted_at IS NULL
@@ -362,7 +363,7 @@ class StorageService {
     entityId: string
   ): Promise<FileRecord[]> {
     try {
-      const result = await pool.query(`
+      const result = await this.pool.query(`
         SELECT *
         FROM files
         WHERE tenantId = $1
@@ -393,7 +394,7 @@ class StorageService {
     filesByType: Record<string, number>;
   }> {
     try {
-      const result = await pool.query(`
+      const result = await this.pool.query(`
         SELECT
           COUNT(*) as total_files,
           SUM(size) as total_size,

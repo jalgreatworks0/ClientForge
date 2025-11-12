@@ -23,11 +23,12 @@ export class AuthModule implements IModule {
   async initialize(context: ModuleContext): Promise<void> {
     context.logger.info('Auth module initialized');
 
-    // Register feature flag for optional 2FA
-    context.featureFlags.register('two-factor-auth', {
-      enabled: false,
-      rolloutPercentage: 0,
-    });
+    // TODO: Register feature flag for optional 2FA
+    // Feature flag registration not yet supported in ModuleContext
+    // await context.featureFlags.register('two-factor-auth', {
+    //   enabled: false,
+    //   rolloutPercentage: 0,
+    // });
   }
 
   registerRoutes(app: Express, context: ModuleContext): void {

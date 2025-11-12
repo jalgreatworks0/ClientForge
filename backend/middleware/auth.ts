@@ -11,19 +11,13 @@ import { Request } from 'express'
  * Aligned with Express.Request augmentation in types/express.d.ts
  */
 export interface AuthRequest extends Request {
-  user?: {
-    id: string
-    userId: string  // Alias for id, used in some controllers
-    email: string
-    tenantId: string
-    role?: string
-    permissions?: string[]
-  }
+  user: NonNullable<Request['user']>
+  tenantId: string
 }
 
 /**
  * Type guard to check if request is authenticated
  */
 export function isAuthenticated(req: Request): req is AuthRequest {
-  return 'user' in req && req.user !== undefined
+  return req.user !== undefined && req.user !== null && req.user.tenantId !== undefined
 }

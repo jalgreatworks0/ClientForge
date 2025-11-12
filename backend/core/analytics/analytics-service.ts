@@ -125,7 +125,7 @@ export class AnalyticsService {
 
       // Generate cache key with filters
       const filterKey = request.filters
-        ? `${request.filters.startDate || 'all'}_${request.filters.endDate || 'all'}_${request.filters.status || 'all'}`
+        ? `${request.filters.startDate || 'all'}_${request.filters.endDate || 'all'}_${request.filters.ownerId || 'all'}_${request.filters.pipelineId || 'all'}`
         : 'all'
       const cacheKey = `tenant:${tenantId}:deals:${filterKey}`
 

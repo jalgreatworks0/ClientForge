@@ -12,7 +12,10 @@
       "@config/*": ["config/*"],
       "@agents/*": ["agents/*"],
       "@database/*": ["database/*"],
-      "@scripts/*": ["scripts/*"]
+      "@scripts/*": ["scripts/*"],
+      "@utils/*": ["backend/utils/*"],
+      "@middleware/*": ["backend/middleware/*"],
+      "@types/*": ["backend/types/*"]
     },
 
     "moduleResolution": "node",

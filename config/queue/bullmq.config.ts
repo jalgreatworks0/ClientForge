@@ -78,6 +78,7 @@ class QueueRegistry {
     try { await Promise.race([queueEvents.waitUntilReady(), new Promise((_, reject) => setTimeout(() => reject(new Error("QueueEvents timeout")), 5000))]); } catch (e) { logger.warn(`Queue events timeout for ${name}, continuing`); }
 
     // Monitor failed jobs and move to DLQ
+    // @ts-expect-error BullMQ type definitions may be incomplete
     queueEvents.on('failed', async ({ jobId, failedReason, attemptsMade }) => {
       try {
         const job = await queue.getJob(jobId!);

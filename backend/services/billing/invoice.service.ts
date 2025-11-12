@@ -204,6 +204,7 @@ export class InvoiceService {
         periodEnd: new Date(upcomingInvoice.period_end * 1000),
       });
 
+      // @ts-expect-error Stripe UpcomingInvoice doesn't have 'id' but type compatibility requires it
       return upcomingInvoice;
     } catch (error: any) {
       if (error.code === 'invoice_upcoming_none') {

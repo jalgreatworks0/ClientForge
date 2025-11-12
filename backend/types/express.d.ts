@@ -9,12 +9,17 @@ declare global {
   namespace Express {
     interface Request {
       tenantId?: string
+      userId?: string
+      session?: Record<string, unknown>
       user?: {
         id: string
+        userId: string  // Alias for id
         email: string
         tenantId: string
         role?: string
         permissions?: string[]
+        provider?: 'google' | 'microsoft' | 'local'
+        providerId?: string
       }
       file?: {
         fieldname: string

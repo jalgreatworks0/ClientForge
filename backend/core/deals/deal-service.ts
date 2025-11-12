@@ -80,6 +80,7 @@ export class DealService {
     // Sync to Elasticsearch for search
     try {
       await elasticsearchSyncService.syncDeal(
+        'index',
         {
           id: deal.id,
           tenantId: tenantId,
@@ -90,8 +91,7 @@ export class DealService {
           amount: deal.amount,
           created_at: deal.createdAt,
           updated_at: deal.updatedAt,
-        },
-        'create'
+        }
       )
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to sync new deal', {
@@ -203,6 +203,7 @@ export class DealService {
     // Sync to Elasticsearch for search
     try {
       await elasticsearchSyncService.syncDeal(
+        'update',
         {
           id: updatedDeal.id,
           tenantId: tenantId,
@@ -213,8 +214,7 @@ export class DealService {
           amount: updatedDeal.amount,
           created_at: updatedDeal.createdAt,
           updated_at: updatedDeal.updatedAt,
-        },
-        'update'
+        }
       )
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to sync updated deal', {
@@ -250,11 +250,11 @@ export class DealService {
     // Remove from Elasticsearch search index
     try {
       await elasticsearchSyncService.syncDeal(
+        'delete',
         {
           id,
           tenantId: tenantId,
-        },
-        'delete'
+        }
       )
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to delete deal from search index', {

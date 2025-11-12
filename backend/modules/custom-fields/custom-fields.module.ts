@@ -38,7 +38,7 @@ export class CustomFieldsModule implements IModule {
   registerEventHandlers(context: ModuleContext): void {
     const entityTypes = ['contact', 'deal', 'company', 'lead', 'ticket', 'project'];
     entityTypes.forEach((entityType) => {
-      context.eventBus?.on(`${entityType}:deleted`, async (data: any) => {
+      context.events?.on(`${entityType}:deleted`, async (data: any) => {
         const fields = await this.customFieldService.getCustomFields(data.tenantId, entityType);
         for (const field of fields) {
           await this.customFieldService.deleteCustomFieldValue(data.tenantId, field.id, data.entityId);

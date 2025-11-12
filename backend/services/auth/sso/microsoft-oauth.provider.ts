@@ -106,9 +106,10 @@ export class MicrosoftOAuthProvider {
       const userProfile = await this.getUserProfile(tokenResponse.accessToken);
 
       // Prepare token data
+      // Note: MSAL doesn't return refreshToken in the AuthenticationResult, it manages it internally
       const tokenData: SSOTokenData = {
         accessToken: tokenResponse.accessToken,
-        refreshToken: tokenResponse.refreshToken,
+        refreshToken: tokenResponse.accessToken, // MSAL manages refresh tokens internally
         idToken: tokenResponse.idToken,
         expiresAt: tokenResponse.expiresOn || new Date(Date.now() + 3600 * 1000)
       };
@@ -141,7 +142,7 @@ export class MicrosoftOAuthProvider {
 
       const tokenData: SSOTokenData = {
         accessToken: tokenResponse.accessToken,
-        refreshToken: tokenResponse.refreshToken || refreshToken,
+        refreshToken: tokenResponse.accessToken || refreshToken, // MSAL manages refresh tokens internally
         idToken: tokenResponse.idToken,
         expiresAt: tokenResponse.expiresOn || new Date(Date.now() + 3600 * 1000)
       };
@@ -214,15 +215,24 @@ export class MicrosoftOAuthProvider {
       }
 
       // Extract user profile from normalized data
+      // Type guard for Microsoft Graph API response
+      const graphData = data as {
+        givenName?: string
+        surname?: string
+        jobTitle?: string
+        department?: string
+        officeLocation?: string
+      }
+
       const userProfile: MicrosoftUserProfile = {
         userId: profile.oid,
         email: profile.email,
         name: profile.name || profile.email.split('@')[0],
-        firstName: data.givenName,
-        lastName: data.surname,
-        jobTitle: data.jobTitle,
-        department: data.department,
-        officeLocation: data.officeLocation
+        firstName: graphData.givenName,
+        lastName: graphData.surname,
+        jobTitle: graphData.jobTitle,
+        department: graphData.department,
+        officeLocation: graphData.officeLocation
       };
 
       logger.info('[Microsoft SSO] User profile fetched successfully', {
@@ -389,7 +399,7 @@ export class MicrosoftOAuthProvider {
         throw new Error(`Microsoft Graph API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as { value?: any[] };
       logger.info('[Microsoft SSO] Tenant info fetched successfully');
       return data.value?.[0] || null;
     } catch (error: any) {

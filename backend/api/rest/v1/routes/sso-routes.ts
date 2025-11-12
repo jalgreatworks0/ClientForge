@@ -151,14 +151,14 @@ router.post('/sso/:provider/callback',
       switch (provider) {
         case 'google': {
           const googleProvider = new GoogleOAuthProvider();
-          const result = await googleProvider.handleCallback(code, state, codeVerifier);
+          const result = await googleProvider.handleCallback(String(code ?? ''), String(state ?? ''), String(codeVerifier ?? ''));
           userProfile = result.userProfile;
           tokenData = result.tokenData;
           break;
         }
         case 'microsoft': {
           const microsoftProvider = new MicrosoftOAuthProvider();
-          const result = await microsoftProvider.handleCallback(code, state, codeVerifier);
+          const result = await microsoftProvider.handleCallback(String(code ?? ''), String(state ?? ''), String(codeVerifier ?? ''));
           userProfile = result.userProfile;
           tokenData = result.tokenData;
           break;

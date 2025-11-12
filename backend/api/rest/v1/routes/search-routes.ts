@@ -8,15 +8,8 @@ import { authenticate } from '@middleware/authenticate'
 import { getElasticsearchClient } from '@config/database/elasticsearch-config'
 import { logger } from '@utils/logging/logger'
 import { ValidationError } from '@utils/errors/app-error'
-
-// Extend Express Request type to include user
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string
-    tenantId: string
-    role: string
-  }
-}
+import { qStr, qInt } from '@utils/http/query'
+import { AuthRequest } from '@middleware/auth'
 
 const router = Router()
 
@@ -24,23 +17,20 @@ const router = Router()
  * GET /api/v1/search
  * Unified search across all entities
  */
-router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+router.get('/', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { q, type, limit = 20, offset = 0 } = req.query
-    const tenantId = req.user?.tenantId
+    const q = qStr(req.query.q)
+    const type = qStr(req.query.type)
+    const limit = qInt(req.query.limit, 20)
+    const offset = qInt(req.query.offset, 0)
+    const tenantId = req.user.tenantId
 
-    if (!q || typeof q !== 'string') {
+    if (!q) {
       throw new ValidationError('Search query (q) is required')
     }
 
-    if (!tenantId) {
-      throw new ValidationError('Tenant ID is required')
-    }
-
     // Determine which indexes to search
-    const indexes = type
-      ? [type as string]
-      : ['contacts', 'accounts', 'deals']
+    const indexes = type ? [type] : ['contacts', 'accounts', 'deals']
 
     const elasticClient = await getElasticsearchClient()
 
@@ -82,8 +72,8 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response, n
           },
         },
       },
-      from: Number(offset),
-      size: Number(limit),
+      from: offset,
+      size: limit,
     })
 
     const results = response.hits.hits.map((hit: any) => ({
@@ -119,23 +109,21 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response, n
  * GET /api/v1/search/suggest
  * Autocomplete suggestions
  */
-router.get('/suggest', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+router.get('/suggest', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { q, type = 'contacts', limit = 5 } = req.query
-    const tenantId = req.user?.tenantId
+    const q = qStr(req.query.q)
+    const type = qStr(req.query.type) ?? 'contacts'
+    const limit = qInt(req.query.limit, 5)
+    const tenantId = req.user.tenantId
 
-    if (!q || typeof q !== 'string') {
+    if (!q) {
       throw new ValidationError('Search query (q) is required')
-    }
-
-    if (!tenantId) {
-      throw new ValidationError('Tenant ID is required')
     }
 
     const elasticClient = await getElasticsearchClient()
 
     const response = await elasticClient.search({
-      index: type as string,
+      index: type,
       query: {
           bool: {
             must: [
@@ -155,7 +143,7 @@ router.get('/suggest', authenticate, async (req: AuthenticatedRequest, res: Resp
             ],
           },
         },
-      size: Number(limit),
+      size: limit,
     })
 
     const suggestions = response.hits.hits.map((hit: any) => ({
@@ -177,13 +165,9 @@ router.get('/suggest', authenticate, async (req: AuthenticatedRequest, res: Resp
  * GET /api/v1/search/stats
  * Search index statistics
  */
-router.get('/stats', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+router.get('/stats', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const tenantId = req.user?.tenantId
-
-    if (!tenantId) {
-      throw new ValidationError('Tenant ID is required')
-    }
+    const tenantId = req.user.tenantId
 
     const elasticClient = await getElasticsearchClient()
 

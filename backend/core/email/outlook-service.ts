@@ -72,7 +72,7 @@ export class OutlookService {
         throw new Error(`Token exchange failed: ${response.statusText}`)
       }
 
-      return await response.json()
+      return await response.json() as { access_token: string; refresh_token: string; expires_in: number }
     } catch (error: any) {
       logger.error('Failed to get tokens from code', { error: error.message })
       throw new Error('Failed to authenticate with Outlook')
@@ -117,7 +117,7 @@ export class OutlookService {
         throw new Error(`Token refresh failed: ${response.statusText}`)
       }
 
-      return await response.json()
+      return await response.json() as { access_token: string; expires_in: number }
     } catch (error: any) {
       logger.error('Failed to refresh access token', { error: error.message })
       throw new Error('Failed to refresh Outlook access token')

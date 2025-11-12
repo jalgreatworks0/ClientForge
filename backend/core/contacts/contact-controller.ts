@@ -379,7 +379,7 @@ export const exportContacts = async (
     const tenantId = req.user!.tenantId
     const format = (req.query.format as string) || 'csv'
 
-    const { data: contacts } = await contactService.listContacts(tenantId, {
+    const { contacts } = await contactService.listContacts(tenantId, {
       page: 1,
       limit: 10000, // Export all contacts (consider pagination for very large datasets)
     })

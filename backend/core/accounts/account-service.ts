@@ -58,6 +58,7 @@ export class AccountService {
     // Sync to Elasticsearch for search
     try {
       await elasticsearchSyncService.syncAccount(
+        'index',
         {
           id: account.id,
           tenantId: tenantId,
@@ -67,8 +68,7 @@ export class AccountService {
           description: account.description,
           created_at: account.createdAt,
           updated_at: account.updatedAt,
-        },
-        'create'
+        }
       )
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to sync new account', {
@@ -169,6 +169,7 @@ export class AccountService {
     // Sync to Elasticsearch for search
     try {
       await elasticsearchSyncService.syncAccount(
+        'update',
         {
           id: updatedAccount.id,
           tenantId: tenantId,
@@ -178,8 +179,7 @@ export class AccountService {
           description: updatedAccount.description,
           created_at: updatedAccount.createdAt,
           updated_at: updatedAccount.updatedAt,
-        },
-        'update'
+        }
       )
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to sync updated account', {
@@ -223,11 +223,11 @@ export class AccountService {
     // Remove from Elasticsearch search index
     try {
       await elasticsearchSyncService.syncAccount(
+        'delete',
         {
           id,
           tenantId: tenantId,
-        },
-        'delete'
+        }
       )
     } catch (error) {
       logger.warn('[Elasticsearch] Failed to delete account from search index', {

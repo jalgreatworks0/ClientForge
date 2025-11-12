@@ -27,10 +27,11 @@ export class NotificationsModule implements IModule {
     // Run database migrations
     await this.runMigrations(context);
 
-    // Initialize WebSocket server (will be attached to HTTP server later)
-    if (context.httpServer) {
-      websocketService.initialize(context.httpServer);
-    }
+    // TODO: Initialize WebSocket server (will be attached to HTTP server later)
+    // WebSocket support requires httpServer to be added to ModuleContext
+    // if (context.httpServer) {
+    //   websocketService.initialize(context.httpServer);
+    // }
 
     logger.info('[Notifications Module] Notifications module initialized successfully');
   }
@@ -64,7 +65,7 @@ export class NotificationsModule implements IModule {
     ];
 
     eventMappings.forEach(({ event, type, title }) => {
-      context.eventBus?.on(event, async (data: any) => {
+      context.events?.on(event, async (data: any) => {
         try {
           await notificationService.send({
             tenantId: data.tenantId,

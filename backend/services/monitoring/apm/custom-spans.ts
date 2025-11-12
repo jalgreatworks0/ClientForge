@@ -3,7 +3,8 @@
  * Utilities for creating custom traces and spans
  */
 
-import { trace, context, Span, SpanStatusCode } from '@opentelemetry/api';
+import { trace, context, SpanStatusCode } from '@opentelemetry/api';
+import type { Span } from '@opentelemetry/api';
 
 import { logger } from '../../../utils/logging/logger';
 
