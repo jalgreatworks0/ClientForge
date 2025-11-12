@@ -54,7 +54,7 @@ describe('PasswordService', () => {
     it('should throw error if hashing fails', async () => {
       const password = 'Password123!'
 
-      mockedBcrypt.hash.mockRejectedValue(new Error('Hashing failed'))
+      mockedBcrypt.hash.mockRejectedValue(new Error('Hashing failed') as never)
 
       await expect(passwordService.hash(password)).rejects.toThrow(
         'Failed to hash password'
@@ -90,7 +90,7 @@ describe('PasswordService', () => {
       const password = 'Password123!'
       const hash = 'invalid-hash'
 
-      mockedBcrypt.compare.mockRejectedValue(new Error('Compare failed'))
+      mockedBcrypt.compare.mockRejectedValue(new Error('Compare failed') as never)
 
       await expect(passwordService.verify(password, hash)).rejects.toThrow(
         'Failed to verify password'

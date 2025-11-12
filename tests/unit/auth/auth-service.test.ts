@@ -350,7 +350,13 @@ describe('AuthService', () => {
       });
       (userRepository.findByEmailAndTenant as jest.Mock).mockResolvedValue(null);
       (passwordService.hash as jest.Mock).mockResolvedValue('$2b$12$hashedpassword');
-      (userRepository.create as jest.Mock).mockResolvedValue(mockCreatedUser)
+      (userRepository.create as jest.Mock).mockResolvedValue(mockCreatedUser);
+      (jwtService.generateTokenPair as jest.Mock).mockReturnValue({
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
+      });
+      (sessionService.createSession as jest.Mock).mockResolvedValue(undefined);
+      (auditLogger.logSuccess as jest.Mock).mockResolvedValue(undefined)
 
       await authService.register(registrationWithUppercase)
 
