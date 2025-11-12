@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   # Main Application
-  app:
+  backend:
+    container_name: clientforge-backend
     build:
       context: .
       dockerfile: deployment/docker/development/Dockerfile.dev
@@ -10,6 +11,7 @@ services:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
       - ./ai:/app/ai
+      - ./logs:/app/logs
     ports:
       - "3000:3000"
       - "3001:3001"
@@ -145,11 +147,11 @@ services:
     image: grafana/loki:2.9.0
     container_name: clientforge-loki
     volumes:
-      - ./config/loki/loki.yaml:/etc/loki/loki.yaml
+      - ./config/loki/loki-config.yml:/etc/loki/loki-config.yml
       - loki-data:/loki
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/loki.yaml
+    command: -config.file=/etc/loki/loki-config.yml
     restart: unless-stopped
 
   # Promtail for log shipping
@@ -159,8 +161,9 @@ services:
     volumes:
       - /var/log:/var/log:ro
       - ./logs:/app/logs:ro
-      - ./config/promtail/promtail.yaml:/etc/promtail/promtail.yaml
-    command: -config.file=/etc/promtail/promtail.yaml
+      - ./config/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
     depends_on:
       - loki
     restart: unless-stopped
@@ -175,8 +178,9 @@ services:
       - GF_SERVER_ROOT_URL=http://localhost:3005
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./dashboards:/var/lib/grafana/dashboards
     ports:
       - "3005:3000"
     depends_on:

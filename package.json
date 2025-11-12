@@ -90,7 +90,10 @@
     "chaos:elasticsearch": "tsx scripts/chaos/simulate-elasticsearch-down.ts",
     "agent:override-check": "tsx scripts/agents/enforce-override.ts",
     "agent:log-edit": "powershell -ExecutionPolicy Bypass -File scripts/agents/agent-log-edit.ps1",
-    "agent:open-workspace": "powershell -ExecutionPolicy Bypass -File scripts/agents/open-workspace-all-drives.ps1"
+    "agent:open-workspace": "powershell -ExecutionPolicy Bypass -File scripts/agents/open-workspace-all-drives.ps1",
+    "monitor:start": "docker compose up -d prometheus grafana loki promtail",
+    "monitor:status": "docker compose ps",
+    "monitor:logs": "docker compose logs -f --tail=200 prometheus grafana loki promtail"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

@@ -1,0 +1,32 @@
+{
+  "title": "ClientForge Backend — Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "HTTP Requests (rate)",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(http_requests_total[1m])" }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Request Duration p95",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))" }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Log lines (last 5m)",
+      "datasource": "Loki",
+      "targets": [
+        { "expr": "{job=\"backend\"} |= \"ERROR\"" }
+      ]
+    }
+  ]
+}
