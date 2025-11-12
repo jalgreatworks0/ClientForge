@@ -32,6 +32,7 @@
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "test-ai-import.js"
+    "test-ai-import.js",
+    "services/ai/experimental/**/*"
   ]
 }

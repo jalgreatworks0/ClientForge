@@ -12,8 +12,8 @@
 import { Request, Response, NextFunction } from 'express'
 import { RateLimiterRedis } from 'rate-limiter-flexible'
 import { createClient } from 'redis'
-import { logger } from '../logging/logger'
-import { AppError } from '../errors/app-error'
+import { logger } from '@utils/logging/logger'
+import { AppError } from '@utils/errors/app-error'
 
 // Initialize Redis client for rate limiting
 const redisClient = createClient({

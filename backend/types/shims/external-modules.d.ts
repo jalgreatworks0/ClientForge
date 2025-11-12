@@ -252,3 +252,39 @@ declare module 'sqlite' {
   const x: any
   export = x
 }
+
+// NestJS modules (for IDE support, experimental code excluded from build)
+declare module '@nestjs/common' {
+  const x: any
+  export = x
+}
+
+declare module '@nestjs/core' {
+  const x: any
+  export = x
+}
+
+declare module '@nestjs/platform-express' {
+  const x: any
+  export = x
+}
+
+declare module '@nestjs/config' {
+  const x: any
+  export = x
+}
+
+declare module '@nestjs/swagger' {
+  const x: any
+  export = x
+}
+
+declare module '@nestjs/terminus' {
+  const x: any
+  export = x
+}
+
+declare module 'rxjs' {
+  const x: any
+  export = x
+}
