@@ -5,9 +5,9 @@
 
 import { Router, Request, Response } from 'express'
 
-import { logger } from '../../../../utils/logging/logger'
-import { getPostgresPool } from '../../../../../config/database/postgres-config'
-import { optionalAuthenticate as authenticateOptional } from '../../../../middleware/authenticate'
+import { logger } from '@utils/logging/logger'
+import { getPostgresPool } from '@config/database/postgres-config'
+import { optionalAuthenticate as authenticateOptional } from '@middleware/authenticate'
 
 const router = Router()
 const pool = getPostgresPool()

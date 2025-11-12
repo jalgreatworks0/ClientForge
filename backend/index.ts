@@ -10,9 +10,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { appConfig } from '../config/app/app-config';
-import { initializeMongoCollections } from '../config/database/mongodb-config';
-import { initializeSearchIndexes } from '../config/database/elasticsearch-config';
+import { appConfig } from '@config/app/app-config';
+import { initializeMongoCollections, getMongoDatabase } from '@config/database/mongodb-config';
+import { initializeSearchIndexes } from '@config/database/elasticsearch-config';
 
 import { logger } from './utils/logging/logger';
 import { Server } from './api/server';
@@ -45,7 +45,6 @@ async function startServer(): Promise<void> {
       logger.info('[OK] MongoDB collections initialized');
 
       // Verify collections were created successfully
-      const { getMongoDatabase } = require('../config/database/mongodb-config');
       const db = await getMongoDatabase();
       const collections = await db.listCollections().toArray();
       const collectionNames = collections.map((c: any) => c.name);

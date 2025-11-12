@@ -5,10 +5,10 @@
 
 import { Router, Request, Response, NextFunction } from 'express'
 
-import { authenticate } from '../../../../middleware/authenticate'
-import { getElasticsearchClient } from '../../../../../config/database/elasticsearch-config'
-import { logger } from '../../../../utils/logging/logger'
-import { ValidationError } from '../../../../utils/errors/app-error'
+import { authenticate } from '@middleware/authenticate'
+import { getElasticsearchClient } from '@config/database/elasticsearch-config'
+import { logger } from '@utils/logging/logger'
+import { ValidationError } from '@utils/errors/app-error'
 
 // Extend Express Request type to include user
 interface AuthenticatedRequest extends Request {

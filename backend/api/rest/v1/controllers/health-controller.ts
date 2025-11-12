@@ -5,12 +5,12 @@
 
 import { Request, Response, NextFunction } from 'express'
 
-import { getPostgresPool } from '../../../../../config/database/postgres-config'
-import { getRedisClient } from '../../../../../config/database/redis-config'
-import { getMongoClient } from '../../../../../config/database/mongodb-config'
-import { getElasticsearchClient } from '../../../../../config/database/elasticsearch-config'
-import { logger } from '../../../../utils/logging/logger'
-import { appConfig } from '../../../../../config/app/app-config'
+import { getPostgresPool } from '@config/database/postgres-config'
+import { getRedisClient } from '@config/database/redis-config'
+import { getMongoClient } from '@config/database/mongodb-config'
+import { getElasticsearchClient } from '@config/database/elasticsearch-config'
+import { logger } from '@utils/logging/logger'
+import { appConfig } from '@config/app/app-config'
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy'

@@ -4,7 +4,20 @@
   "compilerOptions": {
     "outDir": "../dist/backend",
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "baseUrl": ".",
+    "paths": {
+      "@api/*": ["api/*"],
+      "@config/*": ["../config/*"],
+      "@core/*": ["core/*"],
+      "@database/*": ["database/*"],
+      "@middleware/*": ["middleware/*"],
+      "@modules/*": ["modules/*"],
+      "@queues/*": ["queues/*"],
+      "@scripts/*": ["scripts/*"],
+      "@services/*": ["services/*"],
+      "@utils/*": ["utils/*"]
+    }
   },
   "include": [
     "./**/*"
