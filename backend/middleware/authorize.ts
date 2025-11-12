@@ -51,11 +51,11 @@ export function authorize(minLevel: number) {
       }
 
       // Check user's role level from database
-      const meetsRequirement = await permissionService.checkRoleLevel(req.user.roleId, minLevel)
+      const meetsRequirement = await permissionService.checkRoleLevel(req.user.role, minLevel)
 
       if (!meetsRequirement) {
         logger.warn('Authorization denied - insufficient permissions', {
-          userId: req.user.userId,
+          userId: req.user.id,
           tenantId: req.user.tenantId,
           requiredLevel: minLevel,
           path: req.path,
@@ -64,7 +64,7 @@ export function authorize(minLevel: number) {
 
         // Audit log the permission denial
         await auditLogger.logPermissionDenied(
-          req.user.userId,
+          req.user.id,
           req.user.tenantId,
           req.path,
           req.method,
@@ -76,7 +76,7 @@ export function authorize(minLevel: number) {
 
       // User has sufficient permissions
       logger.debug('Authorization granted', {
-        userId: req.user.userId,
+        userId: req.user.id,
         requiredLevel: minLevel,
       })
 
@@ -110,12 +110,12 @@ export function requirePermission(permission: string) {
         '0248fda3-1768-4a0f-97b8-b2b91bc8d3c3', // Super Admin
       ]
 
-      if (adminRoles.includes(req.user.roleId)) {
+      if (adminRoles.includes(req.user.role)) {
         logger.debug('Admin bypass - permission check skipped', {
-          userId: req.user.userId,
+          userId: req.user.id,
           permission,
           path: req.path,
-          roleId: req.user.roleId,
+          roleId: req.user.role,
         })
         next()
         return
@@ -130,14 +130,14 @@ export function requirePermission(permission: string) {
 
       // Check permission from database
       const hasPermission = await permissionService.checkPermission(
-        req.user.roleId,
+        req.user.role,
         resource,
         action
       )
 
       if (!hasPermission) {
         logger.warn('Authorization denied - missing permission', {
-          userId: req.user.userId,
+          userId: req.user.id,
           tenantId: req.user.tenantId,
           permission,
           path: req.path,
@@ -145,7 +145,7 @@ export function requirePermission(permission: string) {
         })
 
         await auditLogger.logPermissionDenied(
-          req.user.userId,
+          req.user.id,
           req.user.tenantId,
           req.path,
           req.method,
@@ -188,7 +188,7 @@ export function requireTenantAccess(tenantIdParam: string = 'tenantId') {
       // Check if user's tenantId matches the requested tenantId
       if (req.user.tenantId !== requestedTenantId) {
         logger.warn('Authorization denied - cross-tenant access attempt', {
-          userId: req.user.userId,
+          userId: req.user.id,
           userTenantId: req.user.tenantId,
           requestedTenantId,
           path: req.path,
@@ -196,7 +196,7 @@ export function requireTenantAccess(tenantIdParam: string = 'tenantId') {
         })
 
         await auditLogger.logPermissionDenied(
-          req.user.userId,
+          req.user.id,
           req.user.tenantId,
           req.path,
           req.method,
@@ -237,16 +237,16 @@ export function requireResourceOwnership(userIdParam: string = 'userId') {
       }
 
       // Check if authenticated user matches the requested user
-      if (req.user.userId !== requestedUserId) {
+      if (req.user.id !== requestedUserId) {
         logger.warn('Authorization denied - resource ownership violation', {
-          userId: req.user.userId,
+          userId: req.user.id,
           requestedUserId,
           path: req.path,
           method: req.method,
         })
 
         await auditLogger.logPermissionDenied(
-          req.user.userId,
+          req.user.id,
           req.user.tenantId,
           req.path,
           req.method,

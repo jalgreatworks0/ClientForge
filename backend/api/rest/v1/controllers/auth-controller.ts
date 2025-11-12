@@ -225,10 +225,10 @@ export async function logout(req: AuthRequest, res: Response, next: NextFunction
       throw new ValidationError('User not authenticated')
     }
 
-    await authService.logout(req.user.userId, data.refreshToken)
+    await authService.logout(req.user.id, data.refreshToken)
 
     logger.info('User logged out successfully', {
-      userId: req.user.userId,
+      userId: req.user.id,
       tenantId: req.user.tenantId,
     })
 

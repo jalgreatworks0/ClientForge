@@ -8,14 +8,15 @@ import { Request } from 'express'
 /**
  * Authenticated request with user context
  * Extends Express Request with user information
+ * Aligned with Express.Request augmentation in types/express.d.ts
  */
 export interface AuthRequest extends Request {
   user?: {
-    userId: string
+    id: string
+    email: string
     tenantId: string
-    roleId: string
-    email?: string
-    jti?: string
+    role?: string
+    permissions?: string[]
   }
 }
 
