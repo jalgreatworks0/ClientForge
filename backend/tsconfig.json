@@ -5,6 +5,10 @@
     "outDir": "../dist/backend",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictBindCallApply": true,
+    "alwaysStrict": true,
     "baseUrl": ".",
     "paths": {
       "@api/*": ["api/*"],
