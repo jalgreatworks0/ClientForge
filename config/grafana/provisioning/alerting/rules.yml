@@ -17,6 +17,9 @@ groups:
                 uid: loki
               expr: 'count_over_time({job="backend"} |= "ERROR" [5m]) > 50'
               queryType: range
+            relativeTimeRange:
+              from: 300
+              to: 0
         annotations:
           summary: "High ERROR volume in logs (5m)"
         labels:

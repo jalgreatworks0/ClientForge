@@ -1,0 +1,19 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: Slack Alerts
+    receivers:
+      - uid: slack-default
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_URL}
+          recipient: ${SLACK_CHANNEL}
+          mentionUsers: ""
+          icon_emoji: ":rotating_light:"
+  - orgId: 1
+    name: Email Critical
+    receivers:
+      - uid: email-critical
+        type: email
+        settings:
+          addresses: ${ALERT_EMAIL_TO}

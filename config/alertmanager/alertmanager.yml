@@ -1,0 +1,17 @@
+route:
+  receiver: default
+  group_by: [job, alertname]
+  group_wait: 15s
+  group_interval: 1m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = "critical"
+      receiver: critical
+receivers:
+  - name: default
+    # Configure your Slack webhook URL here or via environment override
+    # See .env.example for setup instructions
+  - name: critical
+    # Configure your email settings here or via environment override
+    # See .env.example for setup instructions
