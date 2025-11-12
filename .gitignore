@@ -83,3 +83,4 @@ storage/invoices/*
 .claude/**/*.tmp
 .claude/**/secrets*
 .claude/SESSIONS/*_private.md
+nul
