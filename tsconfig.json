@@ -43,6 +43,10 @@
     "agents/**/*",
     "scripts/**/*"
   ],
+  "typeRoots": [
+    "./node_modules/@types",
+    "./backend/types"
+  ],
   "exclude": [
     "node_modules",
     "dist",

@@ -147,9 +147,9 @@ async function cleanupOldBackups(): Promise<void> {
  * Main backup process
  */
 async function main() {
-  console.log('='..repeat(60))
+  console.log('='.repeat(60))
   console.log('PostgreSQL Backup Script')
-  console.log('='..repeat(60))
+  console.log('='.repeat(60))
 
   try {
     // 1. Create backup

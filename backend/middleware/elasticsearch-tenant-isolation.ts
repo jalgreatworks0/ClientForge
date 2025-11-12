@@ -74,10 +74,10 @@ export async function enforceElasticsearchTenantIsolation(
  * Use this to intercept direct ES calls and inject tenant filters
  */
 export class TenantAwareESClient {
-  private client: typeof esClient
+  private client: any
 
-  constructor(esClient: typeof esClient) {
-    this.client = esClient
+  constructor(client: any) {
+    this.client = client
   }
 
   /**

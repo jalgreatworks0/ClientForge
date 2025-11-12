@@ -1,0 +1,30 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "bierner.markdown-mermaid",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "yoavbls.pretty-ts-errors",
+    "pranaygp.vscode-css-peek",
+    "firsttris.vscode-jest-runner",
+    "ms-playwright.playwright",
+    "sonarsource.sonarlint-vscode",
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+    "redhat.vscode-yaml",
+    "humao.rest-client",
+    "cweijan.vscode-postgresql-client2",
+    "mongodb.mongodb-vscode",
+    "usernamehw.errorlens",
+    "gruntfuggly.todo-tree",
+    "vscode-icons-team.vscode-icons"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript-tslint-plugin"
+  ]
+}

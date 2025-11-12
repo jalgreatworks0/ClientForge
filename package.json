@@ -80,7 +80,17 @@
     "es:test-tenant-isolation": "tsx scripts/elasticsearch/canary-test.ts",
     "search:analyze": "tsx scripts/search/analyze-search-queries.ts",
     "storage:test-security": "tsx scripts/storage/test-file-security.ts",
-    "deploy:verify": "tsx scripts/deployment/verify-deployment.ts"
+    "deploy:verify": "tsx scripts/deployment/verify-deployment.ts",
+    "errors:lint": "tsx scripts/errors/lint-registry.ts",
+    "errors:gen": "tsx scripts/errors/generate-types.ts",
+    "errors:grep": "tsx scripts/errors/grep-uncatalogued-errors.ts",
+    "errors:check": "npm run errors:lint && npm run errors:gen && npm run errors:grep",
+    "errors:digest": "tsx scripts/errors/send-daily-digest.ts",
+    "chaos:db": "tsx scripts/chaos/simulate-db-outage.ts",
+    "chaos:elasticsearch": "tsx scripts/chaos/simulate-elasticsearch-down.ts",
+    "agent:override-check": "tsx scripts/agents/enforce-override.ts",
+    "agent:log-edit": "powershell -ExecutionPolicy Bypass -File scripts/agents/agent-log-edit.ps1",
+    "agent:open-workspace": "powershell -ExecutionPolicy Bypass -File scripts/agents/open-workspace-all-drives.ps1"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
@@ -91,6 +101,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@microsoft/microsoft-graph-types": "^2.43.1",
     "@modelcontextprotocol/sdk": "^1.21.1",
+    "@modelcontextprotocol/server-filesystem": "^2025.8.21",
     "@okta/okta-auth-js": "^7.14.0",
     "@sendgrid/mail": "^8.1.6",
     "@tensorflow/tfjs-node": "^4.15.0",

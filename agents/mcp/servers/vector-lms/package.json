@@ -1,0 +1,23 @@
+﻿{
+  "name": "@clientforge/mcp-vector-lms",
+  "version": "1.0.0",
+  "description": "Vector memory MCP server using LM Studio embeddings",
+  "main": "server.ts",
+  "scripts": {
+    "start": "tsx server.ts",
+    "dev": "tsx watch server.ts"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "@types/node-fetch": "^2.6.9",
+    "@types/sqlite3": "^3.1.11",
+    "tsx": "^4.7.0"
+  }
+}

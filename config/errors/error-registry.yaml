@@ -1,0 +1,403 @@
+version: 1
+owner: "ClientForge Platform"
+defaults:
+  http_status: 500
+  severity: "major"        # minor | major | critical
+  notify: false
+  retry: "none"            # none | safe | idempotent
+  visibility: "internal"   # internal | user
+  product_area: "core"
+
+groups:
+  AUTH:
+    description: "Authentication, SSO, MFA"
+    product_area: "auth"
+    errors:
+      - id: AUTH-001
+        name: "InvalidCredentials"
+        http_status: 401
+        severity: minor
+        visibility: user
+        user_message_key: "errors.auth.invalid_credentials"
+        runbook: "docs/errors/runbooks/AUTH-001.md"
+        detect:
+          signals: ["401 responses spike", "failed login events > threshold"]
+          logs: ["logger.error 'AUTH-001'"]
+
+      - id: AUTH-002
+        name: "MFARequired"
+        http_status: 401
+        severity: minor
+        visibility: user
+        user_message_key: "errors.auth.session_expired"
+        runbook: "docs/errors/runbooks/AUTH-002.md"
+
+      - id: AUTH-003
+        name: "TokenExpired"
+        http_status: 401
+        severity: minor
+        visibility: user
+        user_message_key: "errors.auth.token_invalid"
+        runbook: "docs/errors/runbooks/AUTH-003.md"
+
+      - id: AUTH-004
+        name: "SessionInvalid"
+        http_status: 401
+        severity: minor
+        visibility: user
+        user_message_key: "errors.auth.session_expired"
+        runbook: "docs/errors/runbooks/AUTH-004.md"
+
+      - id: AUTH-005
+        name: "PermissionDenied"
+        http_status: 403
+        severity: minor
+        visibility: user
+        user_message_key: "errors.auth.insufficient_permissions"
+        runbook: "docs/errors/runbooks/AUTH-005.md"
+
+  DB:
+    description: "PostgreSQL / MongoDB"
+    product_area: "database"
+    errors:
+      - id: DB-001
+        name: "PostgresUnavailable"
+        http_status: 503
+        severity: critical
+        notify: true
+        retry: safe
+        runbook: "docs/errors/runbooks/DB-001.md"
+        detect:
+          signals: ["port 5432 down", "connection refused"]
+          dashboards: ["Grafana: DB Health"]
+
+      - id: DB-002
+        name: "MongoWriteFailed"
+        http_status: 500
+        severity: major
+        retry: safe
+        runbook: "docs/errors/runbooks/DB-002.md"
+
+      - id: DB-003
+        name: "MongoConnectionFailed"
+        http_status: 503
+        severity: critical
+        notify: true
+        retry: safe
+        runbook: "docs/errors/runbooks/DB-003.md"
+
+      - id: DB-004
+        name: "QueryTimeout"
+        http_status: 504
+        severity: major
+        retry: safe
+        runbook: "docs/errors/runbooks/DB-004.md"
+
+      - id: DB-005
+        name: "TransactionFailed"
+        http_status: 500
+        severity: major
+        retry: none
+        runbook: "docs/errors/runbooks/DB-005.md"
+
+  REDIS:
+    description: "Redis Cache & Sessions"
+    product_area: "cache"
+    errors:
+      - id: RDS-001
+        name: "RedisUnavailable"
+        http_status: 503
+        severity: critical
+        notify: true
+        retry: safe
+        runbook: "docs/errors/runbooks/RDS-001.md"
+
+      - id: RDS-002
+        name: "CacheWriteFailed"
+        http_status: 500
+        severity: minor
+        retry: safe
+        runbook: "docs/errors/runbooks/RDS-002.md"
+
+  SEARCH:
+    description: "Elasticsearch"
+    product_area: "search"
+    errors:
+      - id: ES-001
+        name: "IndexMissing"
+        http_status: 500
+        severity: major
+        retry: idempotent
+        runbook: "docs/errors/runbooks/ES-001.md"
+
+      - id: ES-002
+        name: "SearchFailed"
+        http_status: 500
+        severity: major
+        retry: safe
+        runbook: "docs/errors/runbooks/ES-002.md"
+
+      - id: ES-003
+        name: "ElasticsearchUnavailable"
+        http_status: 503
+        severity: critical
+        notify: true
+        retry: safe
+        runbook: "docs/errors/runbooks/ES-003.md"
+
+  QUEUE:
+    description: "BullMQ / Redis"
+    product_area: "queue"
+    errors:
+      - id: QUEUE-001
+        name: "WorkerDown"
+        http_status: 503
+        severity: critical
+        notify: true
+        runbook: "docs/errors/runbooks/QUEUE-001.md"
+
+      - id: QUEUE-002
+        name: "JobFailed"
+        http_status: 500
+        severity: major
+        retry: safe
+        runbook: "docs/errors/runbooks/QUEUE-002.md"
+
+      - id: QUEUE-003
+        name: "QueueFull"
+        http_status: 503
+        severity: major
+        notify: true
+        runbook: "docs/errors/runbooks/QUEUE-003.md"
+
+  EMAIL:
+    description: "Gmail/Outlook OAuth + send"
+    product_area: "email"
+    errors:
+      - id: MAIL-001
+        name: "OAuthTokenExpired"
+        http_status: 401
+        severity: minor
+        visibility: user
+        user_message_key: "errors.email.send_failed"
+        runbook: "docs/errors/runbooks/MAIL-001.md"
+
+      - id: MAIL-002
+        name: "SendFailed"
+        http_status: 500
+        severity: major
+        retry: safe
+        visibility: user
+        user_message_key: "errors.email.send_failed"
+        runbook: "docs/errors/runbooks/MAIL-002.md"
+
+      - id: MAIL-003
+        name: "InvalidRecipient"
+        http_status: 400
+        severity: minor
+        visibility: user
+        user_message_key: "errors.email.invalid_recipient"
+        runbook: "docs/errors/runbooks/MAIL-003.md"
+
+  AI:
+    description: "Anthropic/OpenAI"
+    product_area: "ai"
+    errors:
+      - id: AI-001
+        name: "ProviderRateLimited"
+        http_status: 429
+        severity: major
+        retry: safe
+        visibility: user
+        user_message_key: "errors.ai.rate_limit"
+        runbook: "docs/errors/runbooks/AI-001.md"
+
+      - id: AI-002
+        name: "InvalidAPIKey"
+        http_status: 401
+        severity: minor
+        visibility: user
+        user_message_key: "errors.ai.api_error"
+        runbook: "docs/errors/runbooks/AI-002.md"
+
+      - id: AI-003
+        name: "ContextTooLarge"
+        http_status: 400
+        severity: minor
+        visibility: user
+        user_message_key: "errors.ai.invalid_prompt"
+        runbook: "docs/errors/runbooks/AI-003.md"
+
+      - id: AI-004
+        name: "ProviderUnavailable"
+        http_status: 503
+        severity: major
+        retry: safe
+        visibility: user
+        user_message_key: "errors.ai.api_error"
+        runbook: "docs/errors/runbooks/AI-004.md"
+
+  FRONTEND:
+    description: "UI/network/validation"
+    product_area: "frontend"
+    errors:
+      - id: FE-001
+        name: "NetworkOffline"
+        severity: minor
+        visibility: user
+        user_message_key: "errors.frontend.network"
+        runbook: "docs/errors/runbooks/FE-001.md"
+
+      - id: FE-002
+        name: "ValidationFailed"
+        http_status: 400
+        severity: minor
+        visibility: user
+        user_message_key: "errors.frontend.validation"
+        runbook: "docs/errors/runbooks/FE-002.md"
+
+      - id: FE-003
+        name: "ResourceNotFound"
+        http_status: 404
+        severity: minor
+        visibility: user
+        user_message_key: "errors.validation.format_error"
+        runbook: "docs/errors/runbooks/FE-003.md"
+
+  AGENTS:
+    description: "MCP/Agents Fleet"
+    product_area: "agents"
+    errors:
+      - id: AGT-001
+        name: "AgentUnreachable"
+        http_status: 503
+        severity: major
+        notify: true
+        runbook: "docs/errors/runbooks/AGT-001.md"
+
+      - id: AGT-002
+        name: "AgentTimeout"
+        http_status: 504
+        severity: major
+        retry: safe
+        runbook: "docs/errors/runbooks/AGT-002.md"
+
+  BILLING:
+    description: "Stripe Integration"
+    product_area: "billing"
+    errors:
+      - id: BIL-001
+        name: "PaymentFailed"
+        http_status: 402
+        severity: major
+        visibility: user
+        user_message_key: "errors.billing.payment_failed"
+        runbook: "docs/errors/runbooks/BIL-001.md"
+
+      - id: BIL-002
+        name: "SubscriptionExpired"
+        http_status: 402
+        severity: minor
+        visibility: user
+        user_message_key: "errors.billing.subscription_inactive"
+        runbook: "docs/errors/runbooks/BIL-002.md"
+
+      - id: BIL-003
+        name: "StripeWebhookFailed"
+        http_status: 500
+        severity: critical
+        notify: true
+        runbook: "docs/errors/runbooks/BIL-003.md"
+
+  STORAGE:
+    description: "MinIO/S3 File Storage"
+    product_area: "storage"
+    errors:
+      - id: STG-001
+        name: "UploadFailed"
+        http_status: 500
+        severity: major
+        retry: safe
+        visibility: user
+        user_message_key: "errors.storage.upload_failed"
+        runbook: "docs/errors/runbooks/STG-001.md"
+
+      - id: STG-002
+        name: "FileNotFound"
+        http_status: 404
+        severity: minor
+        visibility: user
+        user_message_key: "errors.not_found"
+        runbook: "docs/errors/runbooks/STG-002.md"
+
+      - id: STG-003
+        name: "StorageQuotaExceeded"
+        http_status: 507
+        severity: major
+        visibility: user
+        user_message_key: "errors.storage.file_too_large"
+        runbook: "docs/errors/runbooks/STG-003.md"
+
+  VALIDATION:
+    description: "Input Validation"
+    product_area: "validation"
+    errors:
+      - id: VAL-001
+        name: "InvalidInput"
+        http_status: 400
+        severity: minor
+        visibility: user
+        user_message_key: "errors.validation.invalid_input"
+        runbook: "docs/errors/runbooks/VAL-001.md"
+
+      - id: VAL-002
+        name: "MissingRequiredField"
+        http_status: 400
+        severity: minor
+        visibility: user
+        user_message_key: "errors.validation.required_field"
+        runbook: "docs/errors/runbooks/VAL-002.md"
+
+      - id: VAL-003
+        name: "InvalidFormat"
+        http_status: 400
+        severity: minor
+        visibility: user
+        user_message_key: "errors.validation.format_error"
+        runbook: "docs/errors/runbooks/VAL-003.md"
+
+  RATE_LIMIT:
+    description: "Rate Limiting"
+    product_area: "security"
+    errors:
+      - id: RL-001
+        name: "RateLimitExceeded"
+        http_status: 429
+        severity: minor
+        visibility: user
+        user_message_key: "errors.rate_limit.exceeded"
+        runbook: "docs/errors/runbooks/RL-001.md"
+
+  GENERAL:
+    description: "General/Unknown Errors"
+    product_area: "core"
+    errors:
+      - id: GEN-001
+        name: "UnexpectedError"
+        http_status: 500
+        severity: major
+        runbook: "docs/errors/runbooks/GEN-001.md"
+
+      - id: GEN-002
+        name: "ServiceUnavailable"
+        http_status: 503
+        severity: critical
+        notify: true
+        runbook: "docs/errors/runbooks/GEN-002.md"
+
+      - id: GEN-003
+        name: "Timeout"
+        http_status: 504
+        severity: major
+        retry: safe
+        runbook: "docs/errors/runbooks/GEN-003.md"

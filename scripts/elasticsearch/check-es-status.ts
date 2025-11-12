@@ -93,7 +93,10 @@ async function checkElasticsearchStatus(): Promise<void> {
       } else {
         console.log(`   Found ${templates.index_templates.length} templates:`)
         for (const template of templates.index_templates.slice(0, 10)) {
-          console.log(`   - ${template.name}: ${template.index_template.index_patterns.join(', ')}`)
+          const patterns = Array.isArray(template.index_template.index_patterns)
+            ? template.index_template.index_patterns.join(', ')
+            : String(template.index_template.index_patterns)
+          console.log(`   - ${template.name}: ${patterns}`)
         }
         if (templates.index_templates.length > 10) {
           console.log(`   ... and ${templates.index_templates.length - 10} more`)

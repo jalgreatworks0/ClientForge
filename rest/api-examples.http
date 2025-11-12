@@ -1,0 +1,111 @@
+@baseUrl = http://localhost:3000
+@apiVersion = v1
+@token = your-jwt-token-here
+
+### ========================================
+### Authentication
+### ========================================
+
+### Register New User
+POST {{baseUrl}}/api/{{apiVersion}}/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "SecurePass123!",
+  "name": "Test User"
+}
+
+### Login
+POST {{baseUrl}}/api/{{apiVersion}}/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "SecurePass123!"
+}
+
+### Get Current User
+GET {{baseUrl}}/api/{{apiVersion}}/auth/me HTTP/1.1
+Authorization: Bearer {{token}}
+
+### ========================================
+### Clients
+### ========================================
+
+### Get All Clients
+GET {{baseUrl}}/api/{{apiVersion}}/clients HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Get Client By ID
+GET {{baseUrl}}/api/{{apiVersion}}/clients/123e4567-e89b-12d3-a456-426614174000 HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Create New Client
+POST {{baseUrl}}/api/{{apiVersion}}/clients HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Acme Corporation",
+  "email": "contact@acme.com",
+  "phone": "+1234567890",
+  "address": "123 Main St, City, State 12345"
+}
+
+### Update Client
+PATCH {{baseUrl}}/api/{{apiVersion}}/clients/123e4567-e89b-12d3-a456-426614174000 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Acme Corp (Updated)",
+  "phone": "+0987654321"
+}
+
+### Delete Client
+DELETE {{baseUrl}}/api/{{apiVersion}}/clients/123e4567-e89b-12d3-a456-426614174000 HTTP/1.1
+Authorization: Bearer {{token}}
+
+### ========================================
+### Projects
+### ========================================
+
+### Get All Projects
+GET {{baseUrl}}/api/{{apiVersion}}/projects HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Create New Project
+POST {{baseUrl}}/api/{{apiVersion}}/projects HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Website Redesign",
+  "description": "Complete overhaul of company website",
+  "clientId": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "active",
+  "budget": 50000
+}
+
+### ========================================
+### Tasks
+### ========================================
+
+### Get All Tasks
+GET {{baseUrl}}/api/{{apiVersion}}/tasks?status=active HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Create Task
+POST {{baseUrl}}/api/{{apiVersion}}/tasks HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Design homepage mockup",
+  "description": "Create initial design concepts",
+  "projectId": "123e4567-e89b-12d3-a456-426614174000",
+  "assignedTo": "user-id-here",
+  "dueDate": "2025-12-31",
+  "priority": "high"
+}

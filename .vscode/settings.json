@@ -1,0 +1,156 @@
+{
+  // Continue Extension
+  "continue.enableTelemetry": false,
+  "continue.telemetryEnabled": false,
+  "continue.configPath": "~/.continue/config.json",
+  "continue.modelTitle": "GPT-4o",
+  "continue.showInlineTip": true,
+
+  // Editor
+  "editor.inlineSuggest.enabled": true,
+  "editor.quickSuggestionsDelay": 0,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.rulers": [80, 120],
+  "editor.tabSize": 2,
+  "editor.detectIndentation": true,
+
+  // Files
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.turbo": true,
+    "**/.next": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.turbo/**": true
+  },
+
+  // Search
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.turbo": true,
+    "**/coverage": true
+  },
+
+  // TypeScript (Performance Tuned for Large Monorepos)
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+  "typescript.suggest.autoImports": true,
+
+  // ESLint
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "json",
+    "jsonc"
+  ],
+  "eslint.format.enable": true,
+
+  // Prettier
+  "prettier.requireConfig": true,
+  "prettier.enable": true,
+
+  // Git
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+
+  // Terminal
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "Git Bash": {
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+      "icon": "terminal-bash"
+    }
+  },
+
+  // Language-specific
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.wordWrap": "on"
+  },
+
+  // Tailwind CSS
+  "tailwindCSS.experimental.configFile": "frontend/tailwind.config.js",
+  "tailwindCSS.emmetCompletions": true,
+
+  // Jest
+  "jest.autoRun": "off",
+  "jest.jestCommandLine": "npm run test --",
+
+  // Playwright
+  "playwright.reuseBrowser": true,
+
+  // REST Client
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "baseUrl": "http://localhost:3000",
+      "apiVersion": "v1"
+    }
+  },
+
+  // Error Lens
+  "errorLens.enabled": true,
+  "errorLens.enabledDiagnosticLevels": ["error", "warning"],
+
+  // DX Polish
+  "workbench.iconTheme": "vscode-icons",
+  "workbench.colorTheme": "Default Dark Modern",
+  "breadcrumbs.enabled": true,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+
+  // Search Performance
+  "search.useIgnoreFiles": true,
+  "search.followSymlinks": false,
+
+  // Code Actions
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  }
+}

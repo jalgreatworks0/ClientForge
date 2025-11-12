@@ -77,3 +77,9 @@ storage/exports/*
 storage/gdpr-exports/*
 storage/invoices/*
 !storage/*/.gitkeep
+
+# Claude Code Excellence Framework
+.claude/INBOX/*.json
+.claude/**/*.tmp
+.claude/**/secrets*
+.claude/SESSIONS/*_private.md

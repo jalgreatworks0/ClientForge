@@ -151,7 +151,7 @@ async function setupILM(): Promise<void> {
 
       await client.indices.putIndexTemplate({
         name: template.name,
-        body: templateBody
+        ...templateBody as any
       })
 
       console.log(`   ✓ Created template: ${template.name}`)

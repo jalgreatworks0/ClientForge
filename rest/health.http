@@ -1,0 +1,14 @@
+### Backend Health Check
+GET http://localhost:3000/api/v1/health HTTP/1.1
+
+### MCP Router Health
+GET http://localhost:8765/health HTTP/1.1
+
+### Database Health (if exposed)
+GET http://localhost:3000/api/v1/health/db HTTP/1.1
+
+### Redis Health
+GET http://localhost:3000/api/v1/health/redis HTTP/1.1
+
+### LM Studio API Health (if running)
+GET http://localhost:1234/v1/models HTTP/1.1
