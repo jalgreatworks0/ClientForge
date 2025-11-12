@@ -112,6 +112,8 @@ module.exports = {
     '<rootDir>/agents/.*/node_modules/',
     '<rootDir>/.*/dist/',
     '<rootDir>/.*/build/',
+    '<rootDir>/tests/e2e/',
+    '<rootDir>/tests/playwright/',
   ],
 
   // Module file extensions
