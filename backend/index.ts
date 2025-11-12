@@ -10,6 +10,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Validate required environment variables
+import { initEnvValidation } from './config/env-validator';
+initEnvValidation();
+
 import { appConfig } from '@config/app/app-config';
 import { initializeMongoCollections, getMongoDatabase } from '@config/database/mongodb-config';
 import { initializeSearchIndexes } from '@config/database/elasticsearch-config';

@@ -1,0 +1,291 @@
+# ClientForge-CRM Development Guide
+
+**Last Updated**: 2025-11-12  
+**Audience**: Backend & Frontend Developers
+
+---
+
+## Quick Start
+
+```bash
+# Clone repository
+git clone <repo-url>
+cd clientforge-crm
+
+# Install dependencies
+npm install
+
+# Setup environment
+cp .env.example .env
+# Edit .env with your configuration
+
+# Run development servers
+npm run dev:backend   # Backend on port 3000
+npm run dev:frontend  # Frontend on port 3001
+```
+
+---
+
+## Type Safety & TypeScript
+
+### Current State: Strict Mode Migration (Phase 1 Complete)
+
+ClientForge-CRM is actively migrating to TypeScript strict mode. As of November 2025:
+
+- **Status**: Phase 1 of 6 complete
+- **Type Errors**: 309 visible (down from hidden)
+- **Build Impact**: None (errors are warnings only)
+- **Developer Impact**: More IDE feedback, optional fixes
+
+### Type Checking Commands
+
+```bash
+# Run full type check (no build output)
+npm run type-check
+
+# Build with type checking (produces dist/ folder)
+npm run build
+
+# View migration progress
+cat scripts/dev-tools/strict-progress.md
+```
+
+### Strict Mode Flags (Phase 1)
+
+Currently enabled in `backend/tsconfig.json`:
+
+```json
+{
+  "noImplicitAny": true,        // No implicit 'any' types
+  "noImplicitThis": true,       // 'this' must be explicitly typed
+  "strictBindCallApply": true,  // Strict .bind/.call/.apply checks
+  "alwaysStrict": true          // Emit "use strict" in JS
+}
+```
+
+### Common Type Errors & Fixes
+
+#### 1. Implicit `any` in Route Handlers (57% of errors)
+
+**Error**: `TS2769: No overload matches this call`
+
+```typescript
+// ❌ Before: Implicit any types
+router.get('/api/users', (req, res) => {
+  const userId = req.user.userId;  // Type error
+  res.json({ userId });
+});
+
+// ✅ After: Explicit types
+import { Request, Response } from 'express';
+import { AuthRequest } from '@/types/auth';
+
+router.get('/api/users', (req: AuthRequest, res: Response) => {
+  const userId = req.user.id;  // Typed correctly
+  res.json({ userId });
+});
+```
+
+#### 2. Missing Type Imports
+
+**Error**: `TS2307: Cannot find module '@types/js-yaml'`
+
+```bash
+# Install missing types
+npm install --save-dev @types/js-yaml
+```
+
+#### 3. Property Typos
+
+**Error**: `TS2551: Property 'setex' does not exist. Did you mean 'setEx'?`
+
+```typescript
+// ❌ Before: Typo in method name
+await redis.setex(key, ttl, value);
+
+// ✅ After: Correct method name
+await redis.setEx(key, ttl, value);
+```
+
+### Best Practices
+
+1. **Always add types to new code**: Don't add to the error count
+2. **Fix errors in files you touch**: Incremental improvement
+3. **Use type guards**: Safely check types at runtime
+4. **Leverage IDE**: Red squiggles are your friends
+5. **Consult the tracker**: `scripts/dev-tools/strict-progress.md` shows priorities
+
+### Migration Timeline
+
+| Phase | Expected Completion | Error Reduction |
+|-------|---------------------|-----------------|
+| Phase 1: Safe flags | ✅ Complete | Baseline: 309 |
+| Phase 2: AuthRequest fix | Week of Nov 18 | -57% (→132 errors) |
+| Phase 3: Explicit types | Week of Nov 25 | -20% (→70 errors) |
+| Phase 4: Module resolution | Week of Dec 2 | -8% (→45 errors) |
+| Phase 5: Property access | Week of Dec 9 | -15% (→0 errors) |
+| Phase 6: Full strict mode | Week of Dec 16 | Zero errors 🎯 |
+
+**Reference**: See `/docs/architecture/decisions/ADR-0002-typescript-strict-mode.md` for complete strategy.
+
+---
+
+## Development Workflow
+
+### Branch Strategy
+
+```
+main          - Production-ready code
+develop       - Integration branch
+feature/*     - New features
+fix/*         - Bug fixes
+chore/*       - Maintenance tasks
+```
+
+### Commit Conventions
+
+```
+feat(scope): description      # New feature
+fix(scope): description       # Bug fix
+docs(scope): description      # Documentation
+chore(scope): description     # Maintenance
+refactor(scope): description  # Code refactoring
+test(scope): description      # Testing
+```
+
+### Code Review Process
+
+1. Create feature branch from `develop`
+2. Make changes and commit
+3. Run `npm run type-check` and `npm test`
+4. Push branch and create PR
+5. Address review feedback
+6. Merge to `develop` when approved
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- path/to/test.spec.ts
+
+# Watch mode
+npm run test:watch
+```
+
+---
+
+## Building
+
+```bash
+# Development build
+npm run build:dev
+
+# Production build
+npm run build
+
+# Clean build artifacts
+npm run clean
+```
+
+---
+
+## Debugging
+
+### Backend Debugging
+
+```bash
+# Run with Node debugger
+npm run debug:backend
+
+# Attach to process in VS Code
+# Use "Attach to Node" launch configuration
+```
+
+### Frontend Debugging
+
+```bash
+# Run with source maps
+npm run dev:frontend
+
+# Open Chrome DevTools
+# Set breakpoints in Sources tab
+```
+
+---
+
+## Common Issues
+
+### Port Already in Use
+
+```bash
+# Kill process on port 3000
+npx kill-port 3000
+
+# Or change port in .env
+PORT=3002
+```
+
+### Type Errors Blocking Development
+
+Type errors are **warnings only** during strict mode migration. Your code will still build and run.
+
+To hide type errors temporarily:
+```bash
+# Build without type checking
+npm run build -- --no-check
+```
+
+### Module Resolution Errors
+
+```bash
+# Clear TypeScript cache
+rm -rf node_modules/.cache
+
+# Reinstall dependencies
+npm install
+```
+
+---
+
+## Tools & Extensions
+
+### Recommended VS Code Extensions
+
+- ESLint
+- Prettier
+- TypeScript and JavaScript Language Features
+- GitLens
+- Thunder Client (API testing)
+
+### Configuration Files
+
+- `.vscode/settings.json` - Workspace settings
+- `.eslintrc.js` - Linting rules
+- `.prettierrc` - Code formatting
+- `tsconfig.json` - TypeScript configuration
+
+---
+
+## Architecture References
+
+- [System Architecture](/docs/ARCHITECTURE.md)
+- [API Documentation](/docs/api/)
+- [Security Guidelines](/docs/SECURITY.md)
+- [Module System](/docs/MODULE_SYSTEM.md)
+
+---
+
+## Getting Help
+
+- **Documentation**: `/docs/`
+- **Progress Trackers**: `scripts/dev-tools/`
+- **Team Contact**: Slack #clientforge-dev
+- **Bug Reports**: GitHub Issues

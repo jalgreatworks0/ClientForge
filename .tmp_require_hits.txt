@@ -1,0 +1,56 @@
+backend\core\contacts\contact-controller.ts:387:      const Papa = require('papaparse')
+backend\core\contacts\contact-controller.ts:411:      const XLSX = require('xlsx')
+backend\core\contacts\contact-controller.ts:476:      const Papa = require('papaparse')
+backend\core\contacts\contact-controller.ts:482:      const XLSX = require('xlsx')
+backend\api\rest\v1\middleware\error-handler-enhanced.ts:25:  const otel = require("@opentelemetry/api");
+backend\api\rest\v1\routes\email-routes.ts:238:      const { db } = require('../../../../database/postgresql/pool')
+backend\api\rest\v1\routes\email-routes.ts:344:      const { db } = require('../../../../database/postgresql/pool')
+backend\api\rest\v1\routes\email-routes.ts:463:      const { db } = require('../../../../database/postgresql/pool')
+backend\modules\auth\module.ts:33:    const authRoutes = require('../../api/rest/v1/routes/auth-routes');
+scripts\create-master-admin.js:7:require('dotenv').config()
+scripts\create-master-admin.js:8:const bcrypt = require('bcrypt')
+scripts\create-master-admin.js:9:const { Pool } = require('pg')
+scripts\create-master-admin.js:10:const crypto = require('crypto')
+scripts\archive\add-email-permissions.js:1:const { Pool } = require('pg');
+scripts\archive\add-email-permissions.js:2:require('dotenv').config();
+scripts\archive\add-foreign-key-indexes.js:6:require('dotenv').config()
+scripts\archive\add-foreign-key-indexes.js:7:const { Pool } = require('pg')
+config\database\mongodb-config.js:13:const mongodb_1 = require("mongodb");
+scripts\fix-imports.js:7:const fs = require('fs');
+scripts\fix-imports.js:8:const path = require('path');
+scripts\fix-imports.js:57:      const replacement = `require('${correctPath}')`;
+scripts\archive\add-fulltext-search-indexes.js:6:require('dotenv').config()
+scripts\archive\add-fulltext-search-indexes.js:7:const { Pool } = require('pg')
+scripts\archive\add-missing-contact-columns.js:6:const { Pool } = require('pg')
+config\database\postgres-config.js:11:const pg_1 = require("pg");
+scripts\archive\add-missing-indexes.js:6:require('dotenv').config()
+scripts\archive\add-missing-indexes.js:7:const { Pool } = require('pg')
+scripts\archive\check-contacts-schema.js:1:const { Pool } = require('pg')
+scripts\maintenance\update-password.js:1:const {Pool} = require('pg');
+scripts\maintenance\update-password.js:2:const bcrypt = require('bcrypt');
+config\database\redis-config.js:11:const redis_1 = require("redis");
+scripts\archive\check-deals-schema.js:1:const { Pool } = require('pg')
+scripts\reset-master-password.js:1:const { Pool } = require('pg');
+scripts\reset-master-password.js:2:const crypto = require('crypto');
+scripts\reset-master-password.js:3:require('dotenv').config();
+scripts\database\setup-email-integration-schema.js:7:const { Pool } = require('pg')
+scripts\archive\check-email-permissions.js:1:const { Pool } = require('pg');
+scripts\run-ai-features-migration.js:1:const { Pool } = require('pg');
+scripts\run-ai-features-migration.js:2:const fs = require('fs');
+scripts\run-ai-features-migration.js:3:const path = require('path');
+scripts\run-ai-features-migration.js:4:require('dotenv').config();
+scripts\archive\check-indexes.js:5:require('dotenv').config()
+scripts\archive\check-indexes.js:6:const { Pool } = require('pg')
+scripts\archive\check-roles.js:5:require('dotenv').config()
+scripts\archive\check-roles.js:6:const { Pool } = require('pg')
+scripts\archive\check-user-schema.js:1:const { Pool } = require('pg');
+scripts\archive\check-user-schema.js:2:require('dotenv').config();
+scripts\archive\clear-rate-limit.js:6:require('dotenv').config()
+scripts\archive\clear-rate-limit.js:7:const Redis = require('ioredis')
+scripts\test-rate-limit.js:6:const http = require('http')
+scripts\archive\grant-super-admin-permissions.js:6:require('dotenv').config()
+scripts\archive\grant-super-admin-permissions.js:7:const { Pool } = require('pg')
+scripts\verification\check_tasks_schema.js:1:require('dotenv').config();
+scripts\verification\check_tasks_schema.js:2:const { Pool } = require('pg');
+scripts\testing\test-mongodb-connection.js:4:const { MongoClient } = require('mongodb');
+scripts\archive\setup-deals-schema.js:7:const { Pool } = require('pg')
