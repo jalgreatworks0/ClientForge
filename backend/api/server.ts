@@ -18,6 +18,7 @@ import { logger } from '../utils/logging/logger'
 import { errorHandler, setupGlobalErrorHandlers } from '../utils/errors/error-handler'
 import { performanceMonitoring } from '../middleware/performance-monitoring'
 import { metricsMiddleware } from '../services/monitoring/metrics.service'
+import { tenantGuard } from '@middleware/tenant-guard'
 import { websocketService } from '../services/websocket/websocket.service'
 import { queueService } from '../services/queue/queue.service'
 
@@ -108,6 +109,9 @@ export class Server {
 
     // Performance monitoring middleware
     this.app.use(performanceMonitoring)
+
+    // Tenant guard - enforce multi-tenant isolation on all API routes
+    this.app.use('/api/v1', tenantGuard)
 
     logger.info('[OK] Middleware configured')
   }
