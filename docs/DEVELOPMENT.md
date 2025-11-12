@@ -1,7 +1,15 @@
 # ClientForge-CRM Development Guide
 
-**Last Updated**: 2025-11-12  
+**Last Updated**: 2025-11-12
 **Audience**: Backend & Frontend Developers
+
+---
+
+## CI Status
+
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+
+> Replace `OWNER/REPO` with your repo path after pushing to GitHub.
 
 ---
 
