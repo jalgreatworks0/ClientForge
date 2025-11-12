@@ -209,7 +209,7 @@ export async function analyze(req: Request, res: Response): Promise<void> {
  */
 export async function executeAction(req: Request, res: Response): Promise<void> {
   try {
-    const { action, parameters, context } = req.body;
+    const { action, parameters, context: _context } = req.body;
 
     if (!action) {
       res.status(400).json({

@@ -6,9 +6,55 @@ on:
     branches: [ main ]
 
 jobs:
-  build-test:
+  # =============================================================================
+  # QUALITY GATES (BLOCKING)
+  # =============================================================================
+  typecheck:
+    name: TypeScript Type Check
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+  lint:
+    name: ESLint Code Quality (informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Run ESLint (non-blocking)
+        run: npm run lint
+        continue-on-error: true
+
+  test:
+    name: Jest Tests (Unit + Integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,27 +70,14 @@ jobs:
 
       - name: Install backend deps
         working-directory: ./backend
-        run: npm ci || true
+        run: npm ci
 
       - name: Install frontend deps
         working-directory: ./frontend
-        run: npm ci || true
+        run: npm ci
 
-      - name: Typecheck (backend)
-        run: npm run typecheck || true
-
-      - name: Lint
-        run: npm run lint || true
-
-      - name: Unit/Integration Tests (with coverage)
-        run: npm run test -- --coverage --watch=false || true
-
-      - name: Build backend
-        run: npm run build:backend
-
-      - name: Build frontend
-        working-directory: ./frontend
-        run: npm run build
+      - name: Run Jest tests with coverage
+        run: npm run test:backend
 
       - name: Upload coverage
         if: always()
@@ -57,6 +90,51 @@ jobs:
             frontend/coverage/**
           if-no-files-found: ignore
 
+      # --- Codecov integration for coverage reporting ---
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info,./backend/coverage/lcov.info
+          flags: backend
+          fail_ci_if_error: false
+
+  # =============================================================================
+  # BUILD (BLOCKING)
+  # =============================================================================
+  build:
+    name: Build Backend + Frontend
+    runs-on: ubuntu-latest
+    needs: [typecheck, test]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install backend deps
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Install frontend deps
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build backend
+        run: npm run build:backend
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -68,18 +146,9 @@ jobs:
             frontend/dist/**
           if-no-files-found: ignore
 
-      # --- Codecov integration for coverage reporting ---
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info,./backend/coverage/lcov.info
-          flags: backend
-          fail_ci_if_error: false
-
   # --- Docker image build & push to GitHub Container Registry ---
   docker:
-    needs: build-test
+    needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -104,7 +173,7 @@ jobs:
 
   # --- Create semantic version tag for releases ---
   release:
-    needs: [build-test, docker]
+    needs: [build, docker]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:

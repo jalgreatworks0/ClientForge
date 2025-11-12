@@ -1,5 +1,6 @@
-import type { SearchQuery, SearchResult } from '../../types/search/query';
 import type { Client } from '@elastic/elasticsearch';
+
+import type { SearchQuery, SearchResult } from '../../types/search/query';
 
 export interface EsAdapterDeps {
   client: Client;

@@ -1,4 +1,5 @@
 import { OAuthProfile } from '../../types/auth/oauth';
+
 import { adaptGoogle } from './google.adapter';
 import { adaptMicrosoft } from './microsoft.adapter';
 
