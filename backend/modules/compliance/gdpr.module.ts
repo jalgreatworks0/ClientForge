@@ -3,7 +3,7 @@
  * Handles data subject rights and consent management
  */
 
-import { IModule, ModuleContext } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
 import { Express } from 'express';
 import gdprRoutes from '../../api/rest/v1/routes/gdpr-routes';
 import { logger } from '../../utils/logging/logger';
@@ -105,7 +105,7 @@ export class GDPRModule implements IModule {
     logger.info('[GDPR Module] GDPR event handlers registered');
   }
 
-  async healthCheck(): Promise<{ healthy: boolean; details: any }> {
+  async healthCheck(): Promise<ModuleHealth> {
     try {
       // Check database connectivity
       await this.gdprService['pool'].query('SELECT 1');
@@ -115,7 +115,8 @@ export class GDPRModule implements IModule {
       await fs.access(exportDir, fs.constants.W_OK);
 
       return {
-        healthy: true,
+        status: 'ok',
+        message: 'GDPR module healthy',
         details: {
           database: 'connected',
           exportDirectory: 'writable',
@@ -127,7 +128,8 @@ export class GDPRModule implements IModule {
       });
 
       return {
-        healthy: false,
+        status: 'down',
+        message: 'Health check failed',
         details: {
           error: error.message,
         },

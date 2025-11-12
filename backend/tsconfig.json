@@ -25,7 +25,8 @@
     }
   },
   "include": [
-    "./**/*"
+    "./**/*",
+    "./types/shims/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",

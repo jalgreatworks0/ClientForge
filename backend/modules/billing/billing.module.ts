@@ -6,7 +6,7 @@
 
 import { Express } from 'express';
 import express from 'express';
-import { IModule, ModuleContext } from '../../core/modules/ModuleContract';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { logger } from '../../utils/logging/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -186,7 +186,7 @@ export class BillingModule implements IModule {
   /**
    * Health check
    */
-  async healthCheck(context: ModuleContext): Promise<boolean> {
+  async healthCheck(context: ModuleContext): Promise<ModuleHealth> {
     try {
       // Check database connection
       await context.db.query('SELECT 1');
@@ -194,7 +194,7 @@ export class BillingModule implements IModule {
       // Check if Stripe is configured
       if (!process.env.STRIPE_SECRET_KEY) {
         logger.warn('[Billing] Stripe not configured');
-        return false;
+        return { status: 'degraded', message: 'Stripe not configured' };
       }
 
       // Check workers are running
@@ -203,13 +203,21 @@ export class BillingModule implements IModule {
 
       if (!invoiceWorkerRunning || !paymentRetryWorkerRunning) {
         logger.warn('[Billing] Workers not running');
-        return false;
+        return {
+          status: 'degraded',
+          message: 'Some workers not running',
+          details: { invoiceWorkerRunning, paymentRetryWorkerRunning }
+        };
       }
 
-      return true;
+      return { status: 'ok', message: 'Billing module healthy' };
     } catch (error: any) {
       logger.error('[Billing] Health check failed', { error: error.message });
-      return false;
+      return {
+        status: 'down',
+        message: 'Health check failed',
+        details: { error: error.message }
+      };
     }
   }
 

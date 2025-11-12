@@ -4,7 +4,7 @@
  * This allows us to use the module system without rewriting every route file
  */
 
-import { IModule, ModuleContext } from '../../core/modules/ModuleContract';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
 import { logger } from '../../utils/logging/logger';
 import { getPool } from '../../database/postgresql/pool';
@@ -131,13 +131,19 @@ export class CoreModule implements IModule {
     context.logger.info('Core module routes registered (all existing endpoints)');
   }
 
-  async healthCheck(context: ModuleContext): Promise<boolean> {
+  async healthCheck(context: ModuleContext): Promise<ModuleHealth> {
     try {
       // Check database connection
       const result = await context.db.query('SELECT 1');
-      return result.rows.length > 0;
+      return result.rows.length > 0
+        ? { status: 'ok', message: 'Database connection healthy' }
+        : { status: 'down', message: 'Database query returned no rows' };
     } catch (error) {
-      return false;
+      return {
+        status: 'down',
+        message: 'Database connection failed',
+        details: { error: error instanceof Error ? error.message : String(error) }
+      };
     }
   }
 

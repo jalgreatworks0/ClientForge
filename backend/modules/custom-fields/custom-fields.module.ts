@@ -2,7 +2,7 @@
  * Custom Fields Module
  */
 
-import { IModule, ModuleContext } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
 import { Express } from 'express';
 import customFieldsRoutes from '../../api/rest/v1/routes/custom-fields-routes';
 import { logger } from '../../utils/logging/logger';
@@ -44,12 +44,12 @@ export class CustomFieldsModule implements IModule {
     });
   }
 
-  async healthCheck(): Promise<{ healthy: boolean; details: any }> {
+  async healthCheck(): Promise<ModuleHealth> {
     try {
       await this.customFieldService['pool'].query('SELECT 1');
-      return { healthy: true, details: { database: 'connected' } };
+      return { status: 'ok', message: 'Custom Fields module healthy', details: { database: 'connected' } };
     } catch (error: any) {
-      return { healthy: false, details: { error: error.message } };
+      return { status: 'down', message: 'Health check failed', details: { error: error.message } };
     }
   }
 

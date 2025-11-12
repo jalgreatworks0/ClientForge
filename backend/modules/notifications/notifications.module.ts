@@ -3,7 +3,7 @@
  * Multi-channel notification system
  */
 
-import { IModule, ModuleContext } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
 import { Express } from 'express';
 import notificationsRoutes from '../../api/rest/v1/routes/notifications-routes';
 import { logger } from '../../utils/logging/logger';
@@ -92,7 +92,7 @@ export class NotificationsModule implements IModule {
     logger.info('[Notifications Module] Notification event handlers registered');
   }
 
-  async healthCheck(): Promise<{ healthy: boolean; details: any }> {
+  async healthCheck(): Promise<ModuleHealth> {
     try {
       // Check database connectivity
       await notificationService['pool'].query('SELECT 1');
@@ -101,7 +101,8 @@ export class NotificationsModule implements IModule {
       const onlineUsers = websocketService.getOnlineUsersCount();
 
       return {
-        healthy: true,
+        status: 'ok',
+        message: 'Notifications module healthy',
         details: {
           database: 'connected',
           websocket: 'running',
@@ -114,7 +115,8 @@ export class NotificationsModule implements IModule {
       });
 
       return {
-        healthy: false,
+        status: 'down',
+        message: 'Health check failed',
         details: {
           error: error.message,
         },

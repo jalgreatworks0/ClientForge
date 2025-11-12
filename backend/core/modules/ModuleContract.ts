@@ -113,9 +113,9 @@ export interface IModule {
 
   /**
    * Health check (optional)
-   * Return true if module is healthy
+   * Return module health status
    */
-  healthCheck?(context: ModuleContext): Promise<boolean>;
+  healthCheck?(context: ModuleContext): Promise<ModuleHealth>;
 
   /**
    * Module metadata (optional)
@@ -168,6 +168,12 @@ export interface IModuleRegistry {
    * Get module load order (respects dependencies)
    */
   getLoadOrder(): IModule[];
+}
+
+export interface ModuleHealth {
+  status: 'ok' | 'degraded' | 'down';
+  message?: string;
+  details?: Record<string, any>;
 }
 
 export interface ModuleError extends Error {

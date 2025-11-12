@@ -3,7 +3,7 @@
  * Authentication and authorization module
  */
 
-import { IModule, ModuleContext } from '../../core/modules/ModuleContract';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
 import { logger } from '../../utils/logging/logger';
 import authRoutes from '../../api/rest/v1/routes/auth-routes';
@@ -37,13 +37,17 @@ export class AuthModule implements IModule {
     context.logger.info('Auth routes registered');
   }
 
-  async healthCheck(context: ModuleContext): Promise<boolean> {
+  async healthCheck(context: ModuleContext): Promise<ModuleHealth> {
     try {
       // Simple health check: verify users table exists
       const result = await context.db.query('SELECT 1 FROM users LIMIT 1');
-      return true;
+      return { status: 'ok', message: 'Users table accessible' };
     } catch (error) {
-      return false;
+      return {
+        status: 'down',
+        message: 'Users table not accessible',
+        details: { error: error instanceof Error ? error.message : String(error) }
+      };
     }
   }
 

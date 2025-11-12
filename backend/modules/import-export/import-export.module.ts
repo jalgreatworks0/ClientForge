@@ -2,7 +2,7 @@
  * Import/Export Module
  */
 
-import { IModule, ModuleContext } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
 import { Express } from 'express';
 import importExportRoutes from '../../api/rest/v1/routes/import-export-routes';
 import { logger } from '../../utils/logging/logger';
@@ -40,12 +40,12 @@ export class ImportExportModule implements IModule {
     logger.info('[ImportExport Module] Event handlers registered');
   }
 
-  async healthCheck(): Promise<{ healthy: boolean; details: any }> {
+  async healthCheck(): Promise<ModuleHealth> {
     try {
       await this.importService['pool'].query('SELECT 1');
-      return { healthy: true, details: { database: 'connected' } };
+      return { status: 'ok', message: 'Import/Export module healthy', details: { database: 'connected' } };
     } catch (error: any) {
-      return { healthy: false, details: { error: error.message } };
+      return { status: 'down', message: 'Health check failed', details: { error: error.message } };
     }
   }
 
