@@ -1,0 +1,35 @@
+--- backend/workers/queue-workers.ts
++++ backend/workers/queue-workers.ts
+@@ -8,6 +8,7 @@
+ import { initializeEmailSyncQueue, shutdownEmailSyncQueue } from '../queues/email-sync-queue'
+ import { logger } from '../utils/logging/logger'
+ import { SearchIndexJob } from '../services/queue/queue.service'
++import { runSyncJob } from './elasticsearch-sync.worker'
+ 
+ // Store worker references for graceful shutdown
+ const workers: any[] = []
+@@ -33,23 +34,7 @@
+         })
+ 
+         try {
+-          // TODO: Implement actual Elasticsearch operations
+-          // For now, just log the operation
+-          switch (action) {
+-            case 'index':
+-              logger.info('[Data Sync Worker] Indexing document', { index, id })
+-              // await elasticsearch.index({ index, id, body: document })
+-              break
+-            case 'update':
+-              logger.info('[Data Sync Worker] Updating document', { index, id })
+-              // await elasticsearch.update({ index, id, body: { doc: document } })
+-              break
+-            case 'delete':
+-              logger.info('[Data Sync Worker] Deleting document', { index, id })
+-              // await elasticsearch.delete({ index, id })
+-              break
+-          }
+-
++          await runSyncJob({ index, id, action, body: document })
+           return {
+             success: true,
+             action,
