@@ -55,31 +55,8 @@ jest.mock('redis', () => ({
   })),
 }))
 
-// Mock PostgreSQL (pg) to prevent external database connections
-jest.mock('pg', () => {
-  const mockPool = {
-    query: jest.fn(async (query: string, params?: any[]) => {
-      // Return empty results by default
-      return { rows: [], rowCount: 0 }
-    }),
-    connect: jest.fn(async () => ({
-      query: jest.fn(async () => ({ rows: [], rowCount: 0 })),
-      release: jest.fn(),
-    })),
-    end: jest.fn(async () => {}),
-    on: jest.fn(),
-  }
-
-  return {
-    Pool: jest.fn(() => mockPool),
-    Client: jest.fn(() => ({
-      connect: jest.fn(async () => {}),
-      query: jest.fn(async () => ({ rows: [], rowCount: 0 })),
-      end: jest.fn(async () => {}),
-      on: jest.fn(),
-    })),
-  }
-})
+// Mock PostgreSQL (pg) — realistic SQL router
+jest.mock('pg', () => require('./mocks/pg'))
 
 // Mock console methods to reduce noise in test output
 global.console = {
