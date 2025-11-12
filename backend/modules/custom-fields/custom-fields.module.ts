@@ -2,7 +2,7 @@
  * Custom Fields Module
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
 import customFieldsRoutes from '../../api/rest/v1/routes/custom-fields-routes';
 import { logger } from '../../utils/logging/logger';

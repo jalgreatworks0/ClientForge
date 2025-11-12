@@ -3,7 +3,7 @@
  * Multi-channel notification system
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
 import notificationsRoutes from '../../api/rest/v1/routes/notifications-routes';
 import { logger } from '../../utils/logging/logger';

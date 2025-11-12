@@ -204,3 +204,51 @@ declare module 'xlsx' {
     aoa_to_sheet: (data: any[][], opts?: any) => WorkSheet
   }
 }
+
+// Additional OpenTelemetry SDK modules
+declare module '@opentelemetry/sdk-node' {
+  const x: any
+  export = x
+}
+
+declare module '@opentelemetry/auto-instrumentations-node' {
+  const x: any
+  export = x
+}
+
+declare module '@opentelemetry/exporter-trace-otlp-http' {
+  const x: any
+  export = x
+}
+
+declare module '@opentelemetry/exporter-metrics-otlp-http' {
+  const x: any
+  export = x
+}
+
+declare module '@opentelemetry/sdk-metrics' {
+  const x: any
+  export = x
+}
+
+declare module '@opentelemetry/sdk-trace-base' {
+  const x: any
+  export = x
+}
+
+// Additional Sentry modules
+declare module '@sentry/profiling-node' {
+  const x: any
+  export = x
+}
+
+// SQLite modules for agents
+declare module 'sqlite3' {
+  const x: any
+  export = x
+}
+
+declare module 'sqlite' {
+  const x: any
+  export = x
+}

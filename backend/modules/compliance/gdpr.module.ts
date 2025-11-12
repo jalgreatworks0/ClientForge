@@ -3,7 +3,7 @@
  * Handles data subject rights and consent management
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
 import gdprRoutes from '../../api/rest/v1/routes/gdpr-routes';
 import { logger } from '../../utils/logging/logger';

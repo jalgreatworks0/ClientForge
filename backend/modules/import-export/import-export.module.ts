@@ -2,7 +2,7 @@
  * Import/Export Module
  */
 
-import { IModule, ModuleContext, ModuleHealth } from '../../core/module-registry';
+import { IModule, ModuleContext, ModuleHealth } from '../../core/modules/ModuleContract';
 import { Express } from 'express';
 import importExportRoutes from '../../api/rest/v1/routes/import-export-routes';
 import { logger } from '../../utils/logging/logger';
