@@ -7,6 +7,9 @@ module.exports = {
   // Use ts-jest preset for TypeScript support
   preset: 'ts-jest',
 
+  // Setup files (register tsconfig-paths for alias resolution)
+  setupFiles: ['tsconfig-paths/register'],
+
   // Test environment
   testEnvironment: 'node',
 
