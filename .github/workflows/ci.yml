@@ -68,32 +68,56 @@ jobs:
             frontend/dist/**
           if-no-files-found: ignore
 
-      # --- Optional: Codecov (enable after setting CODECOV_TOKEN in repo secrets) ---
-      # - name: Codecov upload
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     fail_ci_if_error: false
+      # --- Codecov integration for coverage reporting ---
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info,./backend/coverage/lcov.info
+          flags: backend
+          fail_ci_if_error: false
 
-  # --- Optional: Docker image build & push (enable when GHCR creds are set) ---
-  # docker:
-  #   needs: build-test
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main'
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-  #     - name: Login to GHCR
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Build and push backend
-  #       uses: docker/build-push-action@v5
-  #       with:
-  #         context: .
-  #         file: deployment/docker/development/Dockerfile.dev
-  #         push: true
-  #         tags: ghcr.io/${{ github.repository_owner }}/clientforge-backend:latest
+  # --- Docker image build & push to GitHub Container Registry ---
+  docker:
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: deployment/docker/development/Dockerfile.dev
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/clientforge-backend:latest
+            ghcr.io/${{ github.repository_owner }}/clientforge-backend:${{ github.sha }}
+
+  # --- Create semantic version tag for releases ---
+  release:
+    needs: [build-test, docker]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract version from package.json
+        id: package_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=v${VERSION}" >> $GITHUB_OUTPUT
+          echo "Creating release tag: v${VERSION}"
+      - name: Create and push tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -a ${{ steps.package_version.outputs.version }} -m "Release ${{ steps.package_version.outputs.version }}"
+          git push origin ${{ steps.package_version.outputs.version }} || echo "Tag already exists"

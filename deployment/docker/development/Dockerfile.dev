@@ -1,4 +1,12 @@
 FROM node:22-alpine
+
+# OCI standard labels for metadata
+LABEL org.opencontainers.image.source="https://github.com/jalgreatworks0/ClientForge"
+LABEL org.opencontainers.image.description="ClientForge CRM backend (development)"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.title="ClientForge CRM Backend"
+LABEL org.opencontainers.image.vendor="ClientForge"
+
 WORKDIR /app
 
 # system deps
