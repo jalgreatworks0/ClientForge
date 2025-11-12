@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import { createReadStream } from 'fs';
 
 import { Pool } from 'pg';
-import * as csv from 'csv-parser';
+import csv from 'csv-parser';
 import * as XLSX from 'xlsx';
 
 import { getPool } from '../../database/postgresql/pool';

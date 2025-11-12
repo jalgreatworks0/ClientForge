@@ -350,7 +350,8 @@ export class NotificationService extends EventEmitter {
         tokens,
       };
 
-      await admin.messaging().sendMulticast(message);
+      // Type assertion needed as firebase-admin type definitions may be incomplete
+      await (admin.messaging() as any).sendMulticast(message);
 
       logger.info('[Notifications] Push notification delivered', {
         notificationId: notification.id,

@@ -7,7 +7,7 @@
 
 import { createServer, Server as HTTPServer } from 'http'
 
-import express, { Application, Request, Response, NextFunction } from 'express'
+import express, { type Express, Application, Request, Response, NextFunction } from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
 import compression from 'compression'
@@ -150,7 +150,7 @@ export class Server {
     logger.info('[Server] Registering module routes...')
     for (const module of this.moduleRegistry.getModules()) {
       logger.info(`[Server] ⏳ Registering routes for module: ${module.name}`)
-      module.registerRoutes(this.app, context)
+      module.registerRoutes(this.app as Express, context)
       logger.info(`[Server] ✅ Routes registered for module: ${module.name}`)
 
       // Register jobs if module has them
@@ -290,7 +290,8 @@ export class Server {
  * Start server if this file is executed directly
  */
 if (require.main === module) {
-  const server = new Server()
+  const moduleRegistry = new ModuleRegistry()
+  const server = new Server(moduleRegistry)
 
   server.start().catch((error) => {
     logger.error('Failed to start server', { error })

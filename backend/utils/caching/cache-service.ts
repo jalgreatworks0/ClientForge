@@ -142,7 +142,8 @@ export async function invalidateCachePattern(
       return 0
     }
 
-    await redis.del(...keys)
+    // Type assertion for Redis command argument compatibility
+    await redis.del(keys as any)
     logger.info('Cache invalidated by pattern', {
       pattern: fullPattern,
       keysDeleted: keys.length,

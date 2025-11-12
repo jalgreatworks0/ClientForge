@@ -170,7 +170,7 @@ export function startMetricsCollection(intervalMs: number = 10000): NodeJS.Timer
 /**
  * Stop metrics collection
  */
-export function stopMetricsCollection(interval: NodeJS.Timer): void {
+export function stopMetricsCollection(interval: ReturnType<typeof setInterval>): void {
   clearInterval(interval)
 }
 

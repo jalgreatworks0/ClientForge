@@ -27,7 +27,7 @@ interface Config {
   };
 }
 
-interface Task {
+interface AgentTask {
   task_id: string;
   role: 'planner' | 'builder' | 'reviewer';
   objective: string;
@@ -98,7 +98,7 @@ async function executeLocal(command: string, input: string): Promise<string> {
 }
 
 // Run planner
-async function runPlanner(objective: string, config: Config): Promise<Task> {
+async function runPlanner(objective: string, config: Config): Promise<AgentTask> {
   const mode = config.planner.mode;
 
   if (mode === 'local') {
@@ -108,10 +108,10 @@ async function runPlanner(objective: string, config: Config): Promise<Task> {
     const { planWithFallback } = await import('../../agents/adapters/planner_claude_sdk');
     const apiKey = process.env.CLAUDE_API_KEY;
     if (!apiKey) throw new Error('CLAUDE_API_KEY not set');
-    return planWithFallback(objective, apiKey);
+    return planWithFallback(objective, apiKey) as unknown as AgentTask;
   } else if (mode === 'http') {
     const { planViaHttp } = await import('../../agents/adapters/planner_http');
-    return planViaHttp(config.planner.http!.endpoint, objective);
+    return planViaHttp(config.planner.http!.endpoint, objective) as unknown as AgentTask;
   }
   throw new Error(`Unknown planner mode: ${mode}`);
 }
