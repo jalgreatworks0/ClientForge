@@ -14,6 +14,8 @@ declare namespace Express {
       tenantId: string;
       email: string;
       role: string;
+      provider?: 'google' | 'microsoft' | 'local';
+      providerId?: string; // sub for Google, oid for Microsoft
     };
   }
 }

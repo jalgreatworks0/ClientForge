@@ -7,6 +7,8 @@ import { ConfidentialClientApplication, AuthorizationCodeRequest } from '@azure/
 
 import { logger } from '../../../utils/logging/logger';
 import { getPool } from '../../../database/postgresql/pool';
+import { normalizeOAuthProfile } from '../../../auth/providers/normalize';
+import type { OAuthProfile } from '../../../types/auth/oauth';
 
 import { SSOProviderService, SSOTokenData } from './sso-provider.service';
 
@@ -203,10 +205,19 @@ export class MicrosoftOAuthProvider {
 
       const data = await response.json();
 
+      // Normalize OAuth profile using type-safe adapter
+      const profile: OAuthProfile = normalizeOAuthProfile('microsoft', data);
+
+      // Type guard ensures we have a Microsoft profile
+      if (profile.kind !== 'microsoft') {
+        throw new Error('Expected Microsoft profile but got different provider');
+      }
+
+      // Extract user profile from normalized data
       const userProfile: MicrosoftUserProfile = {
-        userId: data.id,
-        email: data.mail || data.userPrincipalName,
-        name: data.displayName,
+        userId: profile.oid,
+        email: profile.email,
+        name: profile.name || profile.email.split('@')[0],
         firstName: data.givenName,
         lastName: data.surname,
         jobTitle: data.jobTitle,

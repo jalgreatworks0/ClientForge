@@ -7,6 +7,8 @@ import { OAuth2Client } from 'google-auth-library';
 
 import { logger } from '../../../utils/logging/logger';
 import { getPool } from '../../../database/postgresql/pool';
+import { normalizeOAuthProfile } from '../../../auth/providers/normalize';
+import type { OAuthProfile } from '../../../types/auth/oauth';
 
 import { SSOProviderService, SSOTokenData } from './sso-provider.service';
 
@@ -102,15 +104,23 @@ export class GoogleOAuthProvider {
         throw new Error('Invalid Google OAuth response');
       }
 
-      // Extract user profile
+      // Normalize OAuth profile using type-safe adapter
+      const profile: OAuthProfile = normalizeOAuthProfile('google', payload as any);
+
+      // Type guard ensures we have a Google profile
+      if (profile.kind !== 'google') {
+        throw new Error('Expected Google profile but got different provider');
+      }
+
+      // Extract user profile from normalized data
       const userProfile: GoogleUserProfile = {
-        userId: payload.sub,
-        email: payload.email!,
-        name: payload.name || `${payload.given_name} ${payload.family_name}`,
-        firstName: payload.given_name,
-        lastName: payload.family_name,
-        picture: payload.picture,
-        emailVerified: payload.email_verified
+        userId: profile.sub,
+        email: profile.email,
+        name: profile.name || profile.email.split('@')[0],
+        firstName: undefined,
+        lastName: undefined,
+        picture: profile.picture,
+        emailVerified: profile.emailVerified
       };
 
       // Prepare token data
@@ -210,14 +220,23 @@ export class GoogleOAuthProvider {
 
       const data = await response.json();
 
+      // Normalize OAuth profile using type-safe adapter
+      const profile: OAuthProfile = normalizeOAuthProfile('google', data);
+
+      // Type guard ensures we have a Google profile
+      if (profile.kind !== 'google') {
+        throw new Error('Expected Google profile but got different provider');
+      }
+
+      // Extract user profile from normalized data
       const userProfile: GoogleUserProfile = {
-        userId: data.id,
-        email: data.email,
-        name: data.name,
-        firstName: data.given_name,
-        lastName: data.family_name,
-        picture: data.picture,
-        emailVerified: data.verified_email
+        userId: profile.sub,
+        email: profile.email,
+        name: profile.name || profile.email.split('@')[0],
+        firstName: undefined,
+        lastName: undefined,
+        picture: profile.picture,
+        emailVerified: profile.emailVerified
       };
 
       logger.info('[Google SSO] User profile fetched successfully', {
