@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@clientforge/mcp-vector-lms",
   "version": "1.0.0",
   "description": "Vector memory MCP server using LM Studio embeddings",

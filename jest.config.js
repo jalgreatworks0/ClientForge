@@ -108,6 +108,10 @@ module.exports = {
     '/node_modules/',
     '/dist/',
     '/coverage/',
+    '<rootDir>/agents/mcp/servers/vector-lms/',
+    '<rootDir>/agents/.*/node_modules/',
+    '<rootDir>/.*/dist/',
+    '<rootDir>/.*/build/',
   ],
 
   // Module file extensions

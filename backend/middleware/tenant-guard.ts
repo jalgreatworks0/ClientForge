@@ -6,7 +6,6 @@ const DEFAULT_TENANT_SENTINEL = "00000000-0000-0000-0000-000000000001";
 
 export const tenantGuard: RequestHandler = (req, res, next) => {
   const hdr = (req.headers["x-tenant-id"] as string | undefined)?.trim();
-  // @ts-expect-error augmented type is declared in types/express.d.ts
   const userTenant = req.user?.tenantId as string | undefined;
   const tenantId = hdr || userTenant || undefined;
 
@@ -18,7 +17,6 @@ export const tenantGuard: RequestHandler = (req, res, next) => {
       console.error("CRITICAL: Default tenant fallback used", {
         alert: "PAGE_OPS_TEAM",
       });
-      // @ts-expect-error augmented type is declared in types/express.d.ts
       req.tenantId = EMERGENCY_DEFAULT_TENANT;
       return next();
     }
@@ -28,7 +26,6 @@ export const tenantGuard: RequestHandler = (req, res, next) => {
       code: "E_TENANT_001",
     });
   }
-  // @ts-expect-error augmented type is declared in types/express.d.ts
   req.tenantId = tenantId;
   return next();
 };

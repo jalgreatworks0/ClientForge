@@ -69,3 +69,6 @@ declare global {
     }
   }
 }
+
+// Make this file a module
+export {}

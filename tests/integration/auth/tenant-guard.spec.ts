@@ -76,7 +76,6 @@ describe('Tenant Guard Middleware', () => {
 
       expect(mockNext).toHaveBeenCalled()
       expect(statusSpy).not.toHaveBeenCalled()
-      // @ts-expect-error accessing augmented property
       expect(mockReq.tenantId).toBe('tenant_abc123')
     })
   })
@@ -93,7 +92,6 @@ describe('Tenant Guard Middleware', () => {
 
       expect(mockNext).toHaveBeenCalled()
       expect(statusSpy).not.toHaveBeenCalled()
-      // @ts-expect-error accessing augmented property
       expect(mockReq.tenantId).toBe('tenant_from_user')
     })
   })
@@ -110,7 +108,6 @@ describe('Tenant Guard Middleware', () => {
       tenantGuard(mockReq as Request, mockRes as Response, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
-      // @ts-expect-error accessing augmented property
       expect(mockReq.tenantId).toBe('tenant_from_header')
     })
   })
