@@ -79,7 +79,7 @@ export async function cachedQuery<T>(
     }
 
     // Store in cache
-    await redis.setex(fullKey, ttl, JSON.stringify(result))
+    await redis.setEx(fullKey, ttl, JSON.stringify(result))
     logger.debug('Cached result', { key: fullKey, ttl })
 
     return result
@@ -176,7 +176,7 @@ export async function setCache<T>(
 
   try {
     const redis = await getRedisClient()
-    await redis.setex(fullKey, ttl, JSON.stringify(value))
+    await redis.setEx(fullKey, ttl, JSON.stringify(value))
     logger.debug('Cache set', { key: fullKey, ttl })
   } catch (error) {
     logger.error('Cache set failed', { error, key: fullKey })
