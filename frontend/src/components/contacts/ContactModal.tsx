@@ -98,15 +98,15 @@ export default function ContactModal({ isOpen, onClose, onSave, contact }: Conta
     e.preventDefault()
 
     if (validate()) {
-      // Convert empty strings to null for optional fields
+      // Treat missing as empty string to satisfy email?: string
       const submitData = {
         ...formData,
-        email: formData.email?.trim() || null,
-        phone: formData.phone?.trim() || null,
-        mobile: formData.mobile?.trim() || null,
-        title: formData.title?.trim() || null,
-        department: formData.department?.trim() || null,
-        notes: formData.notes?.trim() || null,
+        email: formData.email?.trim() || '',
+        phone: formData.phone?.trim() || '',
+        mobile: formData.mobile?.trim() || '',
+        title: formData.title?.trim() || '',
+        department: formData.department?.trim() || '',
+        notes: formData.notes?.trim() || '',
       }
       onSave(submitData)
     }

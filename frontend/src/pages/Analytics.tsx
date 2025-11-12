@@ -141,7 +141,7 @@ export default function Analytics() {
           salesFunnel,
           revenueTrend,
           leadSources,
-          teamPerformance: teamPerformance.data || [],
+          teamPerformance: teamPerformance.leaderboard || [],
           pipelineHealth,
           dateRange,
         },
@@ -156,7 +156,7 @@ export default function Analytics() {
       await exportAnalyticsPDF(
         revenueMetrics,
         salesFunnel,
-        teamPerformance.data || [],
+        teamPerformance.leaderboard || [],
         dateRange
       )
       setShowExportMenu(false)
@@ -363,13 +363,13 @@ export default function Analytics() {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={leadSources || []}
+                data={leadSources as any || []}
                 dataKey="totalRevenue"
                 nameKey="source"
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
-                label={(entry) => entry.source}
+                label={({ source }: any) => source}
               >
                 {(leadSources || []).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -441,7 +441,7 @@ export default function Analytics() {
               </tr>
             </thead>
             <tbody>
-              {(teamPerformance?.data || []).map((member: any) => (
+              {(teamPerformance?.leaderboard || []).map((member: any) => (
                 <tr
                   key={member.userId}
                   className="border-b border-alabaster-100 dark:border-dark-border hover:bg-alabaster-50 dark:hover:bg-dark-hover transition-colors"
