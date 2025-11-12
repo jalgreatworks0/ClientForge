@@ -13,6 +13,7 @@ import { Request } from 'express'
 export interface AuthRequest extends Request {
   user?: {
     id: string
+    userId: string  // Alias for id, used in some controllers
     email: string
     tenantId: string
     role?: string

@@ -338,11 +338,11 @@ export function enhancedJWTValidator(req: AuthRequest, res: Response, next: Next
 
       // Attach user info to request
       req.user = {
+        id: payload.userId,
         userId: payload.userId,
         tenantId: payload.tenantId,
-        roleId: payload.roleId,
         email: payload.email,
-        jti: payload.jti,
+        role: payload.roleId,
       }
 
       // Add security headers

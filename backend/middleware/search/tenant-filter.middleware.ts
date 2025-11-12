@@ -12,8 +12,8 @@ import { Client } from '@elastic/elasticsearch'
  * Automatically injects tenant_id filter based on authenticated user
  */
 export function enforceTenantFilter(req: Request, res: Response, next: NextFunction): void {
-  // Get tenant_id from authenticated user
-  const tenantId = req.user?.tenant_id
+  // Get tenantId from authenticated user
+  const tenantId = req.user?.tenantId
 
   if (!tenantId) {
     res.status(403).json({
@@ -230,7 +230,7 @@ export function createTenantAwareClient(client: Client): TenantAwareElasticsearc
  */
 export function attachTenantAwareClient(client: Client) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const tenantId = req.user?.tenant_id
+    const tenantId = req.user?.tenantId
 
     if (!tenantId) {
       res.status(403).json({

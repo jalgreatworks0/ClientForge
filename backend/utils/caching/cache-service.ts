@@ -61,7 +61,7 @@ export async function cachedQuery<T>(
       if (parsed === null && !cacheNull) {
         logger.debug('Cached null value, executing function', { key: fullKey })
         const result = await fn()
-        await redis.setex(fullKey, ttl, JSON.stringify(result))
+        await redis.setEx(fullKey, ttl, JSON.stringify(result))
         return result
       }
 
@@ -233,7 +233,7 @@ export async function getCacheStats(): Promise<{
       return acc
     }, {} as Record<string, string>)
 
-    const keyCount = await redis.dbsize()
+    const keyCount = await redis.dbSize()
 
     return {
       hits: parseInt(stats.keyspace_hits || '0', 10),
