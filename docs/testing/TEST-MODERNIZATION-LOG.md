@@ -1469,6 +1469,186 @@ npm run test:backend                                          # ✅ 258 passed (
 
 ---
 
+## TM-8 – Auth Coverage Expansion, Wave 2 (JwtService)
+
+**Branch**: `fix/tm8-jwt-service-coverage`
+**Status**: ✅ **COMPLETED** (2025-11-13)
+**Result**: +18 new passing tests, JwtService coverage deepened from 14 → 32 tests
+
+### Summary
+
+Deepened unit test coverage for **JwtService** (`backend/core/auth/jwt-service.ts`), focusing on security-critical edge cases, error paths, and token validation scenarios.
+
+This is the second **real coverage expansion** phase, building on TM-7 (SessionService +28 tests).
+
+### Target Module Selection
+
+**JwtService** chosen as TM-8 target:
+- ✅ **Existing coverage foundation** - 14 tests already passing
+- ✅ **Security-critical component** - JWT token generation and verification
+- ✅ **Coverage gaps identified** - Missing: generateTokenPair(), token structure validation, error paths, edge cases
+- ✅ **Production code** - Not in 7 broken skipped suites list
+- ✅ **High-value testing** - Validates critical auth security patterns
+
+### Existing Test Coverage (14 tests before TM-8)
+
+**File**: `tests/unit/auth/jwt-service.test.ts` (previously 14 tests)
+
+#### Before TM-8
+1. ✅ `generateAccessToken()` - 2 tests (success, contains correct fields)
+2. ✅ `generateRefreshToken()` - 2 tests (success, contains correct fields)
+3. ✅ `verifyAccessToken()` - 4 tests (valid, expired, invalid signature, wrong type)
+4. ✅ `verifyRefreshToken()` - 4 tests (valid, expired, invalid signature, wrong type)
+5. ✅ `decodeToken()` - 2 tests (valid token, malformed token)
+
+### New Test Coverage Added (18 tests in TM-8)
+
+**Updated**: `tests/unit/auth/jwt-service.test.ts` (32 tests total, 200+ lines added)
+
+#### generateTokenPair (2 tests)
+1. ✅ Generates both access and refresh tokens with shared jti
+2. ✅ Sets correct expiry times (15m access, 7d refresh)
+
+#### Token claims and structure (5 tests)
+3. ✅ Access token includes correct issuer and audience
+4. ✅ Refresh token includes correct issuer and audience
+5. ✅ Each token pair has unique jti (session tracking)
+6. ✅ TenantId is included in token payload
+7. ✅ Token type field differentiates access vs refresh
+
+#### Error handling (5 tests)
+8. ✅ Handles jwt.sign failure for access token generation
+9. ✅ Handles jwt.sign failure for refresh token generation
+10. ✅ Rejects tokens with wrong issuer (security validation)
+11. ✅ Rejects tokens with wrong audience (security validation)
+12. ✅ Handles malformed tokens gracefully (returns null for decodeToken)
+
+#### Token verification edge cases (3 tests)
+13. ✅ Verifies access token uses different secret than refresh token
+14. ✅ Verifies refresh token uses different secret (suffixed with '_refresh')
+15. ✅ Handles tokens with extra claims correctly
+
+#### Expiry parsing (2 tests)
+16. ✅ Parses expiry time strings correctly ('15m', '7d', '1h', '30s')
+17. ✅ Handles invalid expiry formats gracefully
+
+#### Token masking for security (2 tests)
+18. ✅ Masks tokens in logs (shows first 6 + last 6 chars only)
+19. ✅ Handles short tokens correctly when masking
+
+### Test Patterns Used (Test Constitution Compliance)
+
+#### Mocking Strategy
+- ✅ Mocked `jsonwebtoken` library at module level
+- ✅ Mocked `securityConfig` for test secrets
+- ✅ Reset all mocks in `beforeEach()` for test isolation
+- ✅ Preserved existing mock patterns from original 14 tests
+
+#### Test Structure (Section 3 of Constitution)
+- ✅ Clear `describe()` blocks per behavior category
+- ✅ Behavior-focused test names (e.g., "should generate both access and refresh tokens with shared jti")
+- ✅ Arrange-Act-Assert pattern
+- ✅ Security-focused assertions (different secrets, issuer/audience validation)
+
+#### No New Helpers Needed
+- ✅ Used standard Jest mocking patterns
+- ✅ No custom factories needed (JWT payload is simple object)
+- ✅ Extended existing describe blocks where appropriate
+
+### Commands Run
+
+```bash
+npx jest tests/unit/auth/jwt-service.test.ts --runInBand  # ✅ 32 passed (+18)
+npm run typecheck                                          # ✅ 0 errors
+npm run lint                                               # ✅ 0 errors, 1246 warnings (pre-existing)
+npm run test:backend                                       # ✅ 276 passed (+18), 59 skipped, 7 failed (unchanged)
+```
+
+### Invariants Maintained
+
+- ✅ 0 TypeScript errors
+- ✅ 0 ESLint errors (1246 warnings pre-existing)
+- ✅ 7 failing suites unchanged (all pre-existing TS compilation errors in skipped tests)
+- ✅ 59 skipped tests unchanged
+- ✅ **276 passing tests** (up from 258) → **+18 new tests**
+- ✅ No previously passing tests broken
+
+### Coverage Impact
+
+**JwtService** coverage progression:
+- **Before TM-8**: 14 tests (basic happy paths + expiry/invalid signature)
+- **After TM-8**: 32 tests (comprehensive security validation + edge cases)
+
+**New behaviors covered**:
+- ✅ `generateTokenPair()` - Previously untested method (2 tests)
+- ✅ Token structure validation - Issuer, audience, jti uniqueness (5 tests)
+- ✅ Error path coverage - Generation failures, wrong issuer/audience (5 tests)
+- ✅ Security validation - Different secrets for access/refresh tokens (3 tests)
+- ✅ Utility methods - parseExpiry(), maskToken() (4 tests)
+
+**Overall backend coverage**:
+- Test suites: 21 total (14 passing, 7 failing skipped with TS errors, 4 skipped)
+- Tests: 335 total (276 passed, 59 skipped)
+- **Real passing coverage increased**: 258 → 276 tests (+7% increase)
+
+### Key Findings
+
+1. **JwtService security validated** - Access and refresh tokens use different secrets (critical security pattern)
+2. **Token structure compliance** - All tokens include issuer (`clientforge-crm`), audience (`clientforge-users`), unique jti
+3. **Error handling robust** - Gracefully handles jwt.sign failures, malformed tokens, invalid issuer/audience
+4. **Logging security** - Token masking prevents leaking full tokens in logs (first 6 + last 6 chars only)
+5. **Edge cases covered** - Extra claims handled, expiry parsing validated, short token masking safe
+
+### Files Modified
+
+- ✅ **Updated**: `tests/unit/auth/jwt-service.test.ts` (+200 lines, +18 tests, 32 total)
+- ✅ **Updated**: `docs/testing/TEST-MODERNIZATION-LOG.md` (this entry)
+
+### Coverage Summary by Test Category
+
+**Happy Path Coverage**: 9 tests (7 existing + 2 new generateTokenPair)
+- Token generation (access, refresh, pair)
+- Token verification (valid tokens)
+- Token decoding
+
+**Error Path Coverage**: 9 tests (4 existing + 5 new)
+- Expired tokens (2 existing)
+- Invalid signatures (2 existing)
+- Generation failures (2 new)
+- Wrong issuer/audience (2 new)
+- Malformed tokens (1 existing, refined)
+
+**Edge Cases & Security**: 14 tests (3 existing + 11 new)
+- Token structure validation (issuer, audience, jti) - 5 new
+- Different secrets for access/refresh - 3 new
+- Token masking for logs - 2 new
+- Expiry parsing - 2 new
+- Wrong token type validation (2 existing)
+- Extra claims handling - 1 new
+
+### Next Steps
+
+**User will decide TM-9 direction**:
+
+**Option A: Complete Auth Module Coverage** (Recommended)
+- Target **PasswordService** (currently 17 tests, add error path coverage)
+- Target **Email Verification Service** (0% coverage if exists)
+- Target **Password Reset Service** (0% coverage if exists)
+- Goal: 100% auth module coverage before moving to other domains
+
+**Option B: Fix MEDIUM Complexity Skipped Suites**
+- Now that we have significant coverage momentum (TM-7 +28, TM-8 +18 = +46 tests)
+- Fix task-service.test.ts (CallDirection enum issue)
+- Fix custom-field-service.test.ts (CustomFieldType enum issue)
+- Reduces compilation noise from 7 → 5 failures
+
+**Option C: Expand to Different Domain**
+- Contacts/Deals/Accounts services (core CRM features)
+- Add edge case and error path coverage to existing passing tests
+- Build coverage momentum in business logic layer
+
+---
+
 ## References
 - **Test Constitution**: `docs/testing/TEST-CONSTITUTION.md` ⭐ **NEW**
 - **Blueprint**: `docs/TEST_MODERNIZATION_BLUEPRINT.md`
