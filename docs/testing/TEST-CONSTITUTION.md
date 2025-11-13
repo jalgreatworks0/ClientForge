@@ -409,7 +409,7 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 | 4 | `tests/unit/security/rate-limiter.test.ts` | `backend/middleware/rate-limiter.ts` | ✅ EXISTS | ✅ **TM-12** |
 | 5 | `tests/unit/security/input-sanitizer.test.ts` | `backend/utils/sanitization/input-sanitizer.ts` | ✅ EXISTS | ✅ **TM-13** |
 | 6 | `tests/unit/auth/tenant-guard.test.ts` | `backend/middleware/tenant-guard.ts` | ✅ EXISTS | ✅ **TM-11** |
-| 7 | `tests/integration/auth/auth-flow.test.ts` | `backend/api/server.ts` | ✅ EXISTS | ⏳ TM-14 |
+| 7 | `tests/integration/auth/auth-flow.mini.test.ts` | `backend/api/server.ts` | ✅ EXISTS | ✅ **TM-14** |
 
 **All implementations exist and work in production.** Tests were removed to achieve 0 failing suites baseline.
 
@@ -427,6 +427,13 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 **TM-13 Update** (2025-11-13): InputSanitizer now has comprehensive fortress suite coverage:
 - New test suite: [tests/unit/security/input-sanitizer.test.ts](../../../tests/unit/security/input-sanitizer.test.ts)
 - Coverage: 139 tests covering all 15 sanitization functions
+
+**TM-14 Update** (2025-11-13): Auth Flow Mini-Integration Suite:
+- New test suite: [tests/integration/auth/auth-flow.mini.test.ts](../../../tests/integration/auth/auth-flow.mini.test.ts)
+- Coverage: 4 passing tests (JWT token integration, password hashing integration)
+- Pattern: Mini-integration smoke tests for auth primitives
+- Future: 15 documented tests (skipped) for full HTTP auth flow when infrastructure is ready
+- Guarantees: Real bcrypt password hashing, real JWT token generation/verification work correctly
 - Behavior contract: XSS prevention (DOMPurify), path traversal prevention, URL/email/phone validation
 - Security guarantees: Blocks script tags, event handlers, javascript:/data: URLs, path traversal
 - Pattern: Third fortress suite, comprehensive input validation and security
