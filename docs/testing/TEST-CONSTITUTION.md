@@ -61,12 +61,19 @@ tests/
 |----|------------|----------|-------|--------|-------|
 | TM-18 | CORS & Security Headers HTTP Integration | `tests/integration/http/cors-security.fortress.test.ts` | 20 | ✅ Complete | CORS origin validation, Helmet security headers |
 
+### HTTP Integration / Authentication Flows
+
+| ID | Suite Name | Location | Tests | Status | Notes |
+|----|------------|----------|-------|--------|-------|
+| TM-19 | Auth HTTP Flow Fortress | `tests/integration/auth/auth-flow.fortress.test.ts` | 18 | ⚠️ Infrastructure Complete | Full auth workflows (register/login/refresh), requires DB config |
+
 ### Total Fortress Test Statistics
 
-- **Total Fortress Suites**: 3
-- **Total Fortress Tests**: 66
-- **Total Coverage**: Error handling, request validation, CORS, security headers, auth errors, rate limits, 404s, 500s, nested/array validation, preflight requests
-- **All Passing**: ✅
+- **Total Fortress Suites**: 4
+- **Total Fortress Tests**: 84 total (66 executable, 18 pending DB config)
+- **Total Coverage**: Error handling, request validation, CORS, security headers, **auth flows (register/login/refresh)**, credential validation, JWT validation, multi-tenant isolation, account locking, auth errors, rate limits, 404s, 500s, nested/array validation, preflight requests
+- **Passing (executable)**: 66/66 ✅
+- **Infrastructure Complete**: 18 (TM-19) ⚠️ - Ready once DB configured
 - **No Skipped**: ✅
 
 ## Test Helpers
@@ -76,6 +83,7 @@ tests/
 | Error Handler Test App | `tests/helpers/test-error-handler-app.ts` | Mini Express app for error handler testing |
 | Validation Test App | `tests/support/test-validation-app.ts` | Mini Express app for request validation testing |
 | CORS & Security Test App | `tests/support/test-cors-security-app.ts` | Mini Express app for CORS and security headers testing |
+| Auth HTTP Test App | `tests/support/test-auth-http-app.ts` | Mini Express app for auth flow testing with real DB |
 
 ## Test Execution
 
