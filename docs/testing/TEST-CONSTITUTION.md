@@ -408,7 +408,7 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 | 3 | `tests/unit/metadata/custom-field-service.test.ts` | `backend/services/custom-fields/custom-field.service.ts` | ✅ EXISTS | ⏳ Future |
 | 4 | `tests/unit/security/rate-limiter.test.ts` | `backend/middleware/rate-limiter.ts` | ✅ EXISTS | ⏳ TM-12 |
 | 5 | `tests/unit/security/input-sanitizer.test.ts` | `backend/utils/sanitization/input-sanitizer.ts` | ✅ EXISTS | ⏳ TM-13 |
-| 6 | `tests/integration/auth/tenant-guard.spec.ts` | `backend/middleware/tenant-guard.ts` | ✅ EXISTS | ✅ **TM-11** |
+| 6 | `tests/unit/auth/tenant-guard.test.ts` | `backend/middleware/tenant-guard.ts` | ✅ EXISTS | ✅ **TM-11** |
 | 7 | `tests/integration/auth/auth-flow.test.ts` | `backend/api/server.ts` | ✅ EXISTS | ⏳ TM-14 |
 
 **All implementations exist and work in production.** Tests were removed to achieve 0 failing suites baseline.
