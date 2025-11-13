@@ -673,6 +673,50 @@ npm test:backend   # ✅ 230 passed, 59 skipped, 7 pre-existing failures
 
 ---
 
+## FS-2: Critical Orphan Removal & Storage Hygiene
+
+**Branch**: `fix/fs-critical-orphan-removal`
+**Status**: ✅ **COMPLETED**
+**Date**: 2025-11-12
+
+### Objectives
+- Delete orphan typo directory `testslibsearch/`
+- Verify storage runtime directories are properly gitignored
+- Maintain all invariants (0 TS errors, 0 lint errors, 0 new test failures)
+
+### Summary
+Executed first cleanup phase from FS-SANITATION-BLUEPRINT.md
+
+**Actions Taken**:
+- ✅ Deleted orphan directory `./testslibsearch/` (empty typo directory)
+- ✅ Verified `storage/exports/`, `storage/gdpr-exports/`, `storage/invoices/`, `storage/uploads/` are empty and already gitignored (lines 75-78 in .gitignore)
+- ✅ No additional .gitignore changes needed
+
+**Verification Results**:
+```bash
+# TypeScript compilation
+npm run typecheck
+# ✅ 0 errors
+
+# ESLint
+npm run lint
+# ✅ 0 errors, 1246 warnings
+
+# Jest tests
+npm run test:backend
+# ✅ 230 passed, 59 skipped
+# ⚠️ 7 pre-existing failures (unchanged from FS-1)
+```
+
+### Outcome
+- ✅ 1 orphan directory removed (`testslibsearch/`)
+- ✅ Storage runtime directories confirmed as properly gitignored
+- ✅ All invariants maintained
+
+**Next**: FS-3 will consolidate `backend/tests/` into canonical `tests/` location
+
+---
+
 ## References
 - **Blueprint**: `docs/TEST_MODERNIZATION_BLUEPRINT.md`
 - **Governance**: `docs/testing/TEST-GOVERNANCE.md` (to be created)

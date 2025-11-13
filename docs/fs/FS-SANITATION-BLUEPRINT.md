@@ -490,6 +490,9 @@ After Phase 3 consolidation:
 
 ## FS-2: Critical Orphan Removal
 
+**Status**: ✅ **EXECUTED** (2025-11-12)
+**Branch**: `fix/fs-critical-orphan-removal`
+
 **Objective**: Remove critical orphan directories and storage placeholders
 
 **Scope**:
@@ -499,39 +502,35 @@ After Phase 3 consolidation:
 
 **Paths Affected**:
 ```bash
-./testslibsearch/
-./storage/exports/
-./storage/gdpr-exports/
-./storage/invoices/
-./storage/uploads/
+./testslibsearch/          # ✅ DELETED
+./storage/exports/         # ✅ Empty, already gitignored
+./storage/gdpr-exports/    # ✅ Empty, already gitignored
+./storage/invoices/        # ✅ Empty, already gitignored
+./storage/uploads/         # ✅ Empty, already gitignored
 ```
 
 **Risk**: 🟢 **LOW** - No code references these directories
 
-**Verification**:
+**Actions Taken**:
 ```bash
-# Before deletion, verify no imports
-rg "testslibsearch" --type ts
-rg "storage/exports" --type ts
-rg "storage/gdpr-exports" --type ts
+# Deleted orphan typo directory
+rm -rf testslibsearch/
 
-# After deletion
+# Verified storage dirs empty and already gitignored (lines 75-78)
+# No additional .gitignore changes needed
+```
+
+**Verification Results**:
+```bash
 npm run typecheck  # ✅ 0 errors
-npm run lint       # ✅ 0 errors
+npm run lint       # ✅ 0 errors, 1246 warnings
 npm test:backend   # ✅ 230 passed, 59 skipped, 7 pre-existing failures
 ```
 
-**Actions**:
-```bash
-rm -rf testslibsearch/
-rm -rf storage/exports/ storage/gdpr-exports/ storage/invoices/ storage/uploads/
-
-# Add to .gitignore
-echo "storage/exports/" >> .gitignore
-echo "storage/gdpr-exports/" >> .gitignore
-echo "storage/invoices/" >> .gitignore
-echo "storage/uploads/" >> .gitignore
-```
+**Outcome**:
+- ✅ Orphan directory `testslibsearch/` removed
+- ✅ Storage directories confirmed as runtime-only (already gitignored)
+- ✅ All invariants maintained (0 TS errors, 0 lint errors, 0 new test failures)
 
 ---
 
