@@ -15,8 +15,8 @@ module.exports = {
   // Root directories
   roots: ['<rootDir>/unit', '<rootDir>/integration'],
 
-  // Exclude e2e tests (they use Playwright, not Jest) and integration tests (missing dependencies)
-  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/integration/'],
+  // Exclude e2e tests (they use Playwright, not Jest)
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
 
   // Use babel-jest for better TypeScript parsing
   transform: {
