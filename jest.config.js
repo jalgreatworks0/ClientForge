@@ -1,6 +1,11 @@
 /**
  * Jest Configuration
  * Comprehensive test configuration for unit, integration, and E2E tests
+ *
+ * TODO: Consider migrating to multi-project configuration:
+ * - jest.config.unit.js for fast unit tests
+ * - jest.config.integration.js for integration tests with real dependencies
+ * This would allow running unit tests independently for faster feedback.
  */
 
 module.exports = {
@@ -58,8 +63,9 @@ module.exports = {
     'json',
   ],
 
-  // Coverage thresholds (enforce 85%+ coverage)
-  coverageThresholds: {
+  // Coverage threshold (enforce 85%+ coverage)
+  // NOTE: Fixed typo from 'coverageThresholds' (plural) to 'coverageThreshold' (singular)
+  coverageThreshold: {
     global: {
       branches: 85,
       functions: 85,

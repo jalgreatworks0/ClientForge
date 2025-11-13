@@ -1,0 +1,26 @@
+[
+  {
+    "id": "account_1",
+    "tenantId": "test_tenant",
+    "name": "Acme Corporation",
+    "industry": "Technology",
+    "size": "enterprise",
+    "revenue": 10000000,
+    "website": "https://acme.example.com",
+    "ownerId": "test_user",
+    "createdAt": "2024-02-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "account_2",
+    "tenantId": "test_tenant",
+    "name": "TechStart Inc",
+    "industry": "Technology",
+    "size": "small",
+    "revenue": 500000,
+    "website": "https://techstart.example.com",
+    "ownerId": "test_user",
+    "createdAt": "2024-03-15T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]

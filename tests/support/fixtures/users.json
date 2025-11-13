@@ -1,0 +1,26 @@
+[
+  {
+    "id": "test_user",
+    "tenantId": "test_tenant",
+    "email": "test@example.com",
+    "firstName": "Test",
+    "lastName": "User",
+    "role": "user",
+    "isActive": true,
+    "emailVerified": true,
+    "createdAt": "2024-01-15T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "admin_user",
+    "tenantId": "test_tenant",
+    "email": "admin@example.com",
+    "firstName": "Admin",
+    "lastName": "User",
+    "role": "admin",
+    "isActive": true,
+    "emailVerified": true,
+    "createdAt": "2024-01-10T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]
