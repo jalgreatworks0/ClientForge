@@ -16,11 +16,12 @@ export class ExpressRequestBuilder {
       params: {},
       method: 'GET',
       url: '/',
-      path: '/',
       protocol: 'http',
-      ip: '127.0.0.1',
-      get: jest.fn((header: string) => this.req.headers?.[header.toLowerCase()]),
-    }
+      get: jest.fn((header: string) => {
+        const value = this.req.headers?.[header.toLowerCase()]
+        return Array.isArray(value) ? value : value ? [value] : undefined
+      }) as any,
+    } as any
   }
 
   /**
@@ -79,7 +80,7 @@ export class ExpressRequestBuilder {
    * Set request path
    */
   withPath(path: string): this {
-    this.req.path = path
+    ;(this.req as any).path = path
     this.req.url = path
     return this
   }
@@ -96,7 +97,7 @@ export class ExpressRequestBuilder {
    * Set IP address
    */
   withIP(ip: string): this {
-    this.req.ip = ip
+    ;(this.req as any).ip = ip
     return this
   }
 

@@ -4,11 +4,19 @@
  */
 
 import { PasswordService } from '../../../backend/core/auth/password-service'
-import bcrypt from 'bcrypt'
 
-// Mock bcrypt
-jest.mock('bcrypt')
-const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>
+// Mock bcrypt with explicit mock functions (no types to avoid bcrypt's complex type system)
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
+  getRounds: jest.fn(),
+}))
+
+// Import mocked bcrypt - cast to any to bypass type issues
+import bcrypt from 'bcrypt'
+const mockHash = (bcrypt.hash as any) as jest.Mock
+const mockCompare = (bcrypt.compare as any) as jest.Mock
+const mockGetRounds = (bcrypt.getRounds as any) as jest.Mock
 
 // Mock security config
 jest.mock('../../../config/security/security-config', () => ({
@@ -17,7 +25,7 @@ jest.mock('../../../config/security/security-config', () => ({
       saltRounds: 12,
     },
   },
-  validatePassword: jest.fn((password: string) => {
+  validatePassword: (password: string) => {
     const errors: string[] = []
     if (password.length < 8) errors.push('Password must be at least 8 characters')
     if (password.length > 128) errors.push('Password must not exceed 128 characters')
@@ -27,11 +35,11 @@ jest.mock('../../../config/security/security-config', () => ({
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) errors.push('Password must contain special character')
     if (/\s/.test(password)) errors.push('Password must not contain spaces')
     return { valid: errors.length === 0, errors }
-  }),
+  },
 }))
 
-// TODO(phase5): Re-enable after fixing bcrypt mocking issues and validatePassword implementation.
-describe.skip('PasswordService', () => {
+// Phase 2: ACTIVE - Fixed bcrypt mocking and aligned with real implementation behavior
+describe('PasswordService', () => {
   let passwordService: PasswordService
 
   beforeEach(() => {
@@ -44,18 +52,18 @@ describe.skip('PasswordService', () => {
       const password = 'SecurePassword123!'
       const hashedPassword = '$2b$12$hashedpassword'
 
-      mockedBcrypt.hash.mockResolvedValue(hashedPassword as never)
+      mockHash.mockResolvedValue(hashedPassword)
 
       const result = await passwordService.hash(password)
 
       expect(result).toBe(hashedPassword)
-      expect(mockedBcrypt.hash).toHaveBeenCalledWith(password, 12)
+      expect(mockHash).toHaveBeenCalledWith(password, 12)
     })
 
     it('should throw error if hashing fails', async () => {
       const password = 'Password123!'
 
-      mockedBcrypt.hash.mockRejectedValue(new Error('Hashing failed') as never)
+      mockHash.mockRejectedValue(new Error('Hashing failed'))
 
       await expect(passwordService.hash(password)).rejects.toThrow(
         'Failed to hash password'
@@ -68,19 +76,19 @@ describe.skip('PasswordService', () => {
       const password = 'CorrectPassword123!'
       const hash = '$2b$12$validhash'
 
-      mockedBcrypt.compare.mockResolvedValue(true as never)
+      mockCompare.mockResolvedValue(true)
 
       const result = await passwordService.verify(password, hash)
 
       expect(result).toBe(true)
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(password, hash)
+      expect(mockCompare).toHaveBeenCalledWith(password, hash)
     })
 
     it('should return false for non-matching password', async () => {
       const password = 'WrongPassword123!'
       const hash = '$2b$12$validhash'
 
-      mockedBcrypt.compare.mockResolvedValue(false as never)
+      mockCompare.mockResolvedValue(false)
 
       const result = await passwordService.verify(password, hash)
 
@@ -91,7 +99,7 @@ describe.skip('PasswordService', () => {
       const password = 'Password123!'
       const hash = 'invalid-hash'
 
-      mockedBcrypt.compare.mockRejectedValue(new Error('Compare failed') as never)
+      mockCompare.mockRejectedValue(new Error('Compare failed'))
 
       await expect(passwordService.verify(password, hash)).rejects.toThrow(
         'Failed to verify password'
@@ -237,7 +245,7 @@ describe.skip('PasswordService', () => {
     it('should return false if hash uses correct rounds', () => {
       const hash = '$2b$12$validhash'
 
-      mockedBcrypt.getRounds.mockReturnValue(12)
+      mockGetRounds.mockReturnValue(12)
 
       const result = passwordService.needsRehash(hash)
 
@@ -247,7 +255,7 @@ describe.skip('PasswordService', () => {
     it('should return true if hash uses different rounds', () => {
       const hash = '$2b$10$validhash'
 
-      mockedBcrypt.getRounds.mockReturnValue(10)
+      mockGetRounds.mockReturnValue(10)
 
       const result = passwordService.needsRehash(hash)
 
@@ -257,7 +265,7 @@ describe.skip('PasswordService', () => {
     it('should return false if getRounds throws error', () => {
       const hash = 'invalid-hash'
 
-      mockedBcrypt.getRounds.mockImplementation(() => {
+      mockGetRounds.mockImplementation(() => {
         throw new Error('Invalid hash')
       })
 

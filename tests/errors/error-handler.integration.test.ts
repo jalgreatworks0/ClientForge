@@ -8,11 +8,12 @@ import { Request, Response, NextFunction } from "express";
 import { AppError } from "../../backend/utils/errors/AppError";
 import { getErrorById } from "../../backend/utils/errors/registry";
 import { errorHandler } from "../../backend/api/rest/v1/middleware/error-handler";
+import { ExpressResponseBuilder } from "../support/builders";
 
-// TODO(phase5): Re-enable after fixing Express Response mock (missing setHeader function).
+// TODO(phase3): Update test expectations to match RFC 7807 Problem Details format (errorId, title, etc.)
 describe.skip("Error Handler Middleware - Integration Tests", () => {
   let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
+  let mockResponse: Response;
   let mockNext: NextFunction;
   let statusCode: number;
   let responseData: any;
@@ -22,16 +23,20 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
     statusCode = 0;
     responseData = null;
 
-    mockResponse = {
-      status: jest.fn().mockImplementation((code: number) => {
-        statusCode = code;
-        return mockResponse;
-      }),
-      json: jest.fn().mockImplementation((data: any) => {
-        responseData = data;
-        return mockResponse;
-      }),
-    };
+    // Use ExpressResponseBuilder which provides all required Response methods
+    const responseBuilder = new ExpressResponseBuilder();
+    mockResponse = responseBuilder.build();
+
+    // Override status and json to capture values for assertions
+    mockResponse.status = jest.fn().mockImplementation((code: number) => {
+      statusCode = code;
+      return mockResponse;
+    }) as any;
+
+    mockResponse.json = jest.fn().mockImplementation((data: any) => {
+      responseData = data;
+      return mockResponse;
+    }) as any;
 
     mockNext = jest.fn();
   });
@@ -52,13 +57,10 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(401);
-      expect(responseData).toEqual({
-        error: {
-          id: "AUTH-001",
-          name: "InvalidCredentials",
-          userMessageKey: "errors.auth.invalid_credentials",
-        },
-      });
+      expect(responseData.errorId).toBe("AUTH-001");
+      expect(responseData.title).toBe("InvalidCredentials");
+      expect(responseData.userMessageKey).toBe("errors.auth.invalid_credentials");
+      expect(responseData.status).toBe(401);
     });
 
     it("should handle internal error correctly", () => {

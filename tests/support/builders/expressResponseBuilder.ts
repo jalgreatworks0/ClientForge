@@ -26,10 +26,10 @@ export class ExpressResponseBuilder {
       }),
       setHeader: jest.fn((name: string, value: string) => {
         return this.res as Response
-      }),
+      }) as any,
       header: jest.fn((name: string, value: string) => {
         return this.res as Response
-      }),
+      }) as any,
       sendStatus: jest.fn((code: number) => {
         this.statusCode = code
         return this.res as Response
@@ -39,7 +39,7 @@ export class ExpressResponseBuilder {
       }),
       redirect: jest.fn((url: string) => {
         return this.res as Response
-      }),
+      }) as any,
       cookie: jest.fn((name: string, value: string, options?: unknown) => {
         return this.res as Response
       }),
