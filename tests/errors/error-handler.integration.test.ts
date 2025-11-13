@@ -2,6 +2,7 @@
  * Error Handler Integration Tests
  *
  * Tests the Express error handler middleware with actual AppError instances
+ * All tests updated to match RFC 7807 Problem Details format
  */
 
 import { Request, Response, NextFunction } from "express";
@@ -10,18 +11,23 @@ import { getErrorById } from "../../backend/utils/errors/registry";
 import { errorHandler } from "../../backend/api/rest/v1/middleware/error-handler";
 import { ExpressResponseBuilder } from "../support/builders";
 
-// TODO(phase3): Update test expectations to match RFC 7807 Problem Details format (errorId, title, etc.)
-describe.skip("Error Handler Middleware - Integration Tests", () => {
+// Phase 3: ACTIVE - Updated all test expectations to match RFC 7807 Problem Details format
+describe("Error Handler Middleware - Integration Tests", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Response;
   let mockNext: NextFunction;
   let statusCode: number;
   let responseData: any;
+  let headers: Record<string, string>;
 
   beforeEach(() => {
-    mockRequest = {};
+    mockRequest = {
+      originalUrl: "/api/v1/test",
+      path: "/api/v1/test",
+    };
     statusCode = 0;
     responseData = null;
+    headers = {};
 
     // Use ExpressResponseBuilder which provides all required Response methods
     const responseBuilder = new ExpressResponseBuilder();
@@ -35,6 +41,11 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
 
     mockResponse.json = jest.fn().mockImplementation((data: any) => {
       responseData = data;
+      return mockResponse;
+    }) as any;
+
+    mockResponse.setHeader = jest.fn().mockImplementation((name: string, value: string) => {
+      headers[name] = value;
       return mockResponse;
     }) as any;
 
@@ -57,10 +68,16 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(401);
-      expect(responseData.errorId).toBe("AUTH-001");
-      expect(responseData.title).toBe("InvalidCredentials");
-      expect(responseData.userMessageKey).toBe("errors.auth.invalid_credentials");
-      expect(responseData.status).toBe(401);
+      expect(headers["Content-Type"]).toBe("application/problem+json");
+      expect(responseData).toMatchObject({
+        type: "https://clientforge.com/errors/AUTH-001",
+        title: "InvalidCredentials",
+        status: 401,
+        detail: "Invalid email or password",
+        instance: "/api/v1/test",
+        errorId: "AUTH-001",
+        userMessageKey: "errors.auth.invalid_credentials",
+      });
     });
 
     it("should handle internal error correctly", () => {
@@ -78,10 +95,17 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(503);
-      expect(responseData.error.id).toBe("DB-001");
-      expect(responseData.error.name).toBe("PostgresUnavailable");
-      expect(responseData.error.userMessageKey).toBeUndefined();
-      expect(responseData.error.runbook).toBe("docs/errors/runbooks/DB-001.md");
+      expect(headers["Content-Type"]).toBe("application/problem+json");
+      expect(responseData).toMatchObject({
+        type: "https://clientforge.com/errors/DB-001",
+        title: "PostgresUnavailable",
+        status: 503,
+        detail: "PostgreSQL connection failed",
+        instance: "/api/v1/test",
+        errorId: "DB-001",
+        runbook: "docs/errors/runbooks/DB-001.md",
+      });
+      expect(responseData.userMessageKey).toBeUndefined();
     });
 
     it("should include retry hint for retryable errors", () => {
@@ -97,8 +121,11 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
         mockNext
       );
 
-      expect(responseData.error.retryable).toBe(true);
-      expect(responseData.error.retryStrategy).toBe("safe");
+      expect(responseData).toMatchObject({
+        errorId: "DB-002",
+        retryable: true,
+        retryStrategy: "safe",
+      });
     });
 
     it("should not leak sensitive data in response", () => {
@@ -119,9 +146,14 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
         mockNext
       );
 
-      expect(JSON.stringify(responseData)).not.toContain("secret123");
-      expect(JSON.stringify(responseData)).not.toContain("sk-1234567890");
-      expect(responseData.error.cause).toBeUndefined();
+      const responseString = JSON.stringify(responseData);
+      expect(responseString).not.toContain("secret123");
+      expect(responseString).not.toContain("sk-1234567890");
+      expect(responseString).not.toContain("password");
+      expect(responseString).not.toContain("apiKey");
+      // causeData should never be in the response
+      expect(responseData.causeData).toBeUndefined();
+      expect(responseData.cause).toBeUndefined();
     });
   });
 
@@ -137,11 +169,14 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(500);
-      expect(responseData).toEqual({
-        error: {
-          id: "GEN-001",
-          name: "UnexpectedError",
-        },
+      expect(headers["Content-Type"]).toBe("application/problem+json");
+      expect(responseData).toMatchObject({
+        type: "about:blank",
+        title: "UnexpectedError",
+        status: 500,
+        detail: "An unexpected error occurred",
+        instance: "/api/v1/test",
+        errorId: "GEN-001",
       });
     });
 
@@ -156,7 +191,11 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(500);
-      expect(responseData.error.id).toBe("GEN-001");
+      expect(responseData).toMatchObject({
+        errorId: "GEN-001",
+        title: "UnexpectedError",
+        status: 500,
+      });
     });
 
     it("should handle null error safely", () => {
@@ -168,7 +207,11 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(500);
-      expect(responseData.error.id).toBe("GEN-001");
+      expect(responseData).toMatchObject({
+        errorId: "GEN-001",
+        title: "UnexpectedError",
+        status: 500,
+      });
     });
   });
 
@@ -187,7 +230,10 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(400);
-      expect(responseData.error.id).toBe("VAL-001");
+      expect(responseData).toMatchObject({
+        errorId: "VAL-001",
+        status: 400,
+      });
     });
 
     it("should handle major errors correctly", () => {
@@ -204,7 +250,10 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(500);
-      expect(responseData.error.id).toBe("DB-002");
+      expect(responseData).toMatchObject({
+        errorId: "DB-002",
+        status: 500,
+      });
     });
 
     it("should handle critical errors correctly", () => {
@@ -221,7 +270,10 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(503);
-      expect(responseData.error.id).toBe("DB-001");
+      expect(responseData).toMatchObject({
+        errorId: "DB-001",
+        status: 503,
+      });
     });
   });
 
@@ -237,6 +289,7 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(401);
+      expect(responseData.status).toBe(401);
     });
 
     it("should use 403 for permission errors", () => {
@@ -253,6 +306,7 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(403);
+      expect(responseData.status).toBe(403);
     });
 
     it("should use 404 for not found errors", () => {
@@ -269,6 +323,7 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(404);
+      expect(responseData.status).toBe(404);
     });
 
     it("should use 429 for rate limit errors", () => {
@@ -285,6 +340,7 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(429);
+      expect(responseData.status).toBe(429);
     });
 
     it("should use 503 for service unavailable errors", () => {
@@ -301,11 +357,12 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       expect(statusCode).toBe(503);
+      expect(responseData.status).toBe(503);
     });
   });
 
-  describe("Error Response Structure", () => {
-    it("should always include error.id and error.name", () => {
+  describe("RFC 7807 Problem Details Structure", () => {
+    it("should always include required RFC 7807 fields", () => {
       const error = new AppError(
         getErrorById("DB-001"),
         "Database unavailable"
@@ -318,8 +375,15 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
         mockNext
       );
 
-      expect(responseData.error.id).toBeDefined();
-      expect(responseData.error.name).toBeDefined();
+      // RFC 7807 required fields
+      expect(responseData.type).toBeDefined();
+      expect(responseData.title).toBeDefined();
+      expect(responseData.status).toBeDefined();
+      expect(responseData.detail).toBeDefined();
+      expect(responseData.instance).toBeDefined();
+
+      // Our extension fields
+      expect(responseData.errorId).toBeDefined();
     });
 
     it("should include userMessageKey only for user-facing errors", () => {
@@ -336,7 +400,22 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
       );
 
       // DB-002 is internal, so no userMessageKey in response
-      expect(responseData.error.userMessageKey).toBeUndefined();
+      expect(responseData.userMessageKey).toBeUndefined();
+
+      // Now test user-facing error
+      const userError = new AppError(
+        getErrorById("AUTH-001"),
+        "Invalid credentials"
+      );
+
+      errorHandler(
+        userError,
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(responseData.userMessageKey).toBe("errors.auth.invalid_credentials");
     });
 
     it("should include runbook only for internal errors", () => {
@@ -352,10 +431,9 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
         mockNext
       );
 
-      expect(responseData.error.runbook).toBe("docs/errors/runbooks/DB-001.md");
-    });
+      expect(responseData.runbook).toBe("docs/errors/runbooks/DB-001.md");
 
-    it("should not include runbook for user-facing errors", () => {
+      // Now test user-facing error (should not have runbook)
       const userError = new AppError(
         getErrorById("AUTH-001"),
         "Invalid credentials"
@@ -368,7 +446,42 @@ describe.skip("Error Handler Middleware - Integration Tests", () => {
         mockNext
       );
 
-      expect(responseData.error.runbook).toBeUndefined();
+      expect(responseData.runbook).toBeUndefined();
+    });
+
+    it("should use instance from request originalUrl", () => {
+      mockRequest.originalUrl = "/api/v1/users/123";
+      (mockRequest as any).path = "/api/v1/users/:id";
+
+      const error = new AppError(
+        getErrorById("AUTH-001"),
+        "Unauthorized"
+      );
+
+      errorHandler(
+        error,
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(responseData.instance).toBe("/api/v1/users/123");
+    });
+
+    it("should set Content-Type header to application/problem+json", () => {
+      const error = new AppError(
+        getErrorById("AUTH-001"),
+        "Unauthorized"
+      );
+
+      errorHandler(
+        error,
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(headers["Content-Type"]).toBe("application/problem+json");
     });
   });
 });

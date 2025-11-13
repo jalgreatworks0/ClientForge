@@ -335,28 +335,175 @@ npm run test:backend
 | Baseline (Blueprint Phase) | 32% | 2025-11-10 |
 | Phase 1 Complete | 32% | 2025-11-11 |
 | Phase 2 Complete | 34% | 2025-11-12 |
+| Phase 3 Complete | 35% | 2025-11-12 |
 | **Target (Phase 7)** | **85%** | **TBD** |
 
-**Note**: Phase 1 and 2 focused on infrastructure and fixing existing tests, not adding new tests. Coverage increase is minimal but foundation is now in place for Phase 3-7 expansion.
+**Note**: Phases 1-3 focused on infrastructure and fixing existing tests. Coverage increase is minimal but foundation is now in place for Phase 4-7 expansion.
+
+---
+
+## Phase 3: Error Handler + ES Adapter Consolidation
+
+**Branch**: `fix/test-modernization-phase3`
+**Status**: ✅ **COMPLETED**
+**Date**: 2025-11-12
+
+### Objectives
+- Modernize error-handler.integration.test.ts with RFC 7807 Problem Details format
+- Consolidate Elasticsearch adapter tests into canonical location
+- Maintain 0/0 invariant (0 TypeScript errors, 0 new test failures)
+
+### Deliverables
+
+#### 1. ✅ **Error Handler Integration Tests** - FULLY MODERNIZED
+**File**: `tests/errors/error-handler.integration.test.ts`
+**Status**: ✅ 20/20 tests passing
+**Effort**: ~3 hours
+
+**Issues Fixed**:
+- ❌ **Original Issue**: Test expectations used old format (`responseData.error.id`, `responseData.error.name`)
+- ✅ **Solution**: Rewrote all 20 test expectations to match RFC 7807 Problem Details format
+- ❌ **Issue 2**: Missing request context (originalUrl, path)
+- ✅ **Solution**: Added proper mock request setup with URL context
+- ❌ **Issue 3**: Headers not being captured for Content-Type assertion
+- ✅ **Solution**: Added setHeader mock to capture headers
+
+**RFC 7807 Problem Details Format**:
+```typescript
+// Response structure (actual implementation)
+{
+  type: "https://clientforge.com/errors/AUTH-001",
+  title: "InvalidCredentials",
+  status: 401,
+  detail: "Invalid email or password",
+  instance: "/api/v1/test",
+  errorId: "AUTH-001",
+  correlationId: "req-123",
+  tenantId: "tenant-123",
+  userMessageKey: "errors.auth.invalid_credentials", // Only for user-facing errors
+  runbook: "docs/errors/runbooks/DB-001.md", // Only for internal errors
+  retryable: true, // Only for retryable errors
+  retryStrategy: "safe" // Only for retryable errors
+}
+```
+
+**Test Coverage**:
+- ✅ AppError Handling (4 tests)
+  - User-facing errors with userMessageKey
+  - Internal errors with runbook
+  - Retryable errors with retry hints
+  - Sensitive data redaction
+- ✅ Non-AppError Handling (3 tests)
+  - Standard Error → GEN-001
+  - TypeError → GEN-001
+  - Null error safety
+- ✅ Error Severity Handling (3 tests)
+  - Minor errors (400)
+  - Major errors (500)
+  - Critical errors (503)
+- ✅ HTTP Status Code Mapping (5 tests)
+  - 401 (authentication)
+  - 403 (permission)
+  - 404 (not found)
+  - 429 (rate limit)
+  - 503 (service unavailable)
+- ✅ RFC 7807 Structure (5 tests)
+  - Required fields validation
+  - Conditional field inclusion (userMessageKey, runbook)
+  - Instance URL handling
+  - Content-Type header
+
+**Verification**:
+```bash
+npx jest tests/errors/error-handler.integration.test.ts --runInBand --no-coverage
+# ✅ PASS: 20 tests passed
+```
+
+---
+
+#### 2. ✅ **ES Adapter Test Consolidation** - CANONICAL LOCATION ESTABLISHED
+**Original Location**: `tests/lib/search/es.adapter.spec.ts`
+**New Location**: `tests/unit/lib/search/es.adapter.test.ts`
+**Status**: ✅ 6/6 tests passing
+
+**Actions Taken**:
+1. Moved test file from `tests/lib/` to `tests/unit/lib/`to match directory structure convention
+2. Renamed `.spec.ts` to `.test.ts` for consistency
+3. Updated relative import paths (3 levels → 4 levels deep)
+4. Removed empty `tests/lib/search/` and `tests/lib/` directories
+5. Verified no duplicate ES adapter tests exist
+
+**Analysis of Related Tests**:
+- `tests/unit/lib/search/es.adapter.test.ts` - Tests the ES adapter utility (query building)
+- `tests/unit/services/elasticsearch-sync.test.ts` - Tests the sync service (queueing) - STILL SKIPPED
+- **Conclusion**: These are NOT duplicates; they test different parts of the system
+
+**ES Adapter Test Coverage**:
+- ✅ Hit mapping with highlights (1 test)
+- ✅ Query building with all filters (1 test)
+- ✅ Empty results handling (1 test)
+- ✅ Missing optional filters (1 test)
+- ✅ Date range filters (1 test)
+- ✅ Pagination offset calculation (1 test)
+
+**Verification**:
+```bash
+npx jest tests/unit/lib/search/es.adapter.test.ts --runInBand --no-coverage
+# ✅ PASS: 6 tests passed
+```
+
+---
+
+### Metrics
+
+| Metric | Phase 3 Target | Phase 3 Actual | Status |
+|--------|---------------|----------------|--------|
+| Error Handler Tests Passing | 20 | 20 | ✅ Success |
+| ES Adapter Tests Passing | 6 | 6 | ✅ Success |
+| TypeScript Errors | 0 | 0 | ✅ Success |
+| New Test Failures | 0 | 0 | ✅ Success |
+| Total Tests Passing | 210 | 230 | ✅ +20 |
+| Skipped Tests | 78 | 59 | ✅ -19 (unskipped error-handler) |
+| 0/0 Invariant | ✅ Maintained | ✅ Maintained | ✅ Success |
+
+### Verification
+
+```bash
+# TypeScript compilation
+npm run typecheck  # ✅ 0 errors
+
+# Error handler tests
+npx jest tests/errors/error-handler.integration.test.ts --runInBand --no-coverage
+# ✅ PASS: 20/20 tests
+
+# ES adapter tests
+npx jest tests/unit/lib/search/es.adapter.test.ts --runInBand --no-coverage
+# ✅ PASS: 6/6 tests
+
+# Full test suite
+npm run test:backend
+# ✅ 230 passed, 59 skipped
+# ⚠️ 7 pre-existing failures (unchanged from before Phase 3)
+```
 
 ---
 
 ## Next Actions
 
-### Immediate (Phase 3)
-1. ✅ Re-enable `error-handler.integration.test.ts` with RFC 7807 format expectations
-2. ✅ Consolidate duplicate Elasticsearch adapter tests
-3. ✅ Document test infrastructure patterns in TEST-GOVERNANCE.md
+### Immediate (Phase 4)
+1. ✅ Fix ESLint errors (157 errors) and make lint CI-blocking
+2. ✅ Establish ESLint governance and configuration standards
 
-### Short-Term (Phase 4-5)
-4. ✅ Fix ESLint errors (157 errors) and make lint CI-blocking
-5. ✅ Delete 21 empty test directories
-6. ✅ Unskip remaining 10 test suites incrementally
+### Short-Term (Phase 5-6)
+3. ✅ Unskip remaining test suites incrementally (SSO, rate limiter, input sanitizer, task service)
+4. ✅ Delete 21 empty test directories
+5. ✅ Fix 7 pre-existing failing test suites
 
-### Long-Term (Phase 6-7)
-7. ✅ Add tests for 47 untested services
-8. ✅ Achieve 85%+ global coverage
-9. ✅ Achieve 95%+ coverage for critical modules (auth, middleware)
+### Long-Term (Phase 7)
+6. ✅ Add tests for 47 untested services
+7. ✅ Achieve 85%+ global coverage
+8. ✅ Achieve 95%+ coverage for critical modules (auth, middleware)
+
 
 ---
 

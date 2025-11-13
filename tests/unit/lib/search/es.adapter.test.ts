@@ -3,8 +3,8 @@
  * Tests for the type-safe Elasticsearch adapter
  */
 
-import { esSearch } from '../../../backend/lib/search/es.adapter';
-import type { SearchQuery } from '../../../backend/types/search/query';
+import { esSearch } from '../../../../backend/lib/search/es.adapter';
+import type { SearchQuery } from '../../../../backend/types/search/query';
 
 describe('ES Adapter', () => {
   describe('esSearch', () => {

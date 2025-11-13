@@ -511,6 +511,138 @@ npm run test:backend
 
 ---
 
+## Error Handler Testing (Phase 3)
+
+### RFC 7807 Problem Details Format
+
+**Location**: `tests/errors/error-handler.integration.test.ts`
+**Status**: ✅ Fully modernized (20/20 tests passing)
+
+All error handler tests MUST use RFC 7807 Problem Details format expectations.
+
+#### Response Structure
+
+```typescript
+// ✅ Correct: RFC 7807 Problem Details format
+expect(responseData).toMatchObject({
+  type: "https://clientforge.com/errors/AUTH-001",
+  title: "InvalidCredentials",
+  status: 401,
+  detail: "Invalid email or password",
+  instance: "/api/v1/auth/login",
+  errorId: "AUTH-001",
+});
+
+// Optional fields (conditional on error type)
+expect(responseData.userMessageKey).toBe("errors.auth.invalid_credentials"); // Only for user-facing errors
+expect(responseData.runbook).toBe("docs/errors/runbooks/DB-001.md"); // Only for internal errors
+expect(responseData.retryable).toBe(true); // Only for retryable errors
+expect(responseData.retryStrategy).toBe("safe"); // Only for retryable errors
+
+// ❌ Incorrect: Old format (don't use!)
+expect(responseData.error.id).toBe("AUTH-001"); // WRONG!
+expect(responseData.error.name).toBe("InvalidCredentials"); // WRONG!
+```
+
+#### Required Mock Setup
+
+```typescript
+beforeEach(() => {
+  // Mock request with URL context
+  mockRequest = {
+    originalUrl: "/api/v1/test",
+    path: "/api/v1/test",
+  };
+
+  // Mock response with status, json, and setHeader
+  mockResponse.status = jest.fn().mockImplementation((code: number) => {
+    statusCode = code;
+    return mockResponse;
+  }) as any;
+
+  mockResponse.json = jest.fn().mockImplementation((data: any) => {
+    responseData = data;
+    return mockResponse;
+  }) as any;
+
+  mockResponse.setHeader = jest.fn().mockImplementation((name: string, value: string) => {
+    headers[name] = value;
+    return mockResponse;
+  }) as any;
+});
+```
+
+#### Testing Guidelines
+
+1. **Always test Content-Type header**: `expect(headers["Content-Type"]).toBe("application/problem+json")`
+2. **Test conditional fields**: userMessageKey (user-facing only), runbook (internal only), retryable (retriable only)
+3. **Test sensitive data redaction**: Ensure passwords, API keys, etc. never appear in response
+4. **Test all severity levels**: Minor (400), major (500), critical (503)
+5. **Test all HTTP status codes**: 401, 403, 404, 429, 503, etc.
+
+---
+
+## Elasticsearch Adapter Testing (Phase 3)
+
+### ES Adapter Tests
+
+**Location**: `tests/unit/lib/search/es.adapter.test.ts` (canonical location)
+**Status**: ✅ 6/6 tests passing
+
+#### Test Organization
+
+- **Unit Tests**: `tests/unit/lib/search/es.adapter.test.ts`
+  - Tests the ES adapter utility (`esSearch` function)
+  - Tests query building logic
+  - Tests result mapping logic
+  - Tests pagination calculations
+
+- **Service Tests**: `tests/unit/services/elasticsearch-sync.test.ts` (currently skipped)
+  - Tests the sync service (queueing for indexing)
+  - Different from adapter tests - not duplicates!
+
+#### ES Adapter Test Patterns
+
+```typescript
+it('should build correct ES query with all filters', async () => {
+  const mockClient = {
+    search: jest.fn().mockResolvedValue({
+      hits: { total: { value: 0 }, hits: [] },
+    }),
+  } as any;
+
+  const query: SearchQuery = {
+    filters: {
+      tenantId: 't1',
+      q: 'search term',
+      tags: ['tag1', 'tag2'],
+      createdFrom: '2024-01-01T00:00:00Z',
+      createdTo: '2024-12-31T23:59:59Z',
+    },
+    pagination: { page: 2, pageSize: 25 },
+    sort: { field: 'createdAt', direction: 'desc' },
+  };
+
+  await esSearch({ client: mockClient, index: 'test-index' }, query);
+
+  const searchCall = mockClient.search.mock.calls[0][0];
+  expect(searchCall.index).toBe('test-index');
+  expect(searchCall.from).toBe(25); // page 2, pageSize 25
+  expect(searchCall.size).toBe(25);
+  expect(searchCall.query.bool.must).toContainEqual({ term: { tenantId: 't1' } });
+  expect(searchCall.query.bool.must).toContainEqual({ query_string: { query: 'search term' } });
+});
+```
+
+#### Testing Guidelines
+
+1. **Test all filter types**: tenantId, q (query_string), tags (terms), owners, date ranges, status
+2. **Test pagination**: Verify `from` and `size` calculations
+3. **Test result mapping**: Verify hits are mapped correctly with id, score, source, highlights
+4. **Test edge cases**: Empty results, missing optional filters, highlights present/absent
+
+---
+
 ## Common Pitfalls
 
 ### 1. ❌ Forgetting to Reset Mocks
