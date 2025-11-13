@@ -254,6 +254,49 @@ Tests run automatically on:
 - [Playwright Documentation](https://playwright.dev/docs/intro)
 - [Testing Best Practices](../../docs/protocols/03_TEST_COVERAGE.md)
 
+## 🚫 Anti-Placeholder Policy
+
+**IMPORTANT**: Do not create empty test infrastructure directories for future tests.
+
+### Policy (Established FS-5, 2025-11-12)
+
+1. **Only scaffold test directories when implementing tests**
+   - ❌ Do NOT create `tests/new-feature/` before writing tests
+   - ✅ DO create `tests/new-feature/` when you start writing the first test
+
+2. **No empty placeholder subdirectories**
+   - Empty directories create repository clutter
+   - They create false signals about what's actually tested
+   - Use GitHub issues or project management tools for planning
+
+3. **Test infrastructure should match implementation**
+   - If a feature exists, its tests should exist
+   - If tests don't exist yet, neither should empty test directories
+
+### Historical Context
+
+This policy was established after **FS-5 (2025-11-12)** when 21 empty test infrastructure placeholder directories were removed:
+- `tests/e2e/{cypress,playwright,scenarios}/` - Empty E2E framework placeholders
+- `tests/performance/{load,spike,stress}/` - Empty performance test subcategories
+- `tests/security/{compliance,penetration,vulnerability-scans}/` - Empty security test types
+- `tests/ai-testing/` - Entire empty category removed
+- `tests/unit/{ai,backend,frontend}/` - Empty unit test placeholders
+- `tests/integration/{api,database,services}/` - Empty integration subcategories
+- `tests/{fixtures,utils}/` - Duplicate/unused utilities
+- `backend/__tests__/auth/` - Legacy empty location
+
+These directories were created with good intentions but resulted in:
+- Repository clutter (21 empty directories)
+- Maintenance overhead
+- False signals about test coverage
+- Confusion about canonical test locations
+
+### Enforcement
+
+- **Code Review**: Reject PRs that add empty test directories
+- **Documentation**: Update this README when adding new test categories
+- **Cleanup**: Run periodic scans for empty directories and remove them
+
 ## Support
 
 For testing issues, contact the development team or check:

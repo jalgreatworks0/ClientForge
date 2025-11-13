@@ -914,7 +914,100 @@ integrations/
 
 Documented in: `integrations/README.md`
 
-**Next**: FS-5 will remove test infrastructure placeholder directories (26+ empty directories)
+**Next**: FS-6 will remove documentation placeholder directories (20+ empty directories)
+
+---
+
+## FS-5: Test Infrastructure Placeholder Removal
+
+**Branch**: `fix/fs-test-infra-placeholder-removal`
+**Status**: ✅ **COMPLETED**
+**Date**: 2025-11-12
+
+### Summary
+Removed 21 empty test infrastructure placeholder directories while preserving active test directories with real test files.
+
+### Actions Taken
+1. ✅ Loaded FS-1 test infrastructure placeholder list
+   - Identified 21 candidate empty directories
+
+2. ✅ Re-verified each directory is empty
+   - Confirmed all 21 candidates contain zero files
+
+3. ✅ Identified directories to KEEP (contain active tests)
+   - `tests/helpers/` - Contains `request.ts`
+   - `backend/__tests__/workers/` - Contains `elasticsearch-sync.worker.spec.ts`
+   - Parent directories with files: `tests/{e2e,integration,performance,security}/`
+
+4. ✅ Removed empty placeholder directories
+   ```bash
+   find tests/ -type d -empty -print0 | xargs -0 rmdir
+   rmdir backend/__tests__/auth
+   ```
+
+5. ✅ Added anti-placeholder policy to `tests/README.md`
+
+### Directories Removed (21 total)
+
+**E2E Placeholders** (3):
+- tests/e2e/{cypress,playwright,scenarios}/
+
+**Performance Test Subcategories** (3):
+- tests/performance/{load,spike,stress}/
+
+**Security Test Types** (3):
+- tests/security/{compliance,penetration,vulnerability-scans}/
+
+**AI Testing Category** (4 - entire branch):
+- tests/ai-testing/{accuracy-testing,bias-detection,model-validation}/
+- tests/ai-testing/ (parent)
+
+**Unit Test Placeholders** (3):
+- tests/unit/{ai,backend,frontend}/
+
+**Integration Test Placeholders** (3):
+- tests/integration/{api,database,services}/
+
+**Duplicate/Unused Utilities** (2):
+- tests/fixtures/ (duplicate of tests/support/fixtures/)
+- tests/utils/ (unused)
+
+**Legacy Test Location** (1):
+- backend/__tests__/auth/
+
+### Directories KEPT (Active Test Infrastructure)
+
+- ✅ `tests/helpers/` - Contains request.ts (HTTP helpers)
+- ✅ `backend/__tests__/workers/` - Contains elasticsearch-sync.worker.spec.ts
+- ✅ `tests/e2e/` - Contains auth.spec.ts, playwright.config.ts
+- ✅ `tests/integration/` - Contains setup-test-db.ts, auth/
+- ✅ `tests/performance/` - Contains k6-baseline.js, k6-load-test.js
+- ✅ `tests/security/` - Contains rls-tests.spec.ts
+
+### Verification Results
+```bash
+npm run typecheck       # ✅ 0 errors
+npm run lint            # ✅ 0 errors, 1246 warnings (pre-existing)
+npm run test:backend    # ✅ 230 passed, 59 skipped, 7 pre-existing failures
+```
+
+### Key Findings
+- **Zero Impact**: No tests broken, no references found
+- **Policy Violation**: 21 empty directories violated clean architecture
+- **Future Prevention**: Anti-placeholder policy added to tests/README.md
+- **Storage Cleanup**: Removed 21 empty filesystem entries
+
+### Invariants Maintained
+- ✅ 0 TypeScript errors
+- ✅ 0 ESLint errors (1246 pre-existing warnings)
+- ✅ 0 new test failures
+- ✅ All 7 pre-existing failures remain unchanged
+
+### Policy Established
+**Anti-Placeholder Policy** (documented in tests/README.md):
+> "Do not create empty test infrastructure directories for future tests. Only scaffold test directories when you begin implementing tests. Test infrastructure should match implementation."
+
+**Next**: FS-6 will remove documentation placeholder directories (20+ empty directories)
 
 ---
 
