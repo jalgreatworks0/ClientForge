@@ -1167,8 +1167,159 @@ User will decide:
 
 ---
 
+## TM-6 – Test Constitution & Skipped Suite Policy
+
+**Branch**: `fix/tm6-test-constitution`
+**Status**: ✅ **COMPLETED** (2025-11-13)
+**Result**: Documentation-only changes, all invariants maintained
+
+### Summary
+
+Created a single, authoritative **Test Constitution** document that codifies test structure, patterns, and policies for ClientForge-CRM.
+
+This document serves as the source of truth for all test-related decisions, complementing FS-1 → FS-6 file structure sanitation work.
+
+### Deliverables
+
+#### 1. Test Constitution (`docs/testing/TEST-CONSTITUTION.md`)
+
+Comprehensive 10-section document defining:
+
+**Section 1-2: Foundation**
+- Purpose and goals of test organization
+- Directory layout with clear responsibilities for each test type
+
+**Section 3-4: Patterns & Structure**
+- File naming conventions (*.test.ts, *.spec.ts)
+- Test structure best practices (describe/it patterns)
+- Helpers, factories, and support code guidelines
+  - Factories: `createContact()`, `createAccount()` for test data
+  - Builders: `mockRequest().withTenant().withAuth()` for fluent APIs
+  - Helpers: Database seeding, auth setup, API utilities
+
+**Section 5-7: Quality Standards**
+- **Skipped test policy** - Only allowed with clear TODO and compiling code
+- **TypeScript standards** - All tests must compile (0 errors mandatory)
+- **Linting standards** - ESLint rules must pass (0 errors)
+- **Known test debt** - Explicit tracking of 7 failing, skipped suites
+
+**Section 8-10: Governance**
+- Checklist for adding new tests
+- Constitution evolution process
+- References to related documentation
+
+#### 2. Updated `tests/README.md`
+
+Added prominent constitution reference at the top:
+- Clear link to TEST-CONSTITUTION.md
+- Summary of what the constitution covers
+- Directive to review before writing new tests
+
+#### 3. Known Test Debt Documentation
+
+Explicitly documented the **7 failing, skipped test suites** as Phase 5+ technical debt:
+
+| Suite | Type | Complexity | Error Summary |
+|-------|------|------------|---------------|
+| sso-provider.service.test.ts | Unit | 🔴 HIGH | 6 TS errors (params/methods/args) |
+| task-service.test.ts | Unit | 🟡 MEDIUM | CallDirection enum mismatch |
+| custom-field-service.test.ts | Unit | 🟡 MEDIUM | CustomFieldType enum mismatch |
+| rate-limiter.test.ts | Unit | 🟡 MEDIUM | Mock type incompatibility |
+| input-sanitizer.test.ts | Unit | 🔴 HIGH | Jest parse/TS error |
+| tenant-guard.spec.ts | Integration | 🔴 HIGH | Type augmentation needed |
+| auth-flow.test.ts | Integration | 🔴 HIGH | Constructor signature mismatch |
+
+### Policy Established
+
+**Test Constitution Principles**:
+
+1. **No new broken suites** - All new tests must compile successfully
+2. **Skipped tests are debt** - Must have clear TODO and compiling code
+3. **Shared infrastructure** - Use factories/builders from `tests/support/`
+4. **Strong typing** - TypeScript errors = 0 (mandatory)
+5. **Clear organization** - Each test type has designated directory with specific responsibilities
+
+### Key Sections of Constitution
+
+**Directory Responsibilities**:
+- `tests/unit/` - Fast, isolated, mocked dependencies
+- `tests/integration/` - Multi-layer interactions, test DB
+- `tests/e2e/` - End-to-end user flows (Playwright)
+- `tests/performance/` - k6 load tests (not default CI)
+- `tests/security/` - Security-focused scenarios
+- `tests/helpers/` - Shared HTTP/request utilities
+- `tests/support/` - Factories, builders, fixtures, mocks
+
+**Support Code Structure**:
+```
+tests/support/
+├── builders/      # Fluent APIs (ExpressRequestBuilder)
+├── factories/     # Test data generators (createContact)
+├── fixtures/      # Static test data
+├── helpers/       # Infrastructure (dbHelper, authHelper)
+├── mocks/         # Reusable mocks
+└── test-app.ts    # Express test app bootstrap
+```
+
+### Commands Run
+
+```bash
+npm run typecheck       # ✅ 0 errors
+npm run lint            # ✅ 0 errors, 1246 warnings (pre-existing)
+npm run test:backend    # ✅ 230 passed, 59 skipped, 7 failed (unchanged)
+```
+
+### Invariants Maintained
+
+- ✅ 0 TypeScript errors in compiled code
+- ✅ 0 ESLint errors
+- ✅ 230 passing tests remain passing
+- ✅ 59 skipped tests unchanged
+- ✅ 7 failing suites unchanged (all pre-existing TS compilation errors in skipped tests)
+- ✅ No new test failures introduced
+
+### Impact
+
+**Immediate**:
+- Clear reference point for all future test development
+- Documented technical debt (7 skipped suites) with context
+- Established shared vocabulary for test patterns
+
+**Long-term**:
+- Prevents test rot (broken placeholders, duplicate patterns)
+- Makes onboarding easier (clear structure and standards)
+- Enables confident refactoring (patterns are documented)
+- Supports governance (constitution can evolve deliberately)
+
+### Files Modified
+
+- ✅ Created: `docs/testing/TEST-CONSTITUTION.md` (comprehensive 500+ line document)
+- ✅ Updated: `tests/README.md` (added constitution reference)
+- ✅ Updated: `docs/testing/TEST-MODERNIZATION-LOG.md` (this entry)
+
+### Next Steps
+
+**User will decide**:
+
+**Option A: TM-7 - Real Coverage Expansion** (Recommended)
+- Pick 1-2 core modules with passing tests (auth, contacts, deals)
+- Add meaningful test cases that increase actual coverage
+- Target uncovered error paths and edge cases
+- Work under new Test Constitution guidelines
+
+**Option B: TM-8 - Fix MEDIUM Complexity Skipped Suites**
+- Address 2-3 suites with simple enum type fixes
+- Reduces compilation noise from 7 → 4-5 failures
+- Learning exercise for test modernization
+
+**Option C: Continue File Structure Sanitation**
+- FS-7: Monorepo package placeholders (optional)
+- FS-8: Frontend placeholders (optional)
+
+---
+
 ## References
+- **Test Constitution**: `docs/testing/TEST-CONSTITUTION.md` ⭐ **NEW**
 - **Blueprint**: `docs/TEST_MODERNIZATION_BLUEPRINT.md`
-- **Governance**: `docs/testing/TEST-GOVERNANCE.md` (to be created)
 - **CI Configuration**: `.github/workflows/ci.yml`
 - **Jest Configuration**: `jest.config.js`

@@ -4,6 +4,21 @@
 
 Comprehensive testing infrastructure for ClientForge CRM with 85%+ coverage target.
 
+## 📜 Test Constitution
+
+**All tests must follow the Test Constitution** - the authoritative guide for test organization, patterns, and standards:
+
+👉 **[docs/testing/TEST-CONSTITUTION.md](../docs/testing/TEST-CONSTITUTION.md)**
+
+The constitution defines:
+- Directory layout and responsibilities
+- Naming conventions and structure
+- Helpers, factories, and support code patterns
+- Skipped test policies and technical debt tracking
+- TypeScript and linting standards for tests
+
+**Before writing new tests**, review the constitution to understand established patterns.
+
 ## Test Structure
 
 ```
