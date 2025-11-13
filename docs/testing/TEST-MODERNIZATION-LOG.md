@@ -713,7 +713,77 @@ npm run test:backend
 - ✅ Storage runtime directories confirmed as properly gitignored
 - ✅ All invariants maintained
 
-**Next**: FS-3 will consolidate `backend/tests/` into canonical `tests/` location
+**Next**: FS-4 will remove integration placeholder directories (40+ empty directories)
+
+---
+
+## FS-3: Backend Tests Consolidation
+
+**Branch**: `fix/fs-backend-tests-consolidation`
+**Status**: ✅ **COMPLETED**
+**Date**: 2025-11-12
+
+### Summary
+Consolidated legacy `backend/tests/` directory into canonical `tests/` location by moving `test-app.ts` shared test utility.
+
+### Actions Taken
+1. ✅ Inventoried `backend/tests/` directory
+   - Found exactly 1 file: `backend/tests/support/test-app.ts`
+   - Exports `makeTestApp()` and `requestApp()` test utilities
+
+2. ✅ Searched for import references
+   - **Zero imports found** - file is currently unused in codebase
+   - Searched patterns: `backend/tests`, `test-app`, `makeTestApp`, `requestApp`
+
+3. ✅ Moved file to canonical location
+   ```bash
+   git mv backend/tests/support/test-app.ts tests/support/test-app.ts
+   ```
+
+4. ✅ Removed empty directory structure
+   ```bash
+   rmdir backend/tests/support
+   rmdir backend/tests
+   ```
+
+5. ✅ No import updates needed (file unused)
+
+### Verification Results
+```bash
+npm run typecheck       # ✅ 0 errors
+npm run lint            # ✅ 0 errors, 1246 warnings
+npm run test:backend    # ✅ 230 passed, 59 skipped, 7 pre-existing failures
+```
+
+### File Structure Changes
+**Before**:
+```
+backend/tests/
+└── support/
+    └── test-app.ts          (575 bytes, unused)
+tests/support/               (exists, other files)
+```
+
+**After**:
+```
+backend/tests/               ❌ DELETED
+tests/support/
+└── test-app.ts              ✅ MOVED (575 bytes)
+```
+
+### Key Findings
+- **Zero Risk**: File had no imports, making this a completely safe move
+- **No Breaking Changes**: No test files reference this utility
+- **Future Ready**: File is now in canonical location for when it's needed
+- **Clean Structure**: Eliminates duplicate test support directories
+
+### Invariants Maintained
+- ✅ 0 TypeScript errors
+- ✅ 0 ESLint errors (1246 pre-existing warnings)
+- ✅ 0 new test failures
+- ✅ All 7 pre-existing failures remain unchanged
+
+**Next**: FS-4 will remove integration placeholder directories (40+ empty directories)
 
 ---
 
