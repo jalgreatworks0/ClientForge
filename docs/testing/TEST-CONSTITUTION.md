@@ -27,7 +27,8 @@ Fortress tests are high-quality, comprehensive test suites that:
 
 ```
 tests/
-├── helpers/           # Test utilities and mini-apps
+├── helpers/           # Test utilities and mini-apps (deprecated path)
+├── support/           # Test utilities and mini-apps (new standard path)
 ├── unit/             # Unit tests by domain
 │   ├── auth/
 │   ├── security/
@@ -35,6 +36,7 @@ tests/
 ├── integration/      # Integration tests
 │   ├── auth/
 │   ├── errors/
+│   ├── validation/
 │   └── ...
 └── e2e/             # End-to-end tests
 ```
@@ -45,13 +47,19 @@ tests/
 
 | ID | Suite Name | Location | Tests | Status | Notes |
 |----|------------|----------|-------|--------|-------|
-| TM-16 | Error Handler HTTP Integration | `tests/integration/errors/error-handler.fortress.test.ts` | 30+ | ✅ Complete | Global error handler with real HTTP calls |
+| TM-16 | Error Handler HTTP Integration | `tests/integration/errors/error-handler.fortress.test.ts` | 22 | ✅ Complete | Global error handler with real HTTP calls |
+
+### HTTP Integration / Request Validation
+
+| ID | Suite Name | Location | Tests | Status | Notes |
+|----|------------|----------|-------|--------|-------|
+| TM-17 | Request Validation HTTP Integration | `tests/integration/validation/request-validation.fortress.test.ts` | 22 | ✅ Complete | Zod validation with middleware pipeline |
 
 ### Total Fortress Test Statistics
 
-- **Total Fortress Suites**: 1
-- **Total Fortress Tests**: 30+
-- **Total Coverage**: Error handling, validation, auth errors, rate limits, 404s, 500s
+- **Total Fortress Suites**: 2
+- **Total Fortress Tests**: 44
+- **Total Coverage**: Error handling, request validation, auth errors, rate limits, 404s, 500s, nested/array validation
 - **All Passing**: ✅
 - **No Skipped**: ✅
 
@@ -60,6 +68,7 @@ tests/
 | Helper | Location | Purpose |
 |--------|----------|---------|
 | Error Handler Test App | `tests/helpers/test-error-handler-app.ts` | Mini Express app for error handler testing |
+| Validation Test App | `tests/support/test-validation-app.ts` | Mini Express app for request validation testing |
 
 ## Test Execution
 
@@ -99,10 +108,10 @@ All changes must pass:
 
 ## Future Fortress Suite Targets
 
-Potential areas for TM-17+:
-- CORS middleware integration
-- Request validation middleware
-- File upload error handling
-- WebSocket error handling
-- Authentication flow integration (if not covered)
-- Rate limiter integration (if not covered)
+Potential areas for TM-18+:
+- CORS & Security Headers middleware integration
+- File upload validation and error handling
+- WebSocket connection and error handling
+- Streaming response errors
+- Multi-tenant data isolation testing
+- Rate limiter integration (deeper coverage)
