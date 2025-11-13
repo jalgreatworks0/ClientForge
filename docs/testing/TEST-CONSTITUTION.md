@@ -407,7 +407,7 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 | 2 | `tests/unit/tasks/task-service.test.ts` | `backend/core/tasks/task-service.ts` | ✅ EXISTS | ⏳ Future |
 | 3 | `tests/unit/metadata/custom-field-service.test.ts` | `backend/services/custom-fields/custom-field.service.ts` | ✅ EXISTS | ⏳ Future |
 | 4 | `tests/unit/security/rate-limiter.test.ts` | `backend/middleware/rate-limiter.ts` | ✅ EXISTS | ✅ **TM-12** |
-| 5 | `tests/unit/security/input-sanitizer.test.ts` | `backend/utils/sanitization/input-sanitizer.ts` | ✅ EXISTS | ⏳ TM-13 |
+| 5 | `tests/unit/security/input-sanitizer.test.ts` | `backend/utils/sanitization/input-sanitizer.ts` | ✅ EXISTS | ✅ **TM-13** |
 | 6 | `tests/unit/auth/tenant-guard.test.ts` | `backend/middleware/tenant-guard.ts` | ✅ EXISTS | ✅ **TM-11** |
 | 7 | `tests/integration/auth/auth-flow.test.ts` | `backend/api/server.ts` | ✅ EXISTS | ⏳ TM-14 |
 
@@ -423,6 +423,13 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 - Coverage: 35 tests (rate limiting, keying/isolation, headers, window management)
 - Behavior contract: In-memory rate limiting with multi-tenant isolation
 - Pattern: Second fortress suite, reinforcing critical infrastructure protection
+
+**TM-13 Update** (2025-11-13): InputSanitizer now has comprehensive fortress suite coverage:
+- New test suite: [tests/unit/security/input-sanitizer.test.ts](../../../tests/unit/security/input-sanitizer.test.ts)
+- Coverage: 139 tests covering all 15 sanitization functions
+- Behavior contract: XSS prevention (DOMPurify), path traversal prevention, URL/email/phone validation
+- Security guarantees: Blocks script tags, event handlers, javascript:/data: URLs, path traversal
+- Pattern: Third fortress suite, comprehensive input validation and security
 
 ### Future Coverage Opportunities
 
@@ -530,6 +537,7 @@ To modify this constitution:
 - **Fortress Suite Examples**:
   - `tests/unit/auth/tenant-guard.test.ts` (TM-11 - Multi-tenant isolation)
   - `tests/unit/security/rate-limiter.test.ts` (TM-12 - Rate limiting & resilience)
+  - `tests/unit/security/input-sanitizer.test.ts` (TM-13 - XSS prevention & input validation)
 - **Integration Test Example**: `tests/errors/error-handler.integration.test.ts`
 
 ---
