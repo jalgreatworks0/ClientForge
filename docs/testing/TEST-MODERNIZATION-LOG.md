@@ -628,6 +628,51 @@ git push origin fix/test-modernization-phase4
 
 ---
 
+## FS-1: File Structure Sanitation Blueprint
+
+**Branch**: `fix/fs-sanitation-blueprint`
+**Status**: ✅ **COMPLETED**
+**Date**: 2025-11-12
+
+### Objectives
+- Audit entire repository structure for dead/ghost/legacy paths
+- Identify empty directories, orphan files, and config anomalies
+- Create cleanup plan (FS-2 through FS-10) before adding new features
+
+### Summary
+Generated comprehensive file structure audit in `docs/fs/FS-SANITATION-BLUEPRINT.md`
+
+**Key Findings**:
+- **133 empty directories** identified (integrations, packages, frontend, docs, test infrastructure)
+- **1 orphan directory** found (`testslibsearch/` - typo, should be deleted)
+- **1 legacy test root** (`backend/tests/` - should consolidate to `tests/`)
+- **0 ghost test files** (all tests have implementations after Phase 1-4)
+- **0 broken imports** (all tsconfig paths valid)
+- **2 minor config anomalies** (jest patterns, could be improved)
+
+**Cleanup Plan**:
+- FS-2: Delete critical orphans (`testslibsearch/`, storage placeholders) - 15 min
+- FS-3: Consolidate `backend/tests/` → `tests/` - 30 min
+- FS-4 through FS-8: Remove 133 empty directories - 2 hours
+- FS-9: Deep scan for orphan TypeScript files - 2 hours
+- FS-10: Update jest.config patterns - 10 min
+
+**Total Cleanup Estimate**: ~5 hours
+
+### Verification
+```bash
+# Blueprint generated (no code changes)
+ls docs/fs/FS-SANITATION-BLUEPRINT.md
+# ✅ 35KB blueprint document created
+
+# Invariants maintained
+npm run typecheck  # ✅ 0 errors
+npm run lint       # ✅ 0 errors, 1246 warnings
+npm test:backend   # ✅ 230 passed, 59 skipped, 7 pre-existing failures
+```
+
+---
+
 ## References
 - **Blueprint**: `docs/TEST_MODERNIZATION_BLUEPRINT.md`
 - **Governance**: `docs/testing/TEST-GOVERNANCE.md` (to be created)
