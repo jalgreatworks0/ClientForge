@@ -2015,6 +2015,194 @@ npm run test:backend  # ✅ 0 failing suites
 
 ---
 
+## TM-11 – TenantGuard Fortress Suite
+
+**Branch**: `fix/tm11-tenant-guard-tests`
+**Status**: ✅ **COMPLETED** (2025-11-13)
+**Result**: +23 new passing tests, TenantGuard now has comprehensive fortress-level coverage
+
+### Summary
+
+Created a brand-new, fully working TenantGuard test suite from scratch. This is the first "fortress suite" following TM-10's cleanup, establishing the pattern for critical infrastructure middleware testing.
+
+**TenantGuard removed in TM-10** (tests/integration/auth/tenant-guard.spec.ts - 2 TS errors)
+**TenantGuard rebuilt in TM-11** (tests/unit/auth/tenant-guard.test.ts - 23 passing tests)
+
+### Target Module Selection
+
+**TenantGuard** chosen as TM-11 target:
+- ✅ **Critical backbone middleware** - Multi-tenant isolation for entire application
+- ✅ **Broken tests removed in TM-10** - Fresh start with current API signatures
+- ✅ **Implementation exists** - `backend/middleware/tenant-guard.ts` is production-ready
+- ✅ **High security impact** - Cross-tenant access prevention is non-negotiable
+- ✅ **Fortress pattern pilot** - First test suite following "0 failing suites" standard
+
+### TenantGuard Behavior Matrix
+
+**Implementation Path**: `backend/middleware/tenant-guard.ts`
+
+**Core Behavior**:
+1. **Tenant Resolution**: Reads tenant from `x-tenant-id` header or `req.user.tenantId`
+2. **Header Priority**: Header tenant takes precedence over user tenant
+3. **Validation**: Rejects missing, empty, "default", or sentinel UUIDs
+4. **Context Attachment**: Sets `req.tenantId` for downstream handlers
+5. **Emergency Fallback**: Optional `FALLBACK_tenantId` env var (ops-only, module load time)
+
+### Test Coverage Implemented
+
+**Created**: `tests/unit/auth/tenant-guard.test.ts` (23 tests, 280+ lines)
+
+#### Happy Path Coverage (5 tests)
+1. ✅ Allows requests with valid tenant in header
+2. ✅ Allows requests with valid tenant from user context
+3. ✅ Prefers header tenant over user tenant (priority)
+4. ✅ Trims whitespace from tenant header
+5. ✅ Handles UUID-format tenant IDs
+
+#### Error Path - Missing Tenant (4 tests)
+6. ✅ Rejects requests with no tenant header and no user
+7. ✅ Rejects requests with empty tenant header
+8. ✅ Rejects requests with whitespace-only tenant header
+9. ✅ Rejects requests with user but no tenantId property
+
+#### Error Path - Invalid Tenant Values (3 tests)
+10. ✅ Rejects tenant value "default" (reserved keyword)
+11. ✅ Rejects default sentinel UUID (00000000-0000-0000-0000-000000000001)
+12. ✅ Rejects "default" from user context
+
+#### Emergency Fallback Behavior (2 tests)
+13. ✅ Enforces tenant requirement when no fallback is configured (production mode)
+14. ✅ Does not prevent valid tenants even if fallback is configured
+
+*Note*: Emergency fallback is read at module load time (`process.env.FALLBACK_tenantId`), so runtime tests cannot fully exercise this behavior. Tests document expected behavior for ops emergencies.
+
+#### Edge Cases (6 tests)
+15. ✅ Handles undefined user object
+16. ✅ Handles null user object
+17. ✅ Handles case-sensitive header (lowercase x-tenant-id)
+18. ✅ Handles very long tenant ID (200+ chars)
+19. ✅ Handles numeric tenant ID (as string)
+20. ✅ Handles tenant ID with special characters (hyphens, underscores)
+
+#### Response Format Validation (3 tests)
+21. ✅ Returns proper error structure when tenant is missing
+22. ✅ Returns 400 status code for missing tenant
+23. ✅ Does not modify response when tenant is valid
+
+### Test Patterns Used (Test Constitution Compliance)
+
+#### Mocking Strategy
+- ✅ Minimal Express mocks (Request, Response, NextFunction)
+- ✅ Request mock includes `headers`, `user`, `tenantId` properties
+- ✅ Response mock includes `status()`, `json()` jest mocks
+- ✅ Next function as jest mock to verify middleware flow
+- ✅ Console.error spy for critical logging validation
+
+#### Test Structure (Section 3 of Constitution)
+- ✅ Clear `describe()` blocks per behavior category
+- ✅ Behavior-focused test names (e.g., "should reject tenant value 'default'")
+- ✅ Arrange-Act-Assert pattern
+- ✅ Security-focused assertions (tenant isolation, error responses)
+
+#### No New Helpers Needed
+- ✅ Used standard Jest mocking patterns
+- ✅ No custom factories needed (simple object mocks)
+- ✅ Followed Express middleware testing patterns
+
+### Commands Run
+
+```bash
+npx jest tests/unit/auth/tenant-guard.test.ts --runInBand  # ✅ 23 passed
+npm run typecheck                                           # ✅ 0 errors
+npm run lint                                                # ✅ 0 errors, warnings allowed
+npm run test:backend                                        # ✅ 313 passed (+23), 59 skipped, 0 failed
+```
+
+### Invariants Maintained
+
+- ✅ **0 TypeScript errors**
+- ✅ **0 ESLint errors** (warnings allowed)
+- ✅ **0 failing suites** ⭐ (maintained from TM-10)
+- ✅ Test suites: 4 skipped (intentional), 15 passed, **19 total** (up from 18)
+- ✅ Tests: 59 skipped, **313 passed** (+23), 372 total
+- ✅ No previously passing tests broken
+
+### Coverage Impact
+
+**TenantGuard** coverage progression:
+- **Before TM-10**: 1 broken test file (tests/integration/auth/tenant-guard.spec.ts - 2 TS errors)
+- **After TM-10**: 0 test files (broken tests removed)
+- **After TM-11**: 1 working test file (tests/unit/auth/tenant-guard.test.ts - 23 passing tests)
+
+**Behaviors covered**:
+- ✅ Tenant resolution from multiple sources (header, user)
+- ✅ Header priority over user tenant
+- ✅ Validation (missing, empty, invalid, reserved values)
+- ✅ Context attachment (`req.tenantId`)
+- ✅ Error responses (400 with proper structure)
+- ✅ Edge cases (null/undefined, whitespace, special chars, long IDs)
+
+**Overall backend coverage**:
+- Test suites: 19 total (15 passing, 4 skipped)
+- Tests: 372 total (313 passed, 59 skipped)
+- **Real passing coverage increased**: 290 → 313 tests (+8% increase)
+
+### Key Findings
+
+1. **TenantGuard is production-ready** - All intended multi-tenant isolation behaviors work as designed
+2. **Header priority validated** - Header tenant correctly takes precedence over user.tenantId
+3. **Validation comprehensive** - Rejects all invalid tenant values ("default", sentinel, empty, missing)
+4. **Error responses consistent** - All failures return 400 with structured error (TENANT_REQUIRED, E_TENANT_001)
+5. **Edge cases covered** - Handles null/undefined, whitespace, long IDs, special characters
+6. **Emergency fallback documented** - Module load-time behavior documented but cannot be fully tested at runtime
+
+### Files Modified
+
+- ✅ **Created**: `tests/unit/auth/tenant-guard.test.ts` (280+ lines, 23 tests)
+- ✅ **Updated**: `docs/testing/TEST-MODERNIZATION-LOG.md` (this entry)
+
+### Fortress Suite Pattern Established
+
+TM-11 establishes the **"Fortress Suite" pattern** for critical infrastructure:
+
+1. **Comprehensive coverage**: Happy paths, error paths, edge cases
+2. **Security-focused**: Validates isolation, error responses, context attachment
+3. **Zero failures tolerated**: All tests pass, no skips without clear reason
+4. **Clear behavior matrix**: Tests document what is protected and how
+5. **Minimal mocking**: Simple, maintainable mocks aligned with production types
+6. **Constitution-compliant**: Directory structure, naming, patterns
+
+### Backbone Protection Status
+
+**Critical infrastructure now covered**:
+- ✅ **Auth Core** (TM-7, TM-8, TM-9): SessionService (28), JwtService (32), PasswordService (36) = 96 tests
+- ✅ **TenantGuard** (TM-11): 23 tests
+- **Total backbone tests**: **119 passing tests**
+
+**Next fortress targets**:
+- TM-12: RateLimiter fortress suite
+- TM-13: InputSanitizer fortress suite
+- TM-14: Auth flow integration smoke tests
+
+### Next Steps
+
+**Option A: Continue Fortress Suites** (Recommended)
+- **TM-12 - RateLimiter**: Rate limiting middleware (removed in TM-10, 4 TS errors)
+- **TM-13 - InputSanitizer**: XSS/injection protection (removed in TM-10, 1 syntax error)
+- Goal: Complete critical infrastructure fortress coverage
+
+**Option B: Expand Business Logic Coverage**
+- Contacts/Deals/Accounts services already have tests
+- Add edge case and error path coverage
+- Build coverage momentum in CRM features
+
+**Option C: Integration Smoke Tests**
+- TM-14: Auth flow end-to-end (login, tenant setup, token refresh)
+- Prove whole auth pipeline works together
+- Small but solid suite (5-10 critical path tests)
+
+---
+
 ## References
 - **Test Constitution**: `docs/testing/TEST-CONSTITUTION.md` ⭐ **NEW**
 - **Blueprint**: `docs/TEST_MODERNIZATION_BLUEPRINT.md`

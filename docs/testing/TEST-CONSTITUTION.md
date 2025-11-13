@@ -401,17 +401,22 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 
 ### Removed Suites (TM-10)
 
-| # | Suite (Removed) | Implementation | Status |
-|---|-----------------|----------------|--------|
-| 1 | `tests/unit/services/auth/sso-provider.service.test.ts` | `backend/services/auth/sso/sso-provider.service.ts` | ✅ EXISTS |
-| 2 | `tests/unit/tasks/task-service.test.ts` | `backend/core/tasks/task-service.ts` | ✅ EXISTS |
-| 3 | `tests/unit/metadata/custom-field-service.test.ts` | `backend/services/custom-fields/custom-field.service.ts` | ✅ EXISTS |
-| 4 | `tests/unit/security/rate-limiter.test.ts` | `backend/middleware/rate-limiter.ts` | ✅ EXISTS |
-| 5 | `tests/unit/security/input-sanitizer.test.ts` | `backend/utils/sanitization/input-sanitizer.ts` | ✅ EXISTS |
-| 6 | `tests/integration/auth/tenant-guard.spec.ts` | `backend/middleware/tenant-guard.ts` | ✅ EXISTS |
-| 7 | `tests/integration/auth/auth-flow.test.ts` | `backend/api/server.ts` | ✅ EXISTS |
+| # | Suite (Removed) | Implementation | Status | Coverage |
+|---|-----------------|----------------|--------|----------|
+| 1 | `tests/unit/services/auth/sso-provider.service.test.ts` | `backend/services/auth/sso/sso-provider.service.ts` | ✅ EXISTS | ⏳ Future |
+| 2 | `tests/unit/tasks/task-service.test.ts` | `backend/core/tasks/task-service.ts` | ✅ EXISTS | ⏳ Future |
+| 3 | `tests/unit/metadata/custom-field-service.test.ts` | `backend/services/custom-fields/custom-field.service.ts` | ✅ EXISTS | ⏳ Future |
+| 4 | `tests/unit/security/rate-limiter.test.ts` | `backend/middleware/rate-limiter.ts` | ✅ EXISTS | ⏳ TM-12 |
+| 5 | `tests/unit/security/input-sanitizer.test.ts` | `backend/utils/sanitization/input-sanitizer.ts` | ✅ EXISTS | ⏳ TM-13 |
+| 6 | `tests/integration/auth/tenant-guard.spec.ts` | `backend/middleware/tenant-guard.ts` | ✅ EXISTS | ✅ **TM-11** |
+| 7 | `tests/integration/auth/auth-flow.test.ts` | `backend/api/server.ts` | ✅ EXISTS | ⏳ TM-14 |
 
 **All implementations exist and work in production.** Tests were removed to achieve 0 failing suites baseline.
+
+**TM-11 Update** (2025-11-13): TenantGuard now has comprehensive fortress suite coverage:
+- New test suite: [tests/unit/auth/tenant-guard.test.ts](../../../tests/unit/auth/tenant-guard.test.ts)
+- Coverage: 23 tests (happy path, error cases, edge cases, response validation)
+- Pattern: First "fortress suite" for critical infrastructure middleware
 
 ### Future Coverage Opportunities
 
@@ -516,6 +521,7 @@ To modify this constitution:
 - **Builder Example**: `tests/support/builders/expressRequestBuilder.ts`
 - **Helper Example**: `tests/helpers/request.ts`
 - **Unit Test Example**: `tests/unit/auth/password-service.test.ts`
+- **Fortress Suite Example**: `tests/unit/auth/tenant-guard.test.ts` (TM-11)
 - **Integration Test Example**: `tests/errors/error-handler.integration.test.ts`
 
 ---
