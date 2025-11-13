@@ -1065,6 +1065,108 @@ npm run test:backend    # ✅ 230 passed, 59 skipped, 7 pre-existing failures
 
 ---
 
+## TM-5 – First Failing Suite Investigation
+
+**Branch**: `fix/tm5-first-failing-suite`
+**Status**: 🔍 **INVESTIGATION COMPLETED** (2025-11-13)
+**Result**: No code changes committed
+
+### Summary
+Conducted comprehensive investigation of all 7 failing backend test suites. **Key Finding**: All 7 failures are TypeScript compilation failures in `describe.skip` test suites, NOT runtime test failures.
+
+### Failing Suites Inventory (7 total)
+
+| Suite | Type | Skip Status | Error Type | Complexity |
+|-------|------|-------------|------------|------------|
+| `tests/unit/services/auth/sso-provider.service.test.ts` | Unit | ✅ Skipped | Missing `createdBy` param (2×), Method doesn't exist (2×), Arg count mismatch (2×) | 🔴 HIGH (6 errors) |
+| `tests/unit/tasks/task-service.test.ts` | Unit | ✅ Skipped | `CallDirection` enum type mismatch | 🟡 MEDIUM |
+| `tests/unit/metadata/custom-field-service.test.ts` | Unit | ✅ Skipped | `CustomFieldType` enum type mismatch | 🟡 MEDIUM |
+| `tests/unit/security/rate-limiter.test.ts` | Unit | ✅ Skipped | Response.get() mock type incompatibility | 🟡 MEDIUM |
+| `tests/unit/security/input-sanitizer.test.ts` | Unit | ✅ Skipped | Jest parse error ("unexpected token") | 🔴 HIGH |
+| `tests/integration/auth/tenant-guard.spec.ts` | Integration | ✅ Skipped | Missing `userId`, `role` properties + Request type augmentation needed | 🔴 HIGH |
+| `tests/integration/auth/auth-flow.test.ts` | Integration | ✅ Skipped | Server constructor expects `ModuleRegistry` parameter | 🔴 HIGH |
+
+### Key Findings
+
+1. **All suites are `describe.skip`** - These are placeholder test suites marked for Phase 5 implementation
+2. **Zero runtime tests execute** - Jest compiles TypeScript but never runs tests
+3. **TypeScript compilation failures** - All 7 failures are TS errors, not assertion failures
+4. **Mixed complexity** - 4 suites have HIGH complexity (multiple cascading type issues), 3 have MEDIUM complexity (simple enum/type fixes)
+
+### Root Cause Analysis
+
+**Why these suites fail**:
+- Implementation code evolved (e.g., `createSSOProvider` signature changed)
+- Test placeholder code never updated to match current signatures
+- Type definitions changed (enums introduced, interfaces expanded)
+- Express Request type needs augmentation for `user` and `tenantId` properties
+
+**Impact of fixing**:
+- ✅ Reduces "Test Suites: X failed" count
+- ✅ Eliminates TypeScript compilation noise
+- ❌ Does NOT increase actual test coverage (suites remain skipped)
+- ❌ Does NOT validate functionality (no tests run)
+
+### Recommendation
+
+**DO NOT fix these suites in TM-5**. Instead:
+
+1. **TM-5 Alternative**: Focus on **increasing coverage of PASSING suites**
+   - Add missing test cases to active suites
+   - Target uncovered error paths
+   - Address the 32% → 85% coverage gap
+
+2. **TM-6**: Create **"Test Constitution"** document
+   - Lock test patterns and structure
+   - Define skipped suite policy
+   - Establish TypeScript compilation standards for tests
+
+3. **TM-7+**: Address skipped suites **only when implementing features**
+   - Unskip SSO provider tests when SSO feature is active
+   - Unskip task service tests when task module is production-ready
+   - Treat these as "future test infrastructure" not "broken tests"
+
+### Technical Details
+
+**Example: SSO Provider Service (6 TypeScript errors)**
+```typescript
+// Error 1 & 2: Missing createdBy parameter (lines 59, 77)
+service.createSSOProvider('tenant', 'google', config)
+// Should be:
+service.createSSOProvider('tenant', 'google', config, 'user-123')
+
+// Error 3 & 4: Method doesn't exist (lines 91, 111)
+service.validateAndStoreToken(userId, provider, token)
+// Should be:
+service.validateStateToken(state, userId) // Different method entirely
+
+// Error 5 & 6: Wrong argument count (lines 122, 126)
+service.generateAuthUrl('google')
+// Should be:
+service.generateAuthUrl(provider, tenantId, callbackUrl, state?)
+```
+
+### Commands Run
+```bash
+npm run typecheck       # ✅ 0 errors (with these suites still failing)
+npm run lint            # ✅ 0 errors, 1246 warnings (pre-existing)
+npm run test:backend    # ✅ 230 passed, 59 skipped, 7 failed (compilation)
+```
+
+### Invariants Maintained
+- ✅ 0 TypeScript errors in **compiled code** (backend/*)
+- ✅ 0 ESLint errors
+- ✅ 230 passing tests remain passing
+- ✅ No new test failures introduced
+
+### Next Steps
+User will decide:
+- **Option A**: TM-5 Alternative (increase coverage of passing suites)
+- **Option B**: TM-6 (create Test Constitution document)
+- **Option C**: Fix 1-2 MEDIUM complexity suites (task-service or custom-field-service) as a learning exercise
+
+---
+
 ## References
 - **Blueprint**: `docs/TEST_MODERNIZATION_BLUEPRINT.md`
 - **Governance**: `docs/testing/TEST-GOVERNANCE.md` (to be created)
