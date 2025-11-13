@@ -406,7 +406,7 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 | 1 | `tests/unit/services/auth/sso-provider.service.test.ts` | `backend/services/auth/sso/sso-provider.service.ts` | ✅ EXISTS | ⏳ Future |
 | 2 | `tests/unit/tasks/task-service.test.ts` | `backend/core/tasks/task-service.ts` | ✅ EXISTS | ⏳ Future |
 | 3 | `tests/unit/metadata/custom-field-service.test.ts` | `backend/services/custom-fields/custom-field.service.ts` | ✅ EXISTS | ⏳ Future |
-| 4 | `tests/unit/security/rate-limiter.test.ts` | `backend/middleware/rate-limiter.ts` | ✅ EXISTS | ⏳ TM-12 |
+| 4 | `tests/unit/security/rate-limiter.test.ts` | `backend/middleware/rate-limiter.ts` | ✅ EXISTS | ✅ **TM-12** |
 | 5 | `tests/unit/security/input-sanitizer.test.ts` | `backend/utils/sanitization/input-sanitizer.ts` | ✅ EXISTS | ⏳ TM-13 |
 | 6 | `tests/unit/auth/tenant-guard.test.ts` | `backend/middleware/tenant-guard.ts` | ✅ EXISTS | ✅ **TM-11** |
 | 7 | `tests/integration/auth/auth-flow.test.ts` | `backend/api/server.ts` | ✅ EXISTS | ⏳ TM-14 |
@@ -417,6 +417,12 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 - New test suite: [tests/unit/auth/tenant-guard.test.ts](../../../tests/unit/auth/tenant-guard.test.ts)
 - Coverage: 23 tests (happy path, error cases, edge cases, response validation)
 - Pattern: First "fortress suite" for critical infrastructure middleware
+
+**TM-12 Update** (2025-11-13): RateLimiter now has comprehensive fortress suite coverage:
+- New test suite: [tests/unit/security/rate-limiter.test.ts](../../../tests/unit/security/rate-limiter.test.ts)
+- Coverage: 35 tests (rate limiting, keying/isolation, headers, window management)
+- Behavior contract: In-memory rate limiting with multi-tenant isolation
+- Pattern: Second fortress suite, reinforcing critical infrastructure protection
 
 ### Future Coverage Opportunities
 
@@ -521,7 +527,9 @@ To modify this constitution:
 - **Builder Example**: `tests/support/builders/expressRequestBuilder.ts`
 - **Helper Example**: `tests/helpers/request.ts`
 - **Unit Test Example**: `tests/unit/auth/password-service.test.ts`
-- **Fortress Suite Example**: `tests/unit/auth/tenant-guard.test.ts` (TM-11)
+- **Fortress Suite Examples**:
+  - `tests/unit/auth/tenant-guard.test.ts` (TM-11 - Multi-tenant isolation)
+  - `tests/unit/security/rate-limiter.test.ts` (TM-12 - Rate limiting & resilience)
 - **Integration Test Example**: `tests/errors/error-handler.integration.test.ts`
 
 ---
