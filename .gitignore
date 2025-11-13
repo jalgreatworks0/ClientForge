@@ -61,3 +61,16 @@ models/weights/
 # Temporary
 tmp/
 temp/
+
+# Local development artifacts
+input/
+_backup/
+.backups/
+ai/
+storage/
+archive/
+DIRECTORY_TREE.txt
+create_structure.ps1
+QUICK*START*
+*.bak
+nul
