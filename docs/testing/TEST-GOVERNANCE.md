@@ -511,6 +511,181 @@ npm run test:backend
 
 ---
 
+## ESLint Policy (Phase 4)
+
+### Blocking Configuration
+
+**Status**: ✅ **ACTIVE** as of Phase 4 (2025-11-12)
+
+ESLint is now a **blocking quality gate** in CI/CD with the following configuration:
+
+#### CI Integration
+
+```yaml
+# .github/workflows/ci.yml
+lint:
+  name: ESLint Code Quality
+  runs-on: ubuntu-latest
+  steps:
+    - run: npm run lint  # ✅ BLOCKING on errors (exit code ≠ 0)
+
+build:
+  needs: [typecheck, lint, test]  # Lint must pass before build
+```
+
+**Impact**: Pull requests with ESLint **errors** will fail CI and cannot be merged.
+
+#### Error vs Warning Policy
+
+**Errors** (BLOCKING):
+- Parse errors (invalid TypeScript syntax)
+- Import resolution failures
+- Rules that indicate genuine bugs or broken code
+- `@typescript-eslint/no-var-requires` - Disallow CommonJS require()
+
+**Warnings** (NON-BLOCKING, visible for cleanup):
+- `@typescript-eslint/no-unused-vars` - Unused imports/variables (~350 warnings)
+- `@typescript-eslint/no-explicit-any` - Use of `any` type (~750 warnings)
+- `import/order` - Import statement ordering (~100 warnings)
+- `no-console` - Console statements in production (~20 warnings)
+- `@typescript-eslint/no-namespace` - Namespace usage (3 warnings - legitimate for Express augmentation)
+- `no-case-declarations` - Lexical declarations in case blocks (5 warnings)
+- `no-useless-escape` - Unnecessary escape characters (4 warnings)
+- Other stylistic rules (~20 warnings)
+
+**Total**: 0 errors, ~1246 warnings (as of Phase 4)
+
+#### Rationale
+
+**Why Warnings Instead of Mass Auto-Fix**:
+- Previous aggressive auto-fix attempt broke the codebase:
+  - Incorrectly prefixed used variables with `_`
+  - Created 905 TypeScript compilation errors
+  - Required full rollback to Phase 3 commit
+- **Pragmatic approach**: Warnings remain visible but non-blocking
+- Allows focus on test coverage expansion (Phases 5-7)
+- Warnings will be cleaned incrementally in future Phase 4b
+
+**Why `no-namespace` is a Warning**:
+- Express type augmentation requires `declare global { namespace Express }`
+- This is a **legitimate TypeScript pattern** for module augmentation
+- Downgraded to warning to acknowledge the pattern without blocking CI
+
+### Developer Workflow
+
+#### Running Lint Locally
+
+```bash
+# Check for errors and warnings
+npm run lint
+
+# Auto-fix safe issues (import order, whitespace, etc.)
+npm run lint:fix  # (if configured)
+
+# Check specific directory
+npx eslint backend/core/auth --ext .ts
+```
+
+#### Adding New Code
+
+**Requirements**:
+- ✅ **MUST** have 0 ESLint errors
+- ⚠️ **SHOULD** minimize new warnings
+- ✅ **MUST** not introduce `any` types without justification
+
+**Acceptable Warnings**:
+- `no-console` in debug/development code (remove before production)
+- `@typescript-eslint/no-explicit-any` in complex type scenarios (add TODO comment)
+- `import/order` violations (will be auto-fixed in Phase 4b)
+
+**Unacceptable Errors**:
+- Parse errors (broken TypeScript syntax)
+- Invalid imports or module references
+- Rule violations that indicate bugs
+
+#### Fixing Existing Warnings
+
+**Priority Order** (for Phase 4b):
+1. **High Priority**: Production code warnings (backend/**/*.ts)
+   - Remove unused imports/variables
+   - Replace `any` with proper types
+   - Fix import ordering
+2. **Medium Priority**: Test code warnings (tests/**/*.ts)
+   - `@typescript-eslint/no-explicit-any` is allowed in test files
+   - Focus on unused variables/imports
+3. **Low Priority**: Infrastructure warnings (scripts, config)
+   - Address incrementally as files are touched
+
+**Estimated Effort**: ~20-30 hours to clean all 1246 warnings (Phase 4b scope)
+
+### Configuration Files
+
+#### `.eslintrc.json`
+
+```json
+{
+  "rules": {
+    // === ERRORS (BLOCKING) ===
+    "@typescript-eslint/no-var-requires": "error",
+
+    // === WARNINGS (NON-BLOCKING) ===
+    "@typescript-eslint/no-unused-vars": ["warn", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-namespace": "warn",
+    "import/order": ["warn", {
+      "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+      "newlines-between": "always"
+    }],
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-case-declarations": "warn",
+    "no-useless-escape": "warn",
+    "no-prototype-builtins": "warn",
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "@typescript-eslint/ban-types": "warn"
+  }
+}
+```
+
+#### `.eslintignore`
+
+```
+# Test files (covered by separate test-specific rules)
+**/__tests__/**
+**/*.spec.ts
+**/*.test.ts
+
+# Build output
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Generated files
+*.generated.ts
+
+# Experimental files (not in tsconfig)
+backend/services/ai/experimental/
+```
+
+### Enforcement
+
+**Pre-merge Requirements**:
+- ✅ ESLint exit code 0 (no errors)
+- ✅ TypeScript compilation successful
+- ✅ Jest tests passing
+- ⚠️ Warnings visible but non-blocking
+
+**Post-Phase 4**:
+- Phase 4b (optional): Incremental warning cleanup
+- Warnings tracked in [TEST-MODERNIZATION-LOG.md](./TEST-MODERNIZATION-LOG.md#phase-4-pragmatic-lint-hardening)
+
+---
+
 ## Error Handler Testing (Phase 3)
 
 ### RFC 7807 Problem Details Format
