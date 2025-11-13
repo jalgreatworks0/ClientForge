@@ -1007,7 +1007,61 @@ npm run test:backend    # ✅ 230 passed, 59 skipped, 7 pre-existing failures
 **Anti-Placeholder Policy** (documented in tests/README.md):
 > "Do not create empty test infrastructure directories for future tests. Only scaffold test directories when you begin implementing tests. Test infrastructure should match implementation."
 
-**Next**: FS-6 will remove documentation placeholder directories (20+ empty directories)
+**Next**: FS-7 (optional) will remove remaining placeholder directories (packages/, frontend/, scripts/)
+
+---
+
+## FS-6: Documentation Placeholder Removal
+
+**Branch**: `fix/fs-docs-placeholder-removal`
+**Status**: ✅ **COMPLETED**
+**Date**: 2025-11-12
+
+### Summary
+Removed 22 empty documentation placeholder directories (20 subdirs + 2 empty parents) and established documentation anti-placeholder policy.
+
+### Actions Taken
+1. ✅ Found 20 empty documentation subdirectories under `docs/**`
+2. ✅ Verified no blocking references (only generic parent links in backend/README.md)
+3. ✅ Removed all empty subdirectories
+4. ✅ Removed 2 empty parent directories (docs/api/, docs/modules/)
+5. ✅ Created `docs/README.md` with comprehensive anti-placeholder policy
+
+### Directories Removed (22 total)
+
+**API Documentation** (3): graphql/, rest/, websocket/
+**Architecture** (2): diagrams/, patterns/
+**Deployment** (3): cloud/, local/, on-premise/
+**Development** (3): coding-standards/, contributing/, troubleshooting/
+**Guides** (4): admin-guide/, ai-features/, developer-guide/, user-manual/
+**Module Documentation** (4): ai-companion/, analytics/, contacts/, deals/
+**Operations** (1): runbooks/
+**Empty Parents** (2): api/, modules/
+
+### Verification Results
+```bash
+npm run typecheck       # ✅ 0 errors
+npm run lint            # ✅ 0 errors, 1246 warnings (pre-existing)
+npm run test:backend    # ✅ 230 passed, 59 skipped, 7 pre-existing failures
+```
+
+### Key Findings
+- **Zero Impact**: No code/tests broken, generic parent directory links still work
+- **Policy Violation**: 22 empty directories violated clean architecture
+- **Future Prevention**: Comprehensive docs/README.md created with anti-placeholder policy
+- **Storage Cleanup**: Removed 22 empty filesystem entries
+
+### Invariants Maintained
+- ✅ 0 TypeScript errors
+- ✅ 0 ESLint errors (1246 pre-existing warnings)
+- ✅ 0 new test failures
+- ✅ All 7 pre-existing failures remain unchanged
+
+### Policy Established
+**Anti-Placeholder Policy** (documented in docs/README.md):
+> "Do not create empty documentation directories as placeholders for future documentation. Only create documentation directories when adding content. Planning for future docs should live in GitHub issues, project boards, or ADR TODO sections - not in empty directory trees."
+
+**Next**: FS-7 (optional) will remove remaining placeholder directories (packages/, frontend/, scripts/)
 
 ---
 
