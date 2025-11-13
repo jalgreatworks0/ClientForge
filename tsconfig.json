@@ -4,15 +4,28 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
+    "outDir": "./build",
+    "rootDir": ".",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": false,
     "resolveJsonModule": true,
-    "moduleResolution": "node10",
+    "moduleResolution": "node",
     "allowJs": true,
     "strict": false,
-    "noEmitOnError": false,
-    "ignoreDeprecations": "6.0"
+    "noEmitOnError": false
   },
-  "files": []
+  "include": [
+    "backend/**/*",
+    "tests/**/*",
+    "config/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "backend/dist",
+    "**/*.test.ts",
+    "**/node_modules/**"
+  ]
 }

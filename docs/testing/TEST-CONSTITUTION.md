@@ -55,11 +55,17 @@ tests/
 |----|------------|----------|-------|--------|-------|
 | TM-17 | Request Validation HTTP Integration | `tests/integration/validation/request-validation.fortress.test.ts` | 22 | ✅ Complete | Zod validation with middleware pipeline |
 
+### HTTP Integration / CORS & Security
+
+| ID | Suite Name | Location | Tests | Status | Notes |
+|----|------------|----------|-------|--------|-------|
+| TM-18 | CORS & Security Headers HTTP Integration | `tests/integration/http/cors-security.fortress.test.ts` | 20 | ✅ Complete | CORS origin validation, Helmet security headers |
+
 ### Total Fortress Test Statistics
 
-- **Total Fortress Suites**: 2
-- **Total Fortress Tests**: 44
-- **Total Coverage**: Error handling, request validation, auth errors, rate limits, 404s, 500s, nested/array validation
+- **Total Fortress Suites**: 3
+- **Total Fortress Tests**: 66
+- **Total Coverage**: Error handling, request validation, CORS, security headers, auth errors, rate limits, 404s, 500s, nested/array validation, preflight requests
 - **All Passing**: ✅
 - **No Skipped**: ✅
 
@@ -69,6 +75,7 @@ tests/
 |--------|----------|---------|
 | Error Handler Test App | `tests/helpers/test-error-handler-app.ts` | Mini Express app for error handler testing |
 | Validation Test App | `tests/support/test-validation-app.ts` | Mini Express app for request validation testing |
+| CORS & Security Test App | `tests/support/test-cors-security-app.ts` | Mini Express app for CORS and security headers testing |
 
 ## Test Execution
 

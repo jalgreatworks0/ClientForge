@@ -171,11 +171,90 @@ Created comprehensive fortress test suite for request validation middleware usin
 
 ---
 
-## Future Modernization Targets (TM-18+)
+### TM-18: CORS & Security Headers HTTP Fortress Suite
+
+**Date**: 2025-11-13
+**Status**: ✅ Complete
+**Category**: HTTP Integration / CORS & Security
+
+#### Summary
+Created comprehensive fortress test suite for CORS (Cross-Origin Resource Sharing) and security headers (Helmet) using real HTTP calls via supertest. Tests validate that cross-origin requests are properly allowed/denied and that security headers are consistently applied across all responses (success, error, 404).
+
+#### New Files
+- `tests/support/test-cors-security-app.ts` - CORS & security test mini-app (161 lines)
+- `tests/integration/http/cors-security.fortress.test.ts` - 18 fortress tests
+
+#### CORS & Security Scenarios Covered
+
+1. **Basic CORS Allow Behavior** (5 tests)
+   - Allowed origin requests (localhost:3000, 3001, 3002)
+   - POST requests with JSON body from allowed origins
+   - OPTIONS preflight request handling
+   - Authorization header from allowed origin
+   - Requests with no origin (mobile apps, Postman, curl)
+
+2. **CORS Deny/Block Behavior** (3 tests)
+   - Blocked requests from disallowed origins (evil.com, malicious.com)
+   - Blocked preflight from disallowed origin
+   - Rejected preflight with disallowed HTTP method (TRACE)
+
+3. **Security Headers on Successful Responses** (5 tests)
+   - X-Content-Type-Options: nosniff
+   - X-Frame-Options: SAMEORIGIN
+   - Referrer-Policy: no-referrer
+   - Strict-Transport-Security (HSTS): max-age=31536000, includeSubDomains, preload
+   - Content-Security-Policy (CSP): default-src 'self', script/style/img directives
+
+4. **Security Headers on Error & 404 Responses** (4 tests)
+   - Security headers on 500 internal server errors
+   - Security headers on 400 validation errors
+   - Security headers on 404 not found responses
+   - Security headers on 401 unauthorized responses
+
+5. **Edge Cases** (3 tests)
+   - Exposed custom headers (X-Total-Count, X-Page-Count, X-Request-ID)
+   - Multiple rapid CORS requests from different origins
+   - Security headers and CORS across different HTTP methods (GET, POST)
+
+#### Test Statistics
+- **Total Tests**: 20
+- **Test Categories**: 5
+- **All Passing**: ✅
+- **No Skipped Tests**: ✅
+- **Execution Time**: ~800ms
+
+#### Implementation Details
+- Uses real Helmet middleware with production CSP and HSTS configuration
+- Uses actual CORS configuration from `config/security/cors-config.ts`
+- Tests dynamic origin validation (allows localhost:3000/3001/3002, blocks others)
+- Validates credentials: true behavior (allows cookies and auth headers)
+- Tests preflight caching (maxAge: 86400 seconds / 24 hours)
+- Verifies exposed headers are properly listed in Access-Control-Expose-Headers
+- Confirms security headers present on all response types (2xx, 4xx, 5xx)
+- Tests middleware ordering: Helmet → CORS → Body Parsing → Routes → Error Handler
+
+#### Benefits
+- ✅ Tests actual CORS behavior with real middleware (no mocks)
+- ✅ Validates security headers consistently applied across all responses
+- ✅ Ensures disallowed origins are properly rejected
+- ✅ Confirms preflight requests work correctly
+- ✅ Tests credentials and Authorization header support
+- ✅ Verifies exposed headers configuration
+- ✅ Fast and stable execution
+
+#### Integration with TM-16 and TM-17
+- Security headers applied to error responses (TM-16 error handler)
+- Security headers applied to validation errors (TM-17 validation)
+- Consistent error response structure maintained
+- Middleware pipeline ordering validated end-to-end
+
+---
+
+## Future Modernization Targets (TM-19+)
 
 Potential areas for future fortress suite development:
-- CORS & Security Headers HTTP integration testing
 - File upload validation and error handling
 - WebSocket connection and error handling
 - Streaming response errors
 - Multi-tenant data isolation testing
+- Rate limiter integration (deeper coverage beyond TM-16)
