@@ -438,6 +438,17 @@ Between TM-5 and TM-9, there were 7 known failing suites due to TypeScript compi
 - Security guarantees: Blocks script tags, event handlers, javascript:/data: URLs, path traversal
 - Pattern: Third fortress suite, comprehensive input validation and security
 
+**TM-15 Update** (2025-11-13): Auth HTTP Pipeline Mini-Integration Suite:
+- New test suite: [tests/integration/auth/auth-pipeline.mini.test.ts](../../../tests/integration/auth/auth-pipeline.mini.test.ts)
+- New test helper: [tests/support/test-auth-pipeline-app.ts](../../../tests/support/test-auth-pipeline-app.ts)
+- Coverage: 13 passing tests (HTTP middleware integration)
+- Pattern: HTTP mini-integration smoke tests proving middleware stack works end-to-end
+- Middleware tested: TenantGuard + InputSanitizer + RateLimiter (skipped)
+- Guarantees: Multi-tenant isolation enforced via HTTP, XSS/injection attacks blocked via HTTP
+- Future: 3 documented tests (skipped) for rate limiting HTTP integration
+- Behavior contract: Tenant header validation, email/password sanitization, pipeline error propagation
+- Security guarantees: Returns 400 for missing tenant, strips script tags from input, validates middleware order
+
 ### Future Coverage Opportunities
 
 When adding coverage for the above features:

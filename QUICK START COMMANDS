@@ -1,0 +1,12 @@
+Quick Fix - Start Backend and Frontend Manually
+Open two separate terminal windows: Terminal 1 - Backend:
+cd D:\clientforge-crm
+npm run dev:backend
+Terminal 2 - Frontend:
+cd D:\clientforge-crm\frontend
+npm run dev
+
+
+Start backend on port 3000
+Start frontend on port 3001
+Open browser to http://localhost:3001

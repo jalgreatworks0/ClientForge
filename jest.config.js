@@ -125,6 +125,11 @@ module.exports = {
     '<rootDir>/tests/playwright/',
   ],
 
+  // Transform ESM modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(isomorphic-dompurify|dompurify|parse5)/)',
+  ],
+
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 }

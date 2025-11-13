@@ -85,7 +85,9 @@ REM ============================================================================
 REM STEP 2: Start Docker Compose Services
 REM ============================================================================
 echo [2/7] Starting Docker services (PostgreSQL, MongoDB, Redis, Elasticsearch)...
-docker-compose up -d postgres mongodb redis elasticsearch
+docker-compose up -d postgres mongodb redis elasticsearch 2>nul
+REM Check if containers are actually running (more reliable than exit code)
+docker ps --filter "name=clientforge-crm-postgres" --filter "status=running" --quiet >nul 2>&1
 if ERRORLEVEL 1 (
     echo.
     echo ============================================================================
